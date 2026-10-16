@@ -1,0 +1,383 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ===== IDENTITY =====
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String? // hashed
+  role      String   @default("student") // student | admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  academicProfile   AcademicProfile?
+  roadmaps          Roadmap[]
+  simulations       Simulation[]
+  templates         Template[]
+  templateVotes     TemplateVote[]
+  comments          Comment[]
+  reports           Report[]
+  reminders         Reminder[]
+  checkIns          CheckIn[]
+  achievements      Achievement[]
+  thesisAssessments ThesisAssessment[]
+  advisingLogs      AdvisingLog[]
+  careerAssessments CareerAssessment[]
+  cvProfile         CVProfile?
+}
+
+model GuestSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isReset   Boolean  @default(false)
+
+  academicProfile AcademicProfile?
+  roadmaps        Roadmap[]
+  simulations     Simulation[]
+  reminders       Reminder[]
+  checkIns        CheckIn[]
+  achievements    Achievement[]
+}
+
+model AcademicProfile {
+  id              String   @id @default(cuid())
+  userId          String?  @unique
+  guestSessionId  String?  @unique
+  institutionName String
+  facultyName     String?
+  programName     String
+  educationLevel  String   @default("S1")
+  entryYear       Int
+  currentSemester Int
+  totalCurriculumCredits Int @default(144)
+  completedCredits Int     @default(0)
+  inProgressCredits Int    @default(0)
+  gpa             Float?
+  goals           String   @default("balanced") // fast | balanced | active | relaxed
+  interests       String   @default("[]") // JSON array
+  studyMode       String?
+  takEnabled      Boolean  @default(true)
+  takTarget       Int?
+  weeklyHours     Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestSession GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+}
+
+// ===== ROADMAP =====
+
+model Roadmap {
+  id              String   @id @default(cuid())
+  userId          String?
+  guestSessionId  String?
+  title           String   @default("Roadmap Saya")
+  status          String   @default("active") // active | archived
+  currentVersionId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestSession GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+  versions     RoadmapVersion[]
+  simulations  Simulation[]
+}
+
+model RoadmapVersion {
+  id          String   @id @default(cuid())
+  roadmapId   String
+  versionNum  Int
+  label       String?  // e.g. "Skenario Magang Diterapkan"
+  description String?
+  isBaseline  Boolean  @default(false)
+  appliedFromSimulationId String?
+  createdAt   DateTime @default(now())
+
+  roadmap      Roadmap        @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  semesterPlans SemesterPlan[]
+
+  @@unique([roadmapId, versionNum])
+}
+
+model SemesterPlan {
+  id               String   @id @default(cuid())
+  roadmapVersionId String
+  semesterNum      Int      // 1, 2, 3 ...
+  semesterLabel    String?  // e.g. "Semester 3 — Ganjil 2024/2025"
+  targetCredits    Int      @default(20)
+  plannedCredits   Int      @default(0)
+  isCurrentSemester Boolean @default(false)
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  roadmapVersion RoadmapVersion @relation(fields: [roadmapVersionId], references: [id], onDelete: Cascade)
+  tasks          RoadmapTask[]
+
+  @@unique([roadmapVersionId, semesterNum])
+}
+
+model RoadmapTask {
+  id             String   @id @default(cuid())
+  semesterPlanId String
+  title          String
+  description    String?
+  category       String   @default("akademik") // akademik | tak | karier | skripsi | pribadi
+  credits        Int      @default(0) // SKS, 0 for non-course tasks
+  priority       String   @default("medium") // high | medium | low
+  status         String   @default("planned") // planned | in_progress | done | delayed | cancelled
+  targetDate     String?  // ISO date string
+  completedDate  String?  // ISO date string
+  courseCode     String?
+  notes          String?
+  dataSource     String   @default("mahasiswa") // mahasiswa | kampus | template
+  certaintyLevel String   @default("estimasi") // pasti | estimasi | belum_diketahui
+  nodePositionX  Float?
+  nodePositionY  Float?
+  prerequisites  String   @default("[]") // JSON array of task IDs
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  semesterPlan SemesterPlan @relation(fields: [semesterPlanId], references: [id], onDelete: Cascade)
+}
+
+model CheckIn {
+  id             String   @id @default(cuid())
+  userId         String?
+  guestSessionId String?
+  type           String   // start_semester | end_semester | midpoint
+  semesterNum    Int
+  answers        String   // JSON
+  roadmapUpdates String?  // JSON
+  createdAt      DateTime @default(now())
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestSession GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+}
+
+// ===== SIMULATION =====
+
+model Simulation {
+  id              String   @id @default(cuid())
+  userId          String?
+  guestSessionId  String?
+  roadmapId       String
+  baselineVersionId String?
+  scenarioType    String   // magang | mbkm | advanced_course | exchange | cuti
+  parameters      String   // JSON
+  rulesResult     String?  // JSON — from rules engine
+  aiExplanation   String?  // JSON — from AI, stored separately
+  assumptions     String?  // JSON
+  unknowns        String?  // JSON
+  status          String   @default("draft") // draft | calculated | applied | archived
+  appliedVersionId String?
+  title           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestSession GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+  roadmap      Roadmap       @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+}
+
+// ===== COMMUNITY =====
+
+model Template {
+  id             String   @id @default(cuid())
+  userId         String?
+  title          String
+  description    String
+  category       String   // semester | tak | magang | mbkm | skripsi | organisasi
+  institutionName String?
+  programName    String?
+  cohortYear     Int?
+  goals          String?
+  semesterSteps  String   // JSON
+  sourceType     String   @default("pengalaman") // pengalaman | komunitas | terverifikasi
+  isPublic       Boolean  @default(true)
+  isHidden       Boolean  @default(false)
+  usefulCount    Int      @default(0)
+  authorDisplayName String?
+  isAnonymous    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user    User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  votes   TemplateVote[]
+  comments Comment[]
+  reports  Report[]
+  clones   TemplateClone[]
+}
+
+model TemplateClone {
+  id             String   @id @default(cuid())
+  sourceTemplateId String
+  clonedByUserId String?
+  guestSessionId String?
+  createdAt      DateTime @default(now())
+
+  sourceTemplate Template @relation(fields: [sourceTemplateId], references: [id])
+}
+
+model TemplateVote {
+  id         String   @id @default(cuid())
+  templateId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  template Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, userId])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  templateId String
+  userId     String
+  parentId   String?
+  content    String
+  isHidden   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  template Template  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
+  reports  Report[]
+}
+
+model Report {
+  id            String   @id @default(cuid())
+  templateId    String?
+  commentId     String?
+  reportedByUserId String
+  reason        String
+  status        String   @default("open") // open | reviewed | resolved
+  moderatorNote String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  template  Template? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  comment   Comment?  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter  User      @relation(fields: [reportedByUserId], references: [id])
+}
+
+// ===== THESIS & CAREER =====
+
+model ThesisAssessment {
+  id            String   @id @default(cuid())
+  userId        String
+  interests     String   // JSON array
+  methods       String   // JSON array
+  dataAvailability String
+  timeAvailable String
+  skills        String   // JSON array
+  constraints   String?
+  directions    String?  // JSON — generated directions
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdvisingLog {
+  id          String   @id @default(cuid())
+  userId      String
+  date        String   // ISO date string
+  supervisor  String
+  topics      String
+  decisions   String?
+  followUps   String?  // JSON array
+  dueDate     String?
+  status      String   @default("open") // open | done
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CareerAssessment {
+  id         String   @id @default(cuid())
+  userId     String
+  direction  String   // kerja | s2 | wirausaha | eksplorasi
+  interests  String
+  experience String?
+  skills     String
+  priorities String?
+  actionPlan String?  // JSON
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===== ACHIEVEMENTS =====
+
+model Achievement {
+  id             String   @id @default(cuid())
+  userId         String?
+  guestSessionId String?
+  title          String
+  category       String   // magang | organisasi | proyek | lomba | sertifikasi | akademik | relawan | lainnya
+  role           String?
+  description    String
+  startDate      String?
+  endDate        String?
+  impact         String?
+  skills         String   @default("[]") // JSON array
+  evidenceUrl    String?
+  includeInCv    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestSession GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+}
+
+model CVProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  summary   String?
+  phone     String?
+  linkedin  String?
+  portfolio String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===== REMINDERS =====
+
+model Reminder {
+  id             String   @id @default(cuid())
+  userId         String?
+  guestSessionId String?
+  title          String
+  category       String   // akademik | krs | mbkm | skripsi | yudisium | pribadi
+  deadline       String?  // ISO date string
+  sourceUrl      String?
+  sourceLabel    String?
+  isOfficial     Boolean  @default(false)
+  status         String   @default("active") // active | done | dismissed
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestSession GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+}
