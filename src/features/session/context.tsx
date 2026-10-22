@@ -9,54 +9,56 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 
+export interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface SessionContextType {
   token: string | null;
+  user: UserInfo | null;
   isLoading: boolean;
-  resetDemo: () => Promise<void>;
   clearSession: () => void;
 }
 
 const SessionContext = createContext<SessionContextType>({
   token: null,
+  user: null,
   isLoading: true,
-  resetDemo: async () => {},
   clearSession: () => {},
 });
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const t = localStorage.getItem("stara_demo_token");
+    const u = localStorage.getItem("stara_user");
     setToken(t);
+    if (u) {
+      try {
+        setUser(JSON.parse(u));
+      } catch {
+        setUser(null);
+      }
+    }
     setIsLoading(false);
   }, []);
 
-  const resetDemo = useCallback(async () => {
-    if (!token) return;
-    const res = await fetch("/api/demo/reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
-    const data = await res.json() as { token?: string };
-    if (data.token) {
-      localStorage.setItem("stara_demo_token", data.token);
-      setToken(data.token);
-      router.refresh();
-    }
-  }, [token, router]);
-
   const clearSession = useCallback(() => {
     localStorage.removeItem("stara_demo_token");
+    localStorage.removeItem("stara_user");
     setToken(null);
-    router.push("/");
+    setUser(null);
+    router.push("/login");
   }, [router]);
 
   return (
-    <SessionContext.Provider value={{ token, isLoading, resetDemo, clearSession }}>
+    <SessionContext.Provider value={{ token, user, isLoading, clearSession }}>
       {children}
     </SessionContext.Provider>
   );

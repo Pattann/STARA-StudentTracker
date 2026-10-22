@@ -22,7 +22,10 @@ export async function GET(req: NextRequest) {
     });
 
     if (!roadmap) {
-      return NextResponse.json({ roadmap: null });
+      const profile = await prisma.academicProfile.findUnique({
+        where: { guestSessionId: session.id },
+      });
+      return NextResponse.json({ roadmap: null, profile });
     }
 
     const version = roadmap.currentVersionId
@@ -101,6 +104,15 @@ export async function POST(req: NextRequest) {
       templateSource?: "komunitas" | "kampus";
       mode?: "merge" | "new_version";
       targetSemesterNum?: number;
+      semesterNum?: number;
+      targetCredits?: number;
+      title?: string;
+      category?: string;
+      credits?: number;
+      courseCode?: string;
+      notes?: string;
+      status?: string;
+      isMilestone?: boolean;
       items?: Array<{
         title: string;
         category: string;
@@ -111,6 +123,11 @@ export async function POST(req: NextRequest) {
         certaintyLevel?: string;
       }>;
     };
+
+    if (body.action === "clear_roadmap") {
+      await prisma.roadmap.deleteMany({ where: { guestSessionId: session.id } });
+      return NextResponse.json({ success: true, message: "Roadmap berhasil dikosongkan." });
+    }
 
     if (body.action === "update_task" && body.taskId) {
       const task = await prisma.roadmapTask.findUnique({ where: { id: body.taskId } });
@@ -126,7 +143,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
       }
 
-      const allowed = ["status", "notes", "targetDate"] as const;
+      const allowed = ["status", "notes", "targetDate", "credits", "title", "courseCode", "category"] as const;
       const safeUpdates: Record<string, unknown> = {};
       for (const key of allowed) {
         if (body.updates && key in body.updates) {
@@ -140,6 +157,170 @@ export async function POST(req: NextRequest) {
       });
 
       return NextResponse.json({ task: updated });
+    }
+
+    if (body.action === "add_task") {
+      const {
+        semesterNum,
+        title,
+        category = "akademik",
+        credits = 0,
+        courseCode,
+        notes,
+        status = "planned",
+        isMilestone = false,
+      } = body;
+
+      if (!title || !semesterNum) {
+        return NextResponse.json({ error: "Judul dan semester wajib diisi." }, { status: 400 });
+      }
+
+      const roadmap = await prisma.roadmap.findFirst({
+        where: { guestSessionId: session.id },
+        orderBy: { createdAt: "desc" },
+      });
+      if (!roadmap || !roadmap.currentVersionId) {
+        return NextResponse.json({ error: "Roadmap tidak ditemukan." }, { status: 404 });
+      }
+
+      let plan = await prisma.semesterPlan.findFirst({
+        where: {
+          roadmapVersionId: roadmap.currentVersionId,
+          semesterNum: Number(semesterNum),
+        },
+      });
+
+      if (!plan) {
+        plan = await prisma.semesterPlan.create({
+          data: {
+            roadmapVersionId: roadmap.currentVersionId,
+            semesterNum: Number(semesterNum),
+            semesterLabel: `Semester ${semesterNum}`,
+            targetCredits: 20,
+            plannedCredits: isMilestone ? 0 : Number(credits) || 0,
+            isCurrentSemester: Number(semesterNum) === 5,
+          },
+        });
+      }
+
+      // CRITICAL RULE: Item non-SKS tidak boleh ikut menambah total SKS akademik
+      const finalCredits = isMilestone || (category !== "akademik" && category !== "skripsi" && credits === 0) ? 0 : Number(credits) || 0;
+
+      const newTask = await prisma.roadmapTask.create({
+        data: {
+          semesterPlanId: plan.id,
+          title,
+          category,
+          credits: finalCredits,
+          courseCode: courseCode || null,
+          notes: notes || null,
+          status,
+          dataSource: "mahasiswa",
+          certaintyLevel: "pasti",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: isMilestone ? "Milestone pribadi berhasil ditambahkan (0 SKS)." : "Mata kuliah berhasil ditambahkan ke roadmap.",
+        task: newTask,
+      });
+    }
+
+    if (body.action === "move_task" && body.taskId && body.targetSemesterNum) {
+      const task = await prisma.roadmapTask.findUnique({
+        where: { id: body.taskId },
+        include: { semesterPlan: true },
+      });
+      if (!task) return NextResponse.json({ error: "Item tidak ditemukan." }, { status: 404 });
+
+      // CRITICAL RULE: Mata kuliah yang sudah selesai tidak boleh berpindah semester
+      if (task.status === "done") {
+        return NextResponse.json(
+          { error: "Mata kuliah yang sudah selesai (Lulus) terkunci di semester aslinya dan tidak dapat dipindahkan." },
+          { status: 400 }
+        );
+      }
+
+      const roadmap = await prisma.roadmap.findFirst({
+        where: { guestSessionId: session.id },
+        orderBy: { createdAt: "desc" },
+      });
+      if (!roadmap || !roadmap.currentVersionId) {
+        return NextResponse.json({ error: "Roadmap tidak ditemukan." }, { status: 404 });
+      }
+
+      let destPlan = await prisma.semesterPlan.findFirst({
+        where: {
+          roadmapVersionId: roadmap.currentVersionId,
+          semesterNum: Number(body.targetSemesterNum),
+        },
+      });
+
+      if (!destPlan) {
+        destPlan = await prisma.semesterPlan.create({
+          data: {
+            roadmapVersionId: roadmap.currentVersionId,
+            semesterNum: Number(body.targetSemesterNum),
+            semesterLabel: `Semester ${body.targetSemesterNum}`,
+            targetCredits: 20,
+            plannedCredits: task.credits,
+            isCurrentSemester: Number(body.targetSemesterNum) === 5,
+          },
+        });
+      }
+
+      const updated = await prisma.roadmapTask.update({
+        where: { id: task.id },
+        data: { semesterPlanId: destPlan.id },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `"${task.title}" berhasil dipindahkan ke Semester ${body.targetSemesterNum}.`,
+        task: updated,
+      });
+    }
+
+    if (body.action === "update_semester_target" && body.semesterNum && body.targetCredits) {
+      const roadmap = await prisma.roadmap.findFirst({
+        where: { guestSessionId: session.id },
+        orderBy: { createdAt: "desc" },
+      });
+      if (!roadmap || !roadmap.currentVersionId) {
+        return NextResponse.json({ error: "Roadmap tidak ditemukan." }, { status: 404 });
+      }
+
+      let plan = await prisma.semesterPlan.findFirst({
+        where: {
+          roadmapVersionId: roadmap.currentVersionId,
+          semesterNum: Number(body.semesterNum),
+        },
+      });
+
+      if (!plan) {
+        plan = await prisma.semesterPlan.create({
+          data: {
+            roadmapVersionId: roadmap.currentVersionId,
+            semesterNum: Number(body.semesterNum),
+            semesterLabel: `Semester ${body.semesterNum}`,
+            targetCredits: Number(body.targetCredits) || 20,
+            plannedCredits: 0,
+            isCurrentSemester: Number(body.semesterNum) === 5,
+          },
+        });
+      } else {
+        plan = await prisma.semesterPlan.update({
+          where: { id: plan.id },
+          data: { targetCredits: Number(body.targetCredits) || 20 },
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Target beban Semester ${body.semesterNum} diperbarui menjadi ${body.targetCredits} SKS.`,
+        plan,
+      });
     }
 
     if (body.action === "apply_template") {
@@ -370,8 +551,14 @@ export async function POST(req: NextRequest) {
     if (body.action === "delete_task" && body.taskId) {
       const task = await prisma.roadmapTask.findUnique({ where: { id: body.taskId } });
       if (!task) return NextResponse.json({ error: "Task tidak ditemukan." }, { status: 404 });
+      if (task.status === "done") {
+        return NextResponse.json(
+          { error: "Mata kuliah yang sudah selesai (Lulus) terkunci dan tidak dapat dihapus dari riwayat akademik." },
+          { status: 400 }
+        );
+      }
       await prisma.roadmapTask.delete({ where: { id: body.taskId } });
-      return NextResponse.json({ success: true, message: "Task berhasil dihapus." });
+      return NextResponse.json({ success: true, message: "Item berhasil dihapus." });
     }
 
     return NextResponse.json({ error: "Aksi tidak dikenali." }, { status: 400 });

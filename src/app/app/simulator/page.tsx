@@ -66,6 +66,19 @@ export default function SimulatorPage() {
       .then((r) => r.json())
       .then((d: { simulations: typeof pastSimulations }) => setPastSimulations(d.simulations ?? []))
       .catch(() => {});
+
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const scenario = urlParams.get("scenario") as ScenarioType | null;
+      const sem = urlParams.get("semester");
+      if (scenario && SCENARIO_TYPES[scenario]) {
+        setSelectedType(scenario);
+        if (sem) {
+          setParams((prev) => ({ ...prev, startSemester: parseInt(sem) || 6 }));
+        }
+        setStep("configure");
+      }
+    }
   }, [token]);
 
   const runSimulation = async () => {

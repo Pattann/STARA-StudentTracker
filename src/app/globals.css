@@ -223,28 +223,35 @@ a {
 .stara-nav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(27, 32, 29, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: var(--radius-pill);
-  padding: 4px;
+  gap: 32px;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .stara-nav-link {
-  padding: 7px 18px;
-  border-radius: var(--radius-pill);
-  font-size: 13.5px;
+  padding: 6px 0;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: rgba(245, 245, 240, 0.65);
   text-decoration: none;
-  transition: all var(--transition);
+  transition: color var(--transition);
   display: inline-block;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  position: relative;
 }
 
-.stara-nav-link:hover,
+.stara-nav-link:hover {
+  color: #F5F5F0;
+  background: transparent;
+}
+
 .stara-nav-link.active {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.08);
+  color: #F5F5F0;
+  font-weight: 600;
+  background: transparent;
 }
 
 .stara-nav-actions {
@@ -313,7 +320,7 @@ a {
 .stara-hero {
   position: relative;
   padding-top: clamp(120px, 14vh, 150px);
-  padding-bottom: 40px;
+  padding-bottom: 60px;
   text-align: center;
   overflow: visible;
   width: 100%;
@@ -323,41 +330,59 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px;
-  background: rgba(27, 32, 29, 0.8);
-  border: 1px solid var(--border);
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-pill);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--lime);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
+  color: #E2E8F0;
+  letter-spacing: -0.01em;
   margin-bottom: 24px;
 }
 
+.stara-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lime);
+  display: inline-block;
+}
+
 .stara-headline {
-  font-size: clamp(42px, 6.2vw, 84px);
+  font-size: clamp(38px, 5.2vw, 72px);
   font-weight: 800;
-  line-height: 1.06;
+  line-height: 1.12;
   letter-spacing: -0.035em;
-  color: var(--text-primary);
-  max-width: 900px;
+  color: #FFFFFF;
+  max-width: 960px;
   margin: 0 auto;
 }
 
-.stara-headline-italic {
+.stara-headline-line1 {
+  display: block;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .stara-headline-line1 {
+    white-space: normal;
+  }
+}
+
+.stara-headline-line2 {
   display: block;
   font-weight: 400;
   font-style: italic;
-  color: var(--text-secondary);
-  margin-top: 4px;
+  color: #B5BAB5;
+  margin-top: 6px;
 }
 
 .stara-desc {
-  font-size: clamp(15px, 1.6vw, 17px);
-  color: var(--text-secondary);
+  font-size: clamp(15.5px, 1.5vw, 17px);
+  color: rgba(245, 245, 240, 0.72);
   max-width: 580px;
-  margin: 22px auto 34px;
+  margin: 22px auto 32px;
   line-height: 1.65;
   padding: 0 16px;
 }
@@ -366,8 +391,40 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
+}
+
+.hero-btn-primary {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  padding: 12px 26px !important;
+  background: var(--lime) !important;
+  color: #0B0D0C !important;
+  box-shadow: 0 4px 16px rgba(245, 205, 71, 0.22) !important;
+  border-radius: var(--radius-pill) !important;
+}
+
+.hero-btn-primary:hover {
+  background: var(--lime-dim) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(245, 205, 71, 0.3) !important;
+}
+
+.hero-btn-secondary {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #F5F5F0 !important;
+  border-radius: var(--radius-pill) !important;
+}
+
+.hero-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  transform: translateY(-1px);
 }
 
 .stara-subtext {
@@ -376,21 +433,6 @@ a {
   margin-top: 14px;
 }
 
-/* Floating cursor tags */
-.floating-cursor-tag {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
-  font-size: 12px;
-  font-weight: 500;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  pointer-events: none;
-  animation: floatSlow 5s ease-in-out infinite;
-  z-index: 15;
-}
 
 @keyframes floatSlow {
 
@@ -422,7 +464,7 @@ a {
   width: 100%;
   max-width: 1280px;
   margin: 50px auto 0;
-  padding: 0 20px 40px;
+  padding: 0 20px 50px;
   perspective: 1200px;
   overflow: visible;
 }
@@ -996,19 +1038,24 @@ select.form-input {
 .roadmap-timeline {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 .semester-card {
-  background: var(--bg-elevated);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: border-color var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.semester-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .semester-card.current {
-  border-color: var(--lime);
+  border-color: rgba(245, 205, 71, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .semester-card-header {
@@ -1018,10 +1065,15 @@ select.form-input {
   justify-content: space-between;
   cursor: pointer;
   user-select: none;
+  transition: background var(--transition);
+}
+
+.semester-card-header:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .semester-card-body {
-  padding: 0 20px 20px;
+  padding: 16px 20px 20px;
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -1029,13 +1081,16 @@ select.form-input {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 11px 14px;
   border-radius: var(--radius-md);
-  transition: background var(--transition);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all var(--transition);
 }
 
 .task-item:hover {
-  background: var(--bg-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 /* ============================================================

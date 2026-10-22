@@ -65,14 +65,115 @@ function getProvider(): AIProvider | null {
   const provider = process.env.AI_PROVIDER;
   if (!provider) return null;
 
-  if (provider === "openai" && process.env.OPENAI_API_KEY) {
-    // Could implement OpenAI here
-    return null;
-  }
-
   if (provider === "google" && process.env.GOOGLE_AI_API_KEY) {
-    // Could implement Google AI here
-    return null;
+    try {
+      // Dynamic import Google GenAI
+      const { GoogleGenAI } = require("@google/genai");
+      const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY });
+
+      return {
+        async explainSimulation(req: AIExplanationRequest): Promise<AIExplanationOutput> {
+          const prompt = `
+Anda adalah asisten akademik cerdas STARA (Student Tracker & Academic Roadmap Assistant).
+Tugas Anda adalah menganalisis simulasi skenario "what-if" dari rencana studi mahasiswa berikut:
+- Target Kelulusan: ${req.goalLabel}
+- Tipe Skenario: ${req.scenarioType}
+- Parameter Tambahan: ${JSON.stringify(req.parameters)}
+- Ringkasan Baseline (Sebelum): ${req.baselineSummary}
+- Ringkasan Skenario (Sesudah): ${req.scenarioSummary}
+- Konflik/Peringatan yang Terdeteksi: ${JSON.stringify(req.conflicts)}
+- Hal Belum Diketahui: ${JSON.stringify(req.unknowns)}
+
+Berikan analisis terstruktur dalam bahasa Indonesia profesional yang ramah mahasiswa.
+HANYA kembalikan valid JSON (tanpa markdown backtick \`\`\`json) dengan format berikut:
+{
+  "summary": "Ringkasan dampak skenario ini terhadap kelulusan dan beban studi (2-3 kalimat)",
+  "benefits": ["keuntungan 1", "keuntungan 2"],
+  "tradeoffs": ["konsekuensi/tradeoff 1", "konsekuensi 2"],
+  "risks": ["risiko 1", "risiko 2"],
+  "assumptions": ["asumsi perhitungan yang digunakan"],
+  "unknowns": ["hal yang masih perlu diverifikasi ke pihak kampus"],
+  "recommendedNextSteps": ["langkah konkrit 1 yang harus diambil mahasiswa", "langkah 2"],
+  "questionsForCampus": ["pertanyaan tepat untuk ditanyakan ke dosen wali / prodi"],
+  "isAiGenerated": true
+}
+`;
+
+          const response = await ai.models.generateContent({
+            model: "gemini-1.5-flash",
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+            },
+          });
+
+          const text = response.text?.trim() || "{}";
+          const parsed = JSON.parse(text);
+          return {
+            summary: parsed.summary || req.scenarioSummary,
+            benefits: parsed.benefits || [],
+            tradeoffs: parsed.tradeoffs || [],
+            risks: parsed.risks || req.conflicts,
+            assumptions: parsed.assumptions || ["Perhitungan berbasis data kurikulum saat ini."],
+            unknowns: parsed.unknowns || req.unknowns,
+            recommendedNextSteps: parsed.recommendedNextSteps || ["Konsultasikan dengan dosen wali."],
+            questionsForCampus: parsed.questionsForCampus || req.unknowns.map((u) => `Tentang: ${u}`),
+            isAiGenerated: true,
+          };
+        },
+
+        async generateThesisDirections(req: AIThesisRequest): Promise<AIThesisOutput> {
+          const prompt = `
+Anda adalah asisten pembimbing skripsi/tugas akhir STARA.
+Bantu mahasiswa dengan profil berikut untuk menemukan arah topik skripsi/TA:
+- Program Studi: ${req.programName}
+- Minat/Bidang Tertarik: ${req.interests.join(", ")}
+- Metode yang dikuasai/diminati: ${req.methods.join(", ")}
+- Ketersediaan Data: ${req.dataAvailability}
+- Waktu yang Tersedia: ${req.timeAvailable}
+- Skill: ${req.skills.join(", ")}
+${req.constraints ? `- Catatan Khusus: ${req.constraints}` : ""}
+
+Hasilkan 2-3 rekomendasi arah penelitian TA yang realistis dan terstruktur.
+HANYA kembalikan valid JSON (tanpa markdown codeblocks) dengan format:
+{
+  "directions": [
+    {
+      "topicArea": "Judul Bidang Topik",
+      "exampleQuestion": "Rumusan masalah / pertanyaan penelitian contoh",
+      "whyItFits": "Mengapa topik ini cocok dengan minat & skill mahasiswa",
+      "possibleMethod": "Metode penelitian yang disarankan",
+      "dataRequired": "Kebutuhan dataset/data penelitian",
+      "feasibility": "tinggi",
+      "mainRisks": ["risiko 1", "risiko 2"],
+      "firstSteps": ["langkah awal 1", "langkah 2"],
+      "questionsForSupervisor": ["pertanyaan untuk diajukan ke calon dosen pembimbing"]
+    }
+  ],
+  "isAiGenerated": true
+}
+`;
+
+          const response = await ai.models.generateContent({
+            model: "gemini-1.5-flash",
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+            },
+          });
+
+          const text = response.text?.trim() || "{}";
+          const parsed = JSON.parse(text);
+          return {
+            directions: parsed.directions || [],
+            isAiGenerated: true,
+          };
+        },
+      };
+    } catch (e) {
+      console.error("[AI Provider init error]", e);
+      return null;
+    }
   }
 
   return null;

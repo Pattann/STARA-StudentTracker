@@ -23,7 +23,6 @@ import {
   Layers,
   GraduationCap,
   Briefcase,
-  MousePointer,
   Megaphone,
   Laptop,
   Check,
@@ -95,27 +94,6 @@ export default function HomePage() {
         aria-hidden="true"
       />
 
-      {/* Decorative starfield dots */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "800px",
-          backgroundImage:
-            "radial-gradient(rgba(245,245,240,0.18) 1px, transparent 1px), radial-gradient(rgba(215,255,69,0.14) 1px, transparent 1px)",
-          backgroundSize: "64px 64px, 120px 120px",
-          backgroundPosition: "0 0, 40px 60px",
-          maskImage: "radial-gradient(ellipse 70% 50% at 50% 30%, black 20%, transparent 80%)",
-          WebkitMaskImage: "radial-gradient(ellipse 70% 50% at 50% 30%, black 20%, transparent 80%)",
-          pointerEvents: "none",
-          opacity: 0.7,
-          zIndex: 0,
-        }}
-        aria-hidden="true"
-      />
-
       {/* ============================================================
           1. NAVBAR (Horizontal Capsule Pill)
          ============================================================ */}
@@ -142,22 +120,8 @@ export default function HomePage() {
             <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em", color: "#F5F5F0" }}>STARA</span>
           </Link>
 
-          {/* Center Navigation Links (Desktop) */}
-          <div className="stara-nav-links" style={{ display: "none" }}>
-            {/* Handled by media query inline or styled flex on md */}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              background: "rgba(27, 32, 29, 0.65)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
-              borderRadius: "var(--radius-pill)",
-              padding: "3px 4px",
-            }}
-            className="hidden-mobile-flex"
-          >
+          {/* Center Navigation Links (Desktop) - Clean typography without nested shapes */}
+          <div className="stara-nav-links hidden-mobile-flex">
             {navLinks.map((link) => (
               <a
                 key={link.id}
@@ -270,25 +234,16 @@ export default function HomePage() {
          ============================================================ */}
       <section className="stara-hero">
         <div style={{ maxWidth: 1140, margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 10 }}>
-          {/* Eyebrow Pill */}
+          {/* Clean Minimalist Eyebrow Badge */}
           <div className="stara-eyebrow">
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "var(--lime)",
-                display: "inline-block",
-                boxShadow: "0 0 8px var(--lime)",
-              }}
-            />
-            <span>✦ RENCANAKAN KULIAH, RAIH TUJUANMU</span>
+            <span className="stara-eyebrow-dot" />
+            <span>Rencanakan Kuliah, Raih Tujuanmu</span>
           </div>
 
           {/* Two-Line Editorial Headline */}
           <h1 className="stara-headline">
-            <span>Rancang Perjalananmu.</span>
-            <span className="stara-headline-italic">Capai Lebih Banyak.</span>
+            <span className="stara-headline-line1">Rancang Perjalananmu.</span>
+            <span className="stara-headline-line2">Capai Lebih Banyak.</span>
           </h1>
 
           {/* Description */}
@@ -301,64 +256,18 @@ export default function HomePage() {
           <div className="stara-cta-group">
             <Link
               href="/app/onboarding"
-              className="stara-btn-primary"
-              style={{
-                fontSize: 15,
-                fontWeight: 600,
-                padding: "12px 28px",
-                boxShadow: "0 4px 20px rgba(245, 205, 71, 0.25)",
-              }}
+              className="stara-btn-primary hero-btn-primary"
             >
               <span>Mulai Perjalanan</span>
-              <ArrowUpRight size={17} />
+              <ArrowUpRight size={16} />
             </Link>
             <Link
               href="/demo"
-              className="stara-btn-secondary"
-              style={{
-                fontSize: 15,
-                fontWeight: 500,
-                padding: "12px 26px",
-              }}
+              className="stara-btn-secondary hero-btn-secondary"
             >
               Jelajahi Demo
             </Link>
           </div>
-
-          {/* Supporting Microcopy */}
-          <p className="stara-subtext">Roadmap akademik yang dirancang untuk perjalananmu.</p>
-        </div>
-
-        {/* Floating Interactive Cursor Badges (Reference Style: Robert & Clarissa) */}
-        <div
-          className="floating-cursor-tag hidden-mobile-flex"
-          style={{
-            left: "8%",
-            top: "38%",
-            background: "rgba(18, 38, 32, 0.9)",
-            border: "1px solid rgba(117, 189, 165, 0.45)",
-            color: "#75BDA5",
-            boxShadow: "0 10px 26px rgba(0,0,0,0.5)",
-          }}
-        >
-          <MousePointer size={12} fill="#75BDA5" color="#75BDA5" />
-          <span style={{ fontWeight: 600 }}>Robert ↗</span>
-        </div>
-
-        <div
-          className="floating-cursor-tag hidden-mobile-flex"
-          style={{
-            right: "8%",
-            top: "43%",
-            background: "rgba(42, 24, 28, 0.9)",
-            border: "1px solid rgba(255, 126, 138, 0.45)",
-            color: "#FF99A4",
-            animation: "floatReverse 6s ease-in-out infinite",
-            boxShadow: "0 10px 26px rgba(0,0,0,0.5)",
-          }}
-        >
-          <MousePointer size={12} fill="#FF99A4" color="#FF99A4" />
-          <span style={{ fontWeight: 600 }}>Clarissa ↗</span>
         </div>
 
         {/* ============================================================
@@ -367,7 +276,7 @@ export default function HomePage() {
         <div
           style={{
             maxWidth: 720,
-            margin: "44px auto 16px",
+            margin: "64px auto 20px",
             textAlign: "center",
             padding: "0 24px",
             position: "relative",
@@ -1049,7 +958,7 @@ export default function HomePage() {
         id="fitur"
         style={{
           maxWidth: 1200,
-          margin: "100px auto 0",
+          margin: "150px auto 0",
           padding: "0 24px",
           position: "relative",
           zIndex: 10,
@@ -1371,7 +1280,7 @@ export default function HomePage() {
         id="cara-kerja"
         style={{
           maxWidth: 1200,
-          margin: "120px auto 0",
+          margin: "160px auto 0",
           padding: "0 24px",
           position: "relative",
           zIndex: 10,
@@ -1500,7 +1409,7 @@ export default function HomePage() {
         id="tentang"
         style={{
           maxWidth: 1200,
-          margin: "120px auto 0",
+          margin: "160px auto 0",
           padding: "0 24px",
           position: "relative",
           zIndex: 10,
@@ -1592,7 +1501,7 @@ export default function HomePage() {
       <section
         style={{
           maxWidth: 1200,
-          margin: "100px auto 80px",
+          margin: "160px auto 100px",
           padding: "0 24px",
           position: "relative",
           zIndex: 10,

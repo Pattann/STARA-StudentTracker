@@ -89,7 +89,20 @@ export default function OnboardingPage() {
         throw new Error(data.error ?? "Gagal menyimpan profil.");
       }
 
-      router.push("/app");
+      localStorage.setItem(
+        "stara_onboarding_profile",
+        JSON.stringify({
+          institutionName: form.institutionName,
+          programName: form.programName,
+          entryYear: form.entryYear,
+        })
+      );
+      const queryParams = new URLSearchParams({
+        kampus: form.institutionName,
+        jurusan: form.programName,
+        tahun: form.entryYear,
+      });
+      router.push(`/app/templates?${queryParams.toString()}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Terjadi kesalahan.");
     }

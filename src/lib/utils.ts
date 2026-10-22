@@ -35,7 +35,7 @@ export function semesterLabel(num: number, entryYear: number): string {
   const year = Math.floor((num - 1) / 2) + entryYear;
   const parity = num % 2 === 1 ? "Ganjil" : "Genap";
   const yearStr = `${year}/${year + 1}`;
-  return `Semester ${num} — ${parity} ${yearStr}`;
+  return `Semester ${num} • ${parity} ${yearStr}`;
 }
 
 export function estimateGraduationText(semestersLeft: number, currentSemester: number, entryYear: number): string {

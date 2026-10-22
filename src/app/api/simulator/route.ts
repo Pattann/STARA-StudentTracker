@@ -107,8 +107,22 @@ export async function POST(req: NextRequest) {
     // Compare
     const diff = compareRoadmaps(baseline, scenarioResult, params);
 
-    // Generate rule-based explanation
-    const explanation = generateRuleBasedTradeoffs(params.type, diff);
+    // Generate explanation (AI with rule-based fallback)
+    const { aiProvider } = await import("@/server/ai/provider");
+    let explanation;
+    try {
+      explanation = await aiProvider.explainSimulation({
+        goalLabel: profile.goals,
+        scenarioType: params.type,
+        parameters: params as Record<string, unknown>,
+        baselineSummary: `Baseline: ${baseline.remainingCredits} SKS tersisa menuju estimasi lulus semester ${baseline.estimatedGraduationSemester ?? 8}.`,
+        scenarioSummary: `Skenario: ${scenarioResult.remainingCredits} SKS tersisa menuju estimasi lulus semester ${scenarioResult.estimatedGraduationSemester ?? 8}.`,
+        conflicts: [...diff.risks, ...scenarioResult.conflicts],
+        unknowns: diff.unknowns,
+      });
+    } catch {
+      explanation = generateRuleBasedTradeoffs(params.type, diff);
+    }
 
     const rulesResult = {
       baseline,

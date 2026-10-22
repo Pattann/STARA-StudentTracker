@@ -20,6 +20,7 @@ import {
   ChevronRight,
   X,
   Menu,
+  Sparkles,
 } from "lucide-react";
 import { useSession } from "@/features/session/context";
 
@@ -36,7 +37,7 @@ const navItems = [
 
 export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const pathname = usePathname();
-  const { token, resetDemo, clearSession } = useSession();
+  const { token, user, clearSession } = useSession();
 
   const isActive = (href: string) => {
     if (href === "/app") return pathname === "/app";
@@ -132,6 +133,14 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               <span>Profil & Pengaturan</span>
             </Link>
             <Link
+              href="/onboarding"
+              className="sidebar-nav-item"
+              onClick={() => onClose()}
+            >
+              <Sparkles size={17} aria-hidden="true" color="var(--lime)" />
+              <span style={{ color: "var(--lime)", fontWeight: 600 }}>Setup Onboarding</span>
+            </Link>
+            <Link
               href="/app/check-ins"
               className={`sidebar-nav-item ${isActive("/app/check-ins") ? "active" : ""}`}
               onClick={() => onClose()}
@@ -150,13 +159,13 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           </div>
         </div>
 
-        {/* Demo Badge */}
+        {/* User Session Info Card */}
         {token && (
           <div
             style={{
               margin: "8px",
-              background: "rgba(215,243,106,0.08)",
-              border: "1px solid rgba(215,243,106,0.2)",
+              background: "rgba(245, 205, 71, 0.06)",
+              border: "1px solid rgba(245, 205, 71, 0.2)",
               borderRadius: "var(--radius-md)",
               padding: "12px",
             }}
@@ -165,8 +174,8 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
-                marginBottom: 8,
+                gap: 8,
+                marginBottom: 6,
               }}
             >
               <div
@@ -175,44 +184,45 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
                   height: 8,
                   borderRadius: "50%",
                   background: "var(--lime)",
+                  boxShadow: "0 0 6px var(--lime)",
                 }}
               />
               <span
                 style={{
-                  fontSize: 12,
-                  fontWeight: 700,
+                  fontSize: 11,
+                  fontWeight: 800,
                   color: "var(--lime)",
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
                 }}
               >
-                Mode Demo
+                Akun Aktif
               </span>
             </div>
-            <p
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#F5F5F0",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {user?.name || "Mahasiswa STARA"}
+            </div>
+            <div
               style={{
                 fontSize: 11,
-                color: "var(--text-muted)",
-                marginBottom: 10,
-                lineHeight: 1.5,
+                color: "#A4AAA5",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                marginTop: 2,
               }}
             >
-              Data simulasi. Tidak permanen.
-            </p>
-            <button
-              onClick={() => resetDemo()}
-              className="btn btn-sm"
-              style={{
-                width: "100%",
-                background: "rgba(215,243,106,0.1)",
-                color: "var(--lime)",
-                border: "1px solid rgba(215,243,106,0.2)",
-                borderRadius: "var(--radius-md)",
-                fontSize: 12,
-              }}
-              aria-label="Reset data demo ke keadaan awal"
-            >
-              <RefreshCw size={13} />
-              Reset Demo
-            </button>
+              {user?.email || "Akun Terverifikasi"}
+            </div>
           </div>
         )}
 
