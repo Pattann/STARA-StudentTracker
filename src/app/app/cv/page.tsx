@@ -54,7 +54,7 @@ export default function CVPage() {
       <div className="assumption-notice" style={{ marginBottom: 16 }}>
         <AlertCircle size={14} style={{ flexShrink: 0 }} />
         <span style={{ fontSize: 12 }}>
-          Kelola item CV di halaman <a href="/app/achievements" style={{ color: "var(--lime)" }}>Prestasi</a>. Centang "Di CV" untuk menambahkan item ke sini.
+          Kelola item CV di halaman <a href="/app/achievements" style={{ color: "var(--amber-deep)", fontWeight: 700, textDecoration: "underline" }}>Prestasi</a>. Centang "Di CV" untuk menambahkan item ke sini.
         </span>
       </div>
 

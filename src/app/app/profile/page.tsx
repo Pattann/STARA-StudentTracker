@@ -33,8 +33,8 @@ export default function ProfilePage() {
             <GraduationCap size={18} color="var(--teal)" />
             <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>Profil Akademik</h2>
           </div>
-          <Link href="/onboarding" style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)", display: "flex", alignItems: "center", gap: 4, textDecoration: "none" }}>
-            <Sparkles size={14} />
+          <Link href="/onboarding" style={{ fontSize: 12, fontWeight: 700, color: "var(--amber-deep)", display: "flex", alignItems: "center", gap: 4, textDecoration: "none" }}>
+            <Sparkles size={14} color="var(--amber)" />
             <span>Setup Ulang Onboarding</span>
           </Link>
         </div>

@@ -427,7 +427,7 @@ export default function TemplatesPage() {
               borderRadius: "var(--radius-md)",
             }}
           >
-            <BookMarked size={14} style={{ color: "var(--lime)" }} />
+            <BookMarked size={14} style={{ color: "var(--amber)" }} />
             Ke Roadmap Saya
             <ArrowRight size={13} style={{ color: "var(--text-muted)" }} />
           </Link>
@@ -437,8 +437,8 @@ export default function TemplatesPage() {
       {/* ── AI Recommendation Banner ── */}
       <div
         style={{
-          background: "linear-gradient(135deg, rgba(215, 243, 106, 0.08) 0%, rgba(18, 20, 26, 0.95) 100%)",
-          border: "1px solid rgba(215, 243, 106, 0.25)",
+          background: "#FFFFFF",
+          border: "1px solid rgba(217, 119, 6, 0.25)",
           borderRadius: "var(--radius-lg)",
           padding: "16px 20px",
           marginBottom: 20,
@@ -447,6 +447,7 @@ export default function TemplatesPage() {
           alignItems: "center",
           flexWrap: "wrap",
           gap: 14,
+          boxShadow: "0 4px 16px rgba(245, 205, 71, 0.12)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -455,15 +456,15 @@ export default function TemplatesPage() {
               width: 40,
               height: 40,
               borderRadius: "50%",
-              background: "rgba(215, 243, 106, 0.15)",
-              color: "var(--lime)",
+              background: "rgba(245, 205, 71, 0.22)",
+              color: "#92400E",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
             }}
           >
-            <Sparkles size={20} />
+            <Sparkles size={20} color="#D97706" />
           </div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
@@ -570,7 +571,7 @@ export default function TemplatesPage() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-              <SlidersHorizontal size={13} style={{ color: "var(--lime)" }} />
+              <SlidersHorizontal size={13} style={{ color: "var(--amber)" }} />
               Filter Spesifik
             </div>
             {activeFilterCount > 0 && (
@@ -961,11 +962,11 @@ export default function TemplatesPage() {
                 width: 26,
                 height: 26,
                 borderRadius: "var(--radius-sm)",
-                background: "rgba(215, 243, 106, 0.12)",
+                background: "rgba(245, 205, 71, 0.22)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "var(--lime)",
+                color: "#92400E",
                 flexShrink: 0,
               }}
             >
@@ -1058,7 +1059,7 @@ export default function TemplatesPage() {
             }}
           >
             <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-              <Compass size={14} style={{ color: "var(--lime)" }} />
+              <Compass size={14} style={{ color: "#D97706" }} />
               Opsi Langsung dari Profil Onboarding Kamu:
             </div>
             <div style={{ maxWidth: 360 }}>
@@ -1322,7 +1323,7 @@ export default function TemplatesPage() {
                 <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
                   Target Capaian
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--lime)", marginTop: 2 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--amber-deep)", marginTop: 2 }}>
                   {previewTemplate.targetGPA}
                 </div>
               </div>
@@ -1580,8 +1581,8 @@ export default function TemplatesPage() {
                         width: 24,
                         height: 24,
                         borderRadius: "50%",
-                        background: "rgba(215,243,106,0.15)",
-                        color: "var(--lime)",
+                        background: "rgba(245, 205, 71, 0.22)",
+                        color: "#92400E",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1763,8 +1764,8 @@ export default function TemplatesPage() {
                     width: 56,
                     height: 56,
                     borderRadius: "50%",
-                    background: "rgba(215,243,106,0.15)",
-                    color: "var(--lime)",
+                    background: "rgba(22, 163, 74, 0.12)",
+                    color: "#15803D",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -2176,8 +2177,8 @@ function TemplateCard({
                   alignItems: "center",
                   gap: 3,
                   fontSize: 11,
-                  color: "var(--lime)",
-                  fontWeight: 600,
+                  color: "#15803D",
+                  fontWeight: 700,
                 }}
               >
                 <CheckCircle2 size={11} /> Terverifikasi
@@ -2232,15 +2233,15 @@ function OnboardingContrastCard({
     <div
       className="template-card onboarding-generator-card"
       style={{
-        background: "linear-gradient(155deg, rgba(215, 243, 106, 0.12) 0%, rgba(22, 26, 20, 0.96) 45%, rgba(13, 15, 14, 1) 100%)",
-        border: "1.5px solid rgba(215, 243, 106, 0.65)",
+        background: "#FFFFFF",
+        border: "2px solid #F5CD47",
         borderRadius: "var(--radius-lg)",
         padding: "18px",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
         gap: 14,
-        boxShadow: "0 4px 22px -2px rgba(215, 243, 106, 0.14), inset 0 1px 0 rgba(215, 243, 106, 0.25)",
+        boxShadow: "0 8px 24px rgba(245, 205, 71, 0.16), 0 2px 8px rgba(0, 0, 0, 0.04)",
         position: "relative",
         transition: "border-color var(--transition), transform var(--transition), box-shadow var(--transition)",
       }}
@@ -2262,13 +2263,13 @@ function OnboardingContrastCard({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
-                padding: "3px 8px",
+                padding: "3px 9px",
                 borderRadius: "var(--radius-pill)",
                 fontSize: 11,
                 fontWeight: 700,
-                background: "rgba(215, 243, 106, 0.22)",
-                color: "var(--lime)",
-                border: "1px solid rgba(215, 243, 106, 0.45)",
+                background: "rgba(245, 205, 71, 0.22)",
+                color: "#92400E",
+                border: "1px solid rgba(217, 119, 6, 0.3)",
               }}
             >
               <Compass size={11} /> Profil Onboarding
@@ -2282,9 +2283,9 @@ function OnboardingContrastCard({
                 borderRadius: "var(--radius-pill)",
                 fontSize: 10.5,
                 fontWeight: 600,
-                background: "rgba(255, 255, 255, 0.05)",
+                background: "rgba(0, 0, 0, 0.04)",
                 color: "var(--text-secondary)",
-                border: "1px solid var(--border-subtle)",
+                border: "1px solid var(--border)",
               }}
             >
               <Target size={10} /> Roadmap Saya
@@ -2296,12 +2297,12 @@ function OnboardingContrastCard({
               display: "inline-flex",
               alignItems: "center",
               gap: 4,
-              fontSize: 10.5,
-              fontWeight: 600,
-              color: "var(--lime)",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#15803D",
             }}
           >
-            <CheckCircle2 size={11} /> Terhubung
+            <CheckCircle2 size={12} color="#15803D" /> Terhubung
           </span>
         </div>
 
@@ -2319,7 +2320,7 @@ function OnboardingContrastCard({
               gap: 6,
             }}
           >
-            <Plus size={16} style={{ color: "var(--lime)", flexShrink: 0 }} />
+            <Plus size={16} style={{ color: "#D97706", flexShrink: 0 }} />
             + Buat / Generate &ldquo;Roadmap Saya&rdquo;
           </h2>
           <p
@@ -2332,9 +2333,9 @@ function OnboardingContrastCard({
         {/* Connected Onboarding Data Box */}
         <div
           style={{
-            background: "rgba(0, 0, 0, 0.35)",
+            background: "var(--bg-base)",
             borderRadius: "var(--radius-md)",
-            border: "1px solid rgba(215, 243, 106, 0.16)",
+            border: "1px solid var(--border)",
             padding: "10px 12px",
             display: "flex",
             flexDirection: "column",
@@ -2344,10 +2345,10 @@ function OnboardingContrastCard({
           <div
             style={{
               fontSize: 10,
-              fontWeight: 700,
+              fontWeight: 800,
               textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              color: "var(--lime)",
+              letterSpacing: "0.05em",
+              color: "#92400E",
             }}
           >
             Data Onboarding Terhubung
@@ -2362,7 +2363,7 @@ function OnboardingContrastCard({
               gap: 6,
             }}
           >
-            <GraduationCap size={13} style={{ color: "var(--lime)", flexShrink: 0 }} />
+            <GraduationCap size={13} style={{ color: "#D97706", flexShrink: 0 }} />
             <span className="truncate">
               {profile?.programName || "Program Studi Mahasiswa"}
             </span>
@@ -2391,7 +2392,7 @@ function OnboardingContrastCard({
         <div
           style={{
             paddingTop: 12,
-            borderTop: "1px solid rgba(215, 243, 106, 0.15)",
+            borderTop: "1px solid var(--border)",
           }}
         >
           <button
@@ -2400,15 +2401,15 @@ function OnboardingContrastCard({
             disabled={isGenerating}
             style={{
               width: "100%",
-              padding: "8px 14px",
+              padding: "9px 14px",
               fontSize: 12.5,
               fontWeight: 700,
               gap: 6,
-              background: "var(--lime)",
-              color: "#0c0d12",
-              border: "none",
+              background: "#F5CD47",
+              color: "#18181B",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
               borderRadius: "var(--radius-md)",
-              boxShadow: "0 2px 10px rgba(215, 243, 106, 0.25)",
+              boxShadow: "0 2px 10px rgba(245, 205, 71, 0.35)",
               cursor: isGenerating ? "not-allowed" : "pointer",
             }}
             id="btn-generate-onboarding-roadmap"

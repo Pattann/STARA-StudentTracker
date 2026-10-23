@@ -174,8 +174,8 @@ export default function ThesisPage() {
             {result.directions.map((d, i) => (
               <div key={i} className="card">
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(215,243,106,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: "var(--lime)" }}>{i + 1}</span>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(245, 205, 71, 0.22)", border: "1px solid rgba(217, 119, 6, 0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: "#92400E" }}>{i + 1}</span>
                   </div>
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>{d.topicArea}</div>
@@ -210,10 +210,10 @@ export default function ThesisPage() {
 
                 {d.firstSteps.length > 0 && (
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 11, color: "var(--lime)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Langkah Awal</div>
+                    <div style={{ fontSize: 11, color: "var(--amber-deep)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>Langkah Awal</div>
                     {d.firstSteps.map((s, si) => (
                       <div key={si} style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 6 }}>
-                        <CheckCircle2 size={13} color="var(--lime)" style={{ flexShrink: 0, marginTop: 2 }} />
+                        <CheckCircle2 size={13} color="var(--forest-green)" style={{ flexShrink: 0, marginTop: 2 }} />
                         {s}
                       </div>
                     ))}

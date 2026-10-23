@@ -9,7 +9,7 @@ const directions = [
     value: "kerja",
     label: "Langsung Bekerja",
     icon: Briefcase,
-    color: "var(--lime)",
+    color: "var(--amber)",
     desc: "Terjun ke dunia profesional setelah lulus.",
     steps: ["Perbarui CV dan portofolio", "Aktif di LinkedIn dan job portal", "Ikuti interview preparation", "Daftar ke perusahaan target", "Bangun jaringan profesional"],
   },

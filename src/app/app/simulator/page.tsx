@@ -295,7 +295,7 @@ export default function SimulatorPage() {
               </div>
             </div>
             <div className="comparison-panel scenario">
-              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--lime)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--amber-deep)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Skenario: {selectedType && SCENARIO_TYPES[selectedType]}
               </div>
               <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4 }}>
@@ -306,7 +306,7 @@ export default function SimulatorPage() {
               <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 12 }}>
                 Estimasi kelulusan
                 {result.diff.semesterDelta !== null && result.diff.semesterDelta !== 0 && (
-                  <span style={{ marginLeft: 8, color: result.diff.semesterDelta > 0 ? "var(--coral)" : "var(--lime)", fontWeight: 700 }}>
+                  <span style={{ marginLeft: 8, color: result.diff.semesterDelta > 0 ? "var(--coral)" : "var(--forest-green)", fontWeight: 700 }}>
                     {result.diff.semesterDelta > 0 ? `+${result.diff.semesterDelta} semester` : `${result.diff.semesterDelta} semester`}
                   </span>
                 )}
@@ -328,10 +328,10 @@ export default function SimulatorPage() {
 
             {result.explanation?.benefits?.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)", marginBottom: 6, textTransform: "uppercase" }}>Manfaat</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--forest-green)", marginBottom: 6, textTransform: "uppercase" }}>Manfaat</div>
                 {result.explanation.benefits.map((b, i) => (
                   <div key={i} style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 6, marginBottom: 4 }}>
-                    <CheckCircle2 size={14} color="var(--lime)" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <CheckCircle2 size={14} color="var(--forest-green)" style={{ flexShrink: 0, marginTop: 2 }} />
                     {b}
                   </div>
                 ))}

@@ -458,14 +458,15 @@ export default function RoadmapPage() {
 
   if (!data?.roadmap || !data.roadmap.currentVersion || currentPlans.length === 0) {
     return (
-      <div style={{ maxWidth: 720, margin: "32px auto", padding: "0 16px" }}>
+      <div style={{ maxWidth: 740, margin: "36px auto", padding: "0 16px" }}>
         <div
           className="card"
           style={{
-            padding: "48px 28px",
-            background: "linear-gradient(180deg, var(--bg-card) 0%, rgba(18, 20, 26, 0.98) 100%)",
-            border: "1px dashed var(--border)",
+            padding: "48px 36px",
+            background: "#FFFFFF",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
             borderRadius: "var(--radius-xl)",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -474,40 +475,43 @@ export default function RoadmapPage() {
         >
           <div
             style={{
-              width: 58,
-              height: 58,
+              width: 64,
+              height: 64,
               borderRadius: "50%",
-              background: "rgba(215, 243, 106, 0.12)",
-              color: "var(--lime)",
+              background: "rgba(245, 205, 71, 0.22)",
+              border: "1px solid rgba(217, 119, 6, 0.28)",
+              color: "#92400E",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 18,
+              boxShadow: "0 4px 14px rgba(245, 205, 71, 0.2)",
             }}
           >
-            <BookMarked size={28} />
+            <BookMarked size={30} strokeWidth={2.2} />
           </div>
 
           <span
-            className="badge"
             style={{
-              fontSize: 11,
+              fontSize: 11.5,
               fontWeight: 700,
-              background: "rgba(215, 243, 106, 0.15)",
-              color: "var(--lime)",
-              padding: "3px 10px",
+              background: "rgba(245, 205, 71, 0.22)",
+              color: "#92400E",
+              border: "1px solid rgba(217, 119, 6, 0.3)",
+              padding: "4px 12px",
               borderRadius: "var(--radius-pill)",
-              marginBottom: 12,
+              marginBottom: 14,
+              letterSpacing: "0.02em",
             }}
           >
             Roadmap Belum Dipilih
           </span>
 
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", marginBottom: 8, letterSpacing: "-0.01em" }}>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: "var(--text-primary)", marginBottom: 10, letterSpacing: "-0.02em" }}>
             Roadmap Akademik Kamu Masih Kosong
           </h2>
 
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", maxWidth: 500, lineHeight: 1.6, marginBottom: 24 }}>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", maxWidth: 520, lineHeight: 1.6, marginBottom: 28 }}>
             Kamu belum memilih template kurikulum atau membuat roadmap studi. Kamu dapat langsung men-generate blueprint otomatis berdasarkan profil onboarding kamu, atau menjelajahi katalog template.
           </p>
 
@@ -515,64 +519,88 @@ export default function RoadmapPage() {
             <div
               style={{
                 width: "100%",
-                maxWidth: 480,
-                background: "var(--bg-secondary)",
-                borderRadius: "var(--radius-md)",
+                maxWidth: 520,
+                background: "var(--bg-base)",
+                borderRadius: "var(--radius-lg)",
                 border: "1px solid var(--border)",
-                padding: "14px 16px",
-                marginBottom: 24,
+                padding: "16px 20px",
+                marginBottom: 28,
                 textAlign: "left",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: 12,
+                gap: 16,
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
               }}
             >
               <div>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>
                   Profil Onboarding Terhubung
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginTop: 2 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
                   {data.profile.programName}
                 </div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 1 }}>
+                <div style={{ fontSize: 12.5, color: "var(--text-secondary)", marginTop: 2 }}>
                   {data.profile.institutionName} • Angkatan {data.profile.entryYear} (Semester {data.profile.currentSemester})
                 </div>
               </div>
               <span
                 style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "var(--lime)",
-                  background: "rgba(215, 243, 106, 0.12)",
-                  padding: "4px 8px",
-                  borderRadius: "var(--radius-sm)",
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: "#15803D",
+                  background: "rgba(22, 163, 74, 0.12)",
+                  border: "1px solid rgba(22, 163, 74, 0.25)",
+                  padding: "5px 12px",
+                  borderRadius: "var(--radius-pill)",
                   flexShrink: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
                 }}
               >
+                <CheckCircle2 size={12} />
                 Siap Digenerate
               </span>
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
             <button
               className="btn btn-primary"
               onClick={handleGenerateFromProfile}
               disabled={isGeneratingFromProfile}
-              style={{ gap: 8, padding: "11px 20px", fontSize: 13, fontWeight: 700 }}
+              style={{
+                gap: 8,
+                padding: "12px 24px",
+                fontSize: 13.5,
+                fontWeight: 700,
+                background: "#F5CD47",
+                color: "#18181B",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                boxShadow: "0 2px 10px rgba(245, 205, 71, 0.35)",
+              }}
               id="btn-generate-empty-roadmap"
             >
-              <Plus size={15} />
+              <Plus size={16} strokeWidth={2.5} />
               {isGeneratingFromProfile ? "Merancang Roadmap..." : "Generate Roadmap dari Profil Onboarding"}
             </button>
             <Link
               href="/app/templates"
               className="btn btn-secondary"
-              style={{ gap: 8, padding: "11px 18px", fontSize: 13 }}
+              style={{
+                gap: 8,
+                padding: "12px 22px",
+                fontSize: 13.5,
+                fontWeight: 600,
+                background: "#FFFFFF",
+                color: "var(--text-primary)",
+                border: "1px solid rgba(0, 0, 0, 0.12)",
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.03)",
+              }}
               id="link-explore-templates"
             >
-              <LayoutTemplate size={15} />
+              <LayoutTemplate size={16} />
               Jelajahi Template
             </Link>
           </div>
@@ -785,7 +813,7 @@ export default function RoadmapPage() {
             <div style={{ fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600 }}>
               SKS Lulus
             </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "var(--lime)", lineHeight: 1.2 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#92400E", lineHeight: 1.2 }}>
               {completedCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>/ {totalCurriculum} SKS</span>
             </div>
           </div>
@@ -796,7 +824,7 @@ export default function RoadmapPage() {
                 className="progress-fill"
                 style={{
                   width: `${Math.min(100, (completedCredits / totalCurriculum) * 100)}%`,
-                  background: "var(--lime)",
+                  background: "var(--amber)",
                 }}
               />
             </div>
@@ -927,15 +955,15 @@ export default function RoadmapPage() {
             }}
             id="tab-view-split"
           >
-            <Columns2 size={13} color={activeView === "split" ? "var(--lime)" : "var(--text-muted)"} />
+            <Columns2 size={13} color={activeView === "split" ? "var(--amber)" : "var(--text-muted)"} />
             <span>Berdampingan</span>
           </button>
         </div>
 
         {/* Quiet Mode Indicator */}
         {activeMode === "edit" ? (
-          <div style={{ fontSize: 11.5, color: "var(--lime)", display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--lime)" }} />
+          <div style={{ fontSize: 11.5, color: "var(--amber-deep)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--amber)" }} />
             <span>Mode penyesuaian susunan aktif: klik matkul atau tombol tambah untuk mengubah</span>
           </div>
         ) : (
@@ -973,15 +1001,16 @@ export default function RoadmapPage() {
                     key={f.id}
                     onClick={() => setStatusFilter(f.id)}
                     style={{
-                      padding: "4px 11px",
+                      padding: "5px 12px",
                       borderRadius: "var(--radius-sm)",
                       fontSize: 11.5,
                       fontWeight: 600,
-                      border: statusFilter === f.id ? "1px solid rgba(245, 205, 71, 0.35)" : "1px solid var(--border-subtle)",
-                      background: statusFilter === f.id ? "rgba(245, 205, 71, 0.1)" : "rgba(255, 255, 255, 0.02)",
-                      color: statusFilter === f.id ? "var(--lime)" : "var(--text-muted)",
+                      border: statusFilter === f.id ? "1px solid rgba(217, 119, 6, 0.4)" : "1px solid var(--border)",
+                      background: statusFilter === f.id ? "rgba(245, 205, 71, 0.22)" : "#FFFFFF",
+                      color: statusFilter === f.id ? "#92400E" : "var(--text-secondary)",
                       cursor: "pointer",
                       transition: "all 0.15s ease",
+                      boxShadow: statusFilter === f.id ? "0 1px 4px rgba(245, 205, 71, 0.2)" : "none",
                     }}
                   >
                     {f.label}
@@ -1261,7 +1290,7 @@ export default function RoadmapPage() {
                           <span className="badge badge-gray" style={{ fontSize: 10, fontWeight: 700 }}>
                             {course.code}
                           </span>
-                          <span style={{ fontSize: 11, color: "var(--lime)", fontWeight: 700 }}>
+                          <span style={{ fontSize: 11, color: "var(--amber-deep)", fontWeight: 700 }}>
                             {course.credits} SKS
                           </span>
                           <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
@@ -1299,7 +1328,7 @@ export default function RoadmapPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: 12 }}>
-                    Nama Mata Kuliah <span style={{ color: "var(--lime)" }}>*</span>
+                    Nama Mata Kuliah <span style={{ color: "var(--coral)" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -1446,7 +1475,7 @@ export default function RoadmapPage() {
                         {m.notes}
                       </div>
                     </div>
-                    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, color: "var(--lime)", fontSize: 11, fontWeight: 700 }}>
+                    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, color: "var(--amber-deep)", fontSize: 11, fontWeight: 700 }}>
                       <Plus size={11} /> Pasang (0 SKS)
                     </div>
                   </div>
@@ -1462,7 +1491,7 @@ export default function RoadmapPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: 12 }}>
-                    Judul Milestone / Kegiatan <span style={{ color: "var(--lime)" }}>*</span>
+                    Judul Milestone / Kegiatan <span style={{ color: "var(--coral)" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -1767,9 +1796,9 @@ function SemesterCardItem({
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "var(--lime)",
-                    background: "rgba(245, 205, 71, 0.08)",
-                    border: "1px solid rgba(245, 205, 71, 0.25)",
+                    color: "#92400E",
+                    background: "rgba(245, 205, 71, 0.22)",
+                    border: "1px solid rgba(217, 119, 6, 0.3)",
                     padding: "2px 8px",
                     borderRadius: "var(--radius-sm)",
                     display: "inline-flex",
@@ -1777,7 +1806,7 @@ function SemesterCardItem({
                     gap: 4,
                   }}
                 >
-                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--lime)" }} />
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#D97706" }} />
                   Semester Berjalan
                 </span>
               )}
@@ -1850,10 +1879,10 @@ function SemesterCardItem({
             <span
               style={{
                 fontSize: 11,
-                fontWeight: 600,
-                color: "var(--lime)",
-                background: "rgba(245, 205, 71, 0.08)",
-                border: "1px solid rgba(245, 205, 71, 0.2)",
+                fontWeight: 700,
+                color: "#15803D",
+                background: "rgba(22, 163, 74, 0.12)",
+                border: "1px solid rgba(22, 163, 74, 0.25)",
                 padding: "3px 8px",
                 borderRadius: "var(--radius-sm)",
                 display: "inline-flex",
@@ -2104,10 +2133,10 @@ function SemesterCardItem({
                               <span
                                 style={{
                                   fontSize: 10,
-                                  fontWeight: 600,
-                                  background: "rgba(245, 205, 71, 0.08)",
-                                  border: "1px solid rgba(245, 205, 71, 0.2)",
-                                  color: "var(--lime)",
+                                  fontWeight: 700,
+                                  background: "rgba(22, 163, 74, 0.12)",
+                                  border: "1px solid rgba(22, 163, 74, 0.25)",
+                                  color: "#15803D",
                                   padding: "1px 6px",
                                   borderRadius: "var(--radius-sm)",
                                   display: "inline-flex",
@@ -2197,15 +2226,15 @@ function SemesterCardItem({
               href={`/app/simulator?semester=${plan.semesterNum}`}
               style={{
                 fontSize: 11.5,
-                color: "var(--lime)",
+                color: "var(--amber-deep)",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 5,
                 textDecoration: "none",
-                fontWeight: 600,
+                fontWeight: 700,
               }}
             >
-              <Compass size={13} />
+              <Compass size={13} color="var(--amber)" />
               Uji Alternatif Semester Ini di Simulator
             </Link>
 
@@ -2344,11 +2373,12 @@ function InteractiveVisualRoadmap({
               width: 32,
               height: 32,
               borderRadius: "var(--radius-sm)",
-              background: "rgba(245, 205, 71, 0.1)",
+              background: "rgba(245, 205, 71, 0.22)",
+              border: "1px solid rgba(217, 119, 6, 0.25)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "var(--lime)",
+              color: "#92400E",
             }}
           >
             <GitBranch size={16} />
@@ -3228,10 +3258,10 @@ function SemesterInspectorModal({
                             <span
                               style={{
                                 fontSize: 10,
-                                fontWeight: 600,
-                                background: "rgba(245, 205, 71, 0.08)",
-                                border: "1px solid rgba(245, 205, 71, 0.2)",
-                                color: "var(--lime)",
+                                fontWeight: 700,
+                                background: "rgba(22, 163, 74, 0.12)",
+                                border: "1px solid rgba(22, 163, 74, 0.25)",
+                                color: "#15803D",
                                 padding: "1px 6px",
                                 borderRadius: "var(--radius-sm)",
                                 display: "inline-flex",
@@ -3299,15 +3329,15 @@ function SemesterInspectorModal({
             href={`/app/simulator?semester=${plan.semesterNum}`}
             style={{
               fontSize: 12,
-              color: "var(--lime)",
+              color: "var(--amber-deep)",
               display: "inline-flex",
               alignItems: "center",
               gap: 5,
               textDecoration: "none",
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
-            <Compass size={13} />
+            <Compass size={13} color="var(--amber)" />
             Uji Alternatif Semester Ini di Simulator
           </Link>
 

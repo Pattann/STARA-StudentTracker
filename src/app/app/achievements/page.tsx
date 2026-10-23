@@ -75,7 +75,7 @@ export default function AchievementsPage() {
   const cvItems = achievements.filter((a) => a.includeInCv);
   const categoryColors: Record<string, string> = {
     magang: "var(--orange)", organisasi: "var(--teal)", proyek: "var(--blue)",
-    lomba: "var(--lime)", sertifikasi: "var(--purple)", akademik: "var(--teal)",
+    lomba: "var(--amber)", sertifikasi: "var(--purple)", akademik: "var(--teal)",
     relawan: "var(--coral)", lainnya: "var(--text-muted)",
   };
 
@@ -124,7 +124,7 @@ export default function AchievementsPage() {
                     </div>
                     {a.role && <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>{a.role}</div>}
                     <p className="line-clamp-2" style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>{a.description}</p>
-                    {a.impact && <div style={{ fontSize: 12, color: "var(--lime)", marginTop: 4 }}>📈 {a.impact}</div>}
+                    {a.impact && <div style={{ fontSize: 12, color: "var(--forest-green)", fontWeight: 600, marginTop: 4 }}>📈 {a.impact}</div>}
                     <div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
                       {parseJsonSafe<string[]>(a.skills, []).slice(0, 4).map((s) => (
                         <span key={s} className="badge badge-gray" style={{ fontSize: 11 }}>{s}</span>
