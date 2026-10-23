@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ============================================================
@@ -1600,3 +1599,10 @@ select.form-input {
   white-space: nowrap;
   border-width: 0;
 }
+/* Defer rendering of below-the-fold landing sections until they approach the viewport */
+#cara-kerja,
+#tentang {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 700px;
+}
+

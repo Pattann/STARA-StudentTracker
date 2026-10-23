@@ -285,7 +285,6 @@ export default function HomePage() {
               maxWidth: 920,
               height: "440px",
               background: "radial-gradient(ellipse 65% 50% at 50% 25%, rgba(245, 205, 71, 0.24) 0%, rgba(245, 205, 71, 0.05) 50%, transparent 75%)",
-              filter: "blur(28px)",
               pointerEvents: "none",
               zIndex: 1,
             }}
