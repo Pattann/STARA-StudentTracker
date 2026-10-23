@@ -57,12 +57,12 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 const categoryColors: Record<string, string> = {
-  semester: "var(--blue)",
-  tak: "var(--teal)",
-  magang: "var(--orange)",
-  mbkm: "var(--purple)",
-  skripsi: "var(--coral)",
-  organisasi: "var(--lime)",
+  semester: "#2563EB",
+  tak: "#0D9488",
+  magang: "#D97706",
+  mbkm: "#0284C7",
+  skripsi: "#E11D48",
+  organisasi: "#059669",
 };
 
 const taskCategoryBadgeColors: Record<string, string> = {
@@ -399,23 +399,6 @@ export default function TemplatesPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <button
-            onClick={handleGenerateFromProfile}
-            disabled={isGeneratingFromProfile}
-            className="btn btn-primary btn-sm"
-            style={{
-              gap: 8,
-              padding: "8px 16px",
-              fontSize: 13,
-              fontWeight: 700,
-              borderRadius: "var(--radius-md)",
-              boxShadow: "0 0 16px rgba(215, 243, 106, 0.25)",
-            }}
-            id="btn-ai-generate-from-template-page"
-          >
-            <Sparkles size={14} />
-            {isGeneratingFromProfile ? "Menyusun Rencana..." : "✦ AI: Buat Roadmap Otomatis"}
-          </button>
           <Link
             href="/app/roadmap"
             className="btn btn-secondary btn-sm"
@@ -432,57 +415,6 @@ export default function TemplatesPage() {
             <ArrowRight size={13} style={{ color: "var(--text-muted)" }} />
           </Link>
         </div>
-      </div>
-
-      {/* ── AI Recommendation Banner ── */}
-      <div
-        style={{
-          background: "#FFFFFF",
-          border: "1px solid rgba(217, 119, 6, 0.25)",
-          borderRadius: "var(--radius-lg)",
-          padding: "16px 20px",
-          marginBottom: 20,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 14,
-          boxShadow: "0 4px 16px rgba(245, 205, 71, 0.12)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              background: "rgba(245, 205, 71, 0.22)",
-              color: "#92400E",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Sparkles size={20} color="#D97706" />
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
-              Tidak ingin memilih template satu per satu?
-            </div>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
-              Biarkan AI asisten STARA merancang roadmap terarah sesuai prodi, minat, dan semester berjalanmu.
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={handleGenerateFromProfile}
-          disabled={isGeneratingFromProfile}
-          className="btn btn-primary btn-sm"
-          style={{ gap: 6, fontWeight: 700, fontSize: 12, padding: "8px 14px" }}
-        >
-          {isGeneratingFromProfile ? "Menyusun..." : "Generate Rencana Sekarang ➔"}
-        </button>
       </div>
 
       {/* ── Search + Filter Bar ── */}
@@ -535,13 +467,13 @@ export default function TemplatesPage() {
           {activeFilterCount > 0 && (
             <span
               style={{
-                background: showFilter ? "#0c0d12" : "rgba(215, 243, 106, 0.18)",
-                color: showFilter ? "var(--lime)" : "var(--lime)",
+                background: showFilter ? "#18181B" : "rgba(245, 205, 71, 0.22)",
+                color: showFilter ? "#F5CD47" : "#92400E",
                 borderRadius: "var(--radius-pill)",
                 fontSize: 11,
                 fontWeight: 700,
                 padding: "1px 7px",
-                border: showFilter ? "none" : "1px solid rgba(215, 243, 106, 0.3)",
+                border: showFilter ? "none" : "1px solid rgba(217, 119, 6, 0.3)",
               }}
             >
               {activeFilterCount}
@@ -709,12 +641,16 @@ export default function TemplatesPage() {
             borderRadius: "var(--radius-md)",
             border:
               sourceTab === "komunitas"
-                ? "1px solid rgba(133, 136, 255, 0.4)"
+                ? "1px solid rgba(0, 0, 0, 0.12)"
                 : "1px solid transparent",
             background:
               sourceTab === "komunitas"
-                ? "rgba(133, 136, 255, 0.12)"
+                ? "#FFFFFF"
                 : "transparent",
+            boxShadow:
+              sourceTab === "komunitas"
+                ? "0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)"
+                : "none",
             cursor: "pointer",
             textAlign: "left",
             transition: "all var(--transition)",
@@ -730,12 +666,12 @@ export default function TemplatesPage() {
               borderRadius: "var(--radius-sm)",
               background:
                 sourceTab === "komunitas"
-                  ? "rgba(133, 136, 255, 0.2)"
-                  : "var(--bg-tertiary)",
+                  ? "#EEF2FF"
+                  : "rgba(0, 0, 0, 0.04)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: sourceTab === "komunitas" ? "var(--blue)" : "var(--text-muted)",
+              color: sourceTab === "komunitas" ? "#3730A3" : "var(--text-muted)",
               flexShrink: 0,
             }}
           >
@@ -745,7 +681,7 @@ export default function TemplatesPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span
                 style={{
-                  fontWeight: 700,
+                  fontWeight: 800,
                   fontSize: 14,
                   color:
                     sourceTab === "komunitas" ? "var(--text-primary)" : "var(--text-secondary)",
@@ -757,14 +693,18 @@ export default function TemplatesPage() {
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
-                  padding: "1px 7px",
+                  padding: "1px 8px",
                   borderRadius: "var(--radius-pill)",
                   background:
                     sourceTab === "komunitas"
-                      ? "rgba(133, 136, 255, 0.22)"
-                      : "var(--bg-tertiary)",
+                      ? "#EEF2FF"
+                      : "rgba(0, 0, 0, 0.06)",
                   color:
-                    sourceTab === "komunitas" ? "var(--blue)" : "var(--text-muted)",
+                    sourceTab === "komunitas" ? "#3730A3" : "var(--text-secondary)",
+                  border:
+                    sourceTab === "komunitas"
+                      ? "1px solid #C7D2FE"
+                      : "1px solid transparent",
                 }}
               >
                 {komunitas.length}
@@ -772,7 +712,7 @@ export default function TemplatesPage() {
             </div>
             <p
               style={{
-                fontSize: 11,
+                fontSize: 11.5,
                 color: "var(--text-muted)",
                 marginTop: 2,
                 lineHeight: 1.3,
@@ -797,12 +737,16 @@ export default function TemplatesPage() {
             borderRadius: "var(--radius-md)",
             border:
               sourceTab === "kampus"
-                ? "1px solid rgba(215, 243, 106, 0.4)"
+                ? "1px solid rgba(0, 0, 0, 0.12)"
                 : "1px solid transparent",
             background:
               sourceTab === "kampus"
-                ? "rgba(215, 243, 106, 0.08)"
+                ? "#FFFFFF"
                 : "transparent",
+            boxShadow:
+              sourceTab === "kampus"
+                ? "0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)"
+                : "none",
             cursor: "pointer",
             textAlign: "left",
             transition: "all var(--transition)",
@@ -818,12 +762,12 @@ export default function TemplatesPage() {
               borderRadius: "var(--radius-sm)",
               background:
                 sourceTab === "kampus"
-                  ? "rgba(215, 243, 106, 0.18)"
-                  : "var(--bg-tertiary)",
+                  ? "#F0FDF4"
+                  : "rgba(0, 0, 0, 0.04)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: sourceTab === "kampus" ? "var(--lime)" : "var(--text-muted)",
+              color: sourceTab === "kampus" ? "#15803D" : "var(--text-muted)",
               flexShrink: 0,
             }}
           >
@@ -833,7 +777,7 @@ export default function TemplatesPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span
                 style={{
-                  fontWeight: 700,
+                  fontWeight: 800,
                   fontSize: 14,
                   color:
                     sourceTab === "kampus" ? "var(--text-primary)" : "var(--text-secondary)",
@@ -845,14 +789,18 @@ export default function TemplatesPage() {
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
-                  padding: "1px 7px",
+                  padding: "1px 8px",
                   borderRadius: "var(--radius-pill)",
                   background:
                     sourceTab === "kampus"
-                      ? "rgba(215, 243, 106, 0.2)"
-                      : "var(--bg-tertiary)",
+                      ? "#F0FDF4"
+                      : "rgba(0, 0, 0, 0.06)",
                   color:
-                    sourceTab === "kampus" ? "var(--lime)" : "var(--text-muted)",
+                    sourceTab === "kampus" ? "#15803D" : "var(--text-secondary)",
+                  border:
+                    sourceTab === "kampus"
+                      ? "1px solid #BBF7D0"
+                      : "1px solid transparent",
                 }}
               >
                 {kampus.length}
@@ -860,7 +808,7 @@ export default function TemplatesPage() {
             </div>
             <p
               style={{
-                fontSize: 11,
+                fontSize: 11.5,
                 color: "var(--text-muted)",
                 marginTop: 2,
                 lineHeight: 1.3,
@@ -888,56 +836,61 @@ export default function TemplatesPage() {
         <button
           onClick={() => setFilterCategory("")}
           style={{
-            padding: "5px 12px",
+            padding: "6px 14px",
             borderRadius: "var(--radius-pill)",
             fontSize: 12,
-            fontWeight: 600,
+            fontWeight: filterCategory === "" ? 700 : 500,
             border:
               filterCategory === ""
-                ? "1px solid var(--border-active)"
-                : "1px solid var(--border)",
-            background:
-              filterCategory === "" ? "var(--bg-tertiary)" : "transparent",
+                ? "1.5px solid #18181B"
+                : "1px solid rgba(0, 0, 0, 0.1)",
+            background: "#FFFFFF",
             color:
-              filterCategory === "" ? "var(--text-primary)" : "var(--text-muted)",
+              filterCategory === "" ? "#18181B" : "var(--text-secondary)",
+            boxShadow:
+              filterCategory === ""
+                ? "0 2px 8px rgba(0, 0, 0, 0.08)"
+                : "0 1px 2px rgba(0, 0, 0, 0.02)",
             cursor: "pointer",
             transition: "all var(--transition)",
           }}
         >
           Semua Topik
         </button>
-        {Object.entries(TEMPLATE_CATEGORIES).map(([val, label]) => (
-          <button
-            key={val}
-            onClick={() => setFilterCategory(filterCategory === val ? "" : val)}
-            style={{
-              padding: "5px 12px",
-              borderRadius: "var(--radius-pill)",
-              fontSize: 12,
-              fontWeight: 600,
-              border:
-                filterCategory === val
-                  ? `1px solid ${categoryColors[val] ?? "var(--blue)"}`
-                  : "1px solid var(--border)",
-              background:
-                filterCategory === val
-                  ? `${categoryColors[val] ?? "var(--text-muted)"}18`
-                  : "transparent",
-              color:
-                filterCategory === val
-                  ? categoryColors[val] ?? "var(--text-muted)"
-                  : "var(--text-muted)",
-              cursor: "pointer",
-              transition: "all var(--transition)",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            {categoryIcons[val]}
-            {label}
-          </button>
-        ))}
+        {Object.entries(TEMPLATE_CATEGORIES).map(([val, label]) => {
+          const isSelected = filterCategory === val;
+          const color = categoryColors[val] ?? "#2563EB";
+          return (
+            <button
+              key={val}
+              onClick={() => setFilterCategory(isSelected ? "" : val)}
+              style={{
+                padding: "6px 13px",
+                borderRadius: "var(--radius-pill)",
+                fontSize: 12,
+                fontWeight: isSelected ? 700 : 500,
+                border: isSelected
+                  ? `1.5px solid ${color}`
+                  : "1px solid rgba(0, 0, 0, 0.1)",
+                background: "#FFFFFF",
+                color: isSelected ? color : "var(--text-secondary)",
+                boxShadow: isSelected
+                  ? `0 2px 8px ${color}22`
+                  : "0 1px 2px rgba(0, 0, 0, 0.02)",
+                cursor: "pointer",
+                transition: "all var(--transition)",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <span style={{ color: isSelected ? color : "var(--text-muted)" }}>
+                {categoryIcons[val]}
+              </span>
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── Onboarding / Active Filter Banner ── */}
@@ -947,8 +900,9 @@ export default function TemplatesPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "rgba(215, 243, 106, 0.05)",
-            border: "1px solid rgba(215, 243, 106, 0.2)",
+            background: "#FFFFFF",
+            border: "1px solid rgba(217, 119, 6, 0.28)",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
             borderRadius: "var(--radius-md)",
             padding: "10px 14px",
             marginBottom: 16,
@@ -1236,15 +1190,19 @@ export default function TemplatesPage() {
                       padding: "3px 10px",
                       borderRadius: "var(--radius-pill)",
                       fontSize: 11,
-                      fontWeight: 600,
+                      fontWeight: 700,
                       background:
                         previewTemplate.sourceType === "kampus"
-                          ? "rgba(245,205,71,0.12)"
-                          : "rgba(133,136,255,0.12)",
+                          ? "#F0FDF4"
+                          : "#EEF2FF",
                       color:
                         previewTemplate.sourceType === "kampus"
-                          ? "var(--lime)"
-                          : "var(--blue)",
+                          ? "#15803D"
+                          : "#3730A3",
+                      border:
+                        previewTemplate.sourceType === "kampus"
+                          ? "1px solid #BBF7D0"
+                          : "1px solid #C7D2FE",
                     }}
                   >
                     {previewTemplate.sourceType === "kampus" ? (
@@ -1381,8 +1339,8 @@ export default function TemplatesPage() {
             {/* Target Audience Note */}
             <div
               style={{
-                background: "rgba(133,136,255,0.06)",
-                borderLeft: "3px solid var(--blue)",
+                background: "#EEF2FF",
+                borderLeft: "3px solid #4F46E5",
                 padding: "10px 14px",
                 borderRadius: "0 var(--radius-sm) var(--radius-sm) 0",
                 fontSize: 13,
@@ -1871,8 +1829,8 @@ export default function TemplatesPage() {
                 {/* Info Note on Version Snapshot */}
                 <div
                   style={{
-                    background: "rgba(133,136,255,0.08)",
-                    border: "1px solid rgba(133,136,255,0.2)",
+                    background: "#EEF2FF",
+                    border: "1px solid #C7D2FE",
                     borderRadius: "var(--radius-md)",
                     padding: "10px 12px",
                     fontSize: 12,
@@ -2011,7 +1969,7 @@ function TemplateCard({
       className="template-card"
       style={{
         background: "var(--bg-card)",
-        border: isKampus ? "1px solid rgba(215, 243, 106, 0.22)" : "1px solid var(--border)",
+        border: isKampus ? "1px solid rgba(21, 128, 61, 0.22)" : "1px solid var(--border)",
         borderRadius: "var(--radius-lg)",
         padding: "18px",
         display: "flex",
@@ -2038,12 +1996,13 @@ function TemplateCard({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
-                padding: "3px 8px",
+                padding: "3px 9px",
                 borderRadius: "var(--radius-pill)",
                 fontSize: 11,
-                fontWeight: 600,
-                background: isKampus ? "rgba(215, 243, 106, 0.12)" : "rgba(133, 136, 255, 0.12)",
-                color: isKampus ? "var(--lime)" : "var(--blue)",
+                fontWeight: 700,
+                background: isKampus ? "#F0FDF4" : "#EEF2FF",
+                color: isKampus ? "#15803D" : "#3730A3",
+                border: isKampus ? "1px solid #BBF7D0" : "1px solid #C7D2FE",
               }}
             >
               {isKampus ? (
@@ -2234,7 +2193,7 @@ function OnboardingContrastCard({
       className="template-card onboarding-generator-card"
       style={{
         background: "#FFFFFF",
-        border: "2px solid #F5CD47",
+        border: "1.5px solid #F5CD47",
         borderRadius: "var(--radius-lg)",
         padding: "18px",
         display: "flex",
@@ -2272,7 +2231,7 @@ function OnboardingContrastCard({
                 border: "1px solid rgba(217, 119, 6, 0.3)",
               }}
             >
-              <Compass size={11} /> Profil Onboarding
+              <Sparkles size={11} color="#D97706" /> Rekomendasi AI
             </span>
             <span
               style={{
@@ -2288,7 +2247,7 @@ function OnboardingContrastCard({
                 border: "1px solid var(--border)",
               }}
             >
-              <Target size={10} /> Roadmap Saya
+              <Compass size={10} /> Profil Onboarding
             </span>
           </div>
 
@@ -2300,9 +2259,13 @@ function OnboardingContrastCard({
               fontSize: 11,
               fontWeight: 700,
               color: "#15803D",
+              background: "#F0FDF4",
+              border: "1px solid #BBF7D0",
+              padding: "2px 8px",
+              borderRadius: "var(--radius-pill)",
             }}
           >
-            <CheckCircle2 size={12} color="#15803D" /> Terhubung
+            <CheckCircle2 size={11} color="#15803D" /> Terhubung
           </span>
         </div>
 
@@ -2310,23 +2273,23 @@ function OnboardingContrastCard({
         <div style={{ marginBottom: 12 }}>
           <h2
             style={{
-              fontSize: 14.5,
+              fontSize: 15,
               fontWeight: 800,
               color: "var(--text-primary)",
-              lineHeight: 1.45,
+              lineHeight: 1.4,
               marginBottom: 6,
               display: "flex",
               alignItems: "center",
               gap: 6,
             }}
           >
-            <Plus size={16} style={{ color: "#D97706", flexShrink: 0 }} />
-            + Buat / Generate &ldquo;Roadmap Saya&rdquo;
+            <Sparkles size={16} style={{ color: "#D97706", flexShrink: 0 }} />
+            Buat Roadmap Otomatis (AI)
           </h2>
           <p
             style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}
           >
-            Rancang blueprint studi personal semester demi semester otomatis sesuai data onboarding yang telah kamu isi.
+            Tidak ingin memilih template satu per satu? Biarkan AI asisten STARA langsung merancang roadmap semester demi semester terarah sesuai data prodi &amp; onboarding kamu.
           </p>
         </div>
 
@@ -2401,7 +2364,7 @@ function OnboardingContrastCard({
             disabled={isGenerating}
             style={{
               width: "100%",
-              padding: "9px 14px",
+              padding: "10px 14px",
               fontSize: 12.5,
               fontWeight: 700,
               gap: 6,
@@ -2414,8 +2377,8 @@ function OnboardingContrastCard({
             }}
             id="btn-generate-onboarding-roadmap"
           >
-            <Plus size={14} />
-            {isGenerating ? "Merancang Roadmap..." : "Generate Roadmap Saya"}
+            <Sparkles size={14} />
+            {isGenerating ? "Menyusun Roadmap..." : "Generate Roadmap Sekarang"}
           </button>
         </div>
       </div>
