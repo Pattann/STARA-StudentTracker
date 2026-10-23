@@ -31,6 +31,7 @@ import {
   BarChart3,
   Code,
   FileText,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -291,29 +292,29 @@ export default function HomePage() {
             aria-hidden="true"
           />
 
-          {/* Floating 3D Micro Badges - Anchored to outer card flanks, keeping center completely open */}
+          {/* Floating Badges - Editorial Crisp White Pills with STARA Accents */}
           <div
             style={{
               position: "absolute",
               top: "55px",
               left: "2%",
               zIndex: 35,
-              background: "rgba(255, 255, 255, 0.95)",
-              border: "1px solid rgba(79, 70, 229, 0.25)",
+              background: "#FFFFFF",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
               padding: "7px 14px",
               borderRadius: "var(--radius-pill)",
               fontSize: 11.5,
               fontWeight: 600,
-              color: "#4F46E5",
+              color: "#18181B",
               display: "flex",
               alignItems: "center",
               gap: 8,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+              boxShadow: "0 8px 24px rgba(28, 25, 23, 0.06)",
               animation: "floatSlow 5.5s ease-in-out infinite",
             }}
             className="hidden-mobile-flex"
           >
-            <Megaphone size={15} color="#4F46E5" />
+            <Megaphone size={14} color="#1E3A8A" />
             <span>KRS Genap Siap</span>
           </div>
 
@@ -323,22 +324,22 @@ export default function HomePage() {
               top: "16px",
               left: "14%",
               zIndex: 35,
-              background: "rgba(255, 255, 255, 0.95)",
-              border: "1px solid rgba(124, 58, 237, 0.3)",
+              background: "#FFFFFF",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
               padding: "6px 14px",
               borderRadius: "var(--radius-pill)",
               fontSize: 12,
               fontWeight: 600,
-              color: "#7C3AED",
+              color: "#18181B",
               display: "flex",
               alignItems: "center",
               gap: 6,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+              boxShadow: "0 8px 24px rgba(28, 25, 23, 0.06)",
               animation: "floatSlow 4.5s ease-in-out infinite",
             }}
             className="hidden-mobile-flex"
           >
-            <GraduationCap size={14} color="#7C3AED" />
+            <GraduationCap size={14} color="#B45309" />
             <span>Target Sem 5 Siap</span>
           </div>
 
@@ -348,22 +349,22 @@ export default function HomePage() {
               top: "16px",
               right: "14%",
               zIndex: 35,
-              background: "rgba(255, 255, 255, 0.95)",
-              border: "1px solid rgba(13, 148, 136, 0.3)",
+              background: "#FFFFFF",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
               padding: "6px 14px",
               borderRadius: "var(--radius-pill)",
               fontSize: 12,
               fontWeight: 600,
-              color: "#0D9488",
+              color: "#18181B",
               display: "flex",
               alignItems: "center",
               gap: 6,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+              boxShadow: "0 8px 24px rgba(28, 25, 23, 0.06)",
               animation: "floatReverse 5s ease-in-out infinite",
             }}
             className="hidden-mobile-flex"
           >
-            <Sparkles size={14} color="#0D9488" />
+            <TrendingUp size={14} color="#B45309" />
             <span>Simulasi MBKM Siap</span>
           </div>
 
@@ -373,23 +374,24 @@ export default function HomePage() {
               top: "55px",
               right: "2%",
               zIndex: 35,
-              background: "rgba(255, 255, 255, 0.95)",
-              border: "1px solid rgba(13, 148, 136, 0.25)",
+              background: "#FFFFFF",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
               padding: "7px 14px",
               borderRadius: "var(--radius-pill)",
               fontSize: 11.5,
               fontWeight: 600,
-              color: "#0D9488",
+              color: "#18181B",
               display: "flex",
               alignItems: "center",
               gap: 8,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+              boxShadow: "0 8px 24px rgba(28, 25, 23, 0.06)",
               animation: "floatReverse 6s ease-in-out infinite",
             }}
             className="hidden-mobile-flex"
           >
-            <Laptop size={15} color="#0D9488" />
+            <Laptop size={14} color="#15803D" />
             <span>SIAKAD Terhubung</span>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#15803D" }} />
           </div>
 
           {/* Cards Flex Layout */}
@@ -401,14 +403,14 @@ export default function HomePage() {
                 width: 220,
                 height: 350,
                 background: "#FFFFFF",
-                border: "1px solid rgba(79, 70, 229, 0.20)",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
                 padding: "22px 18px",
                 transform: "rotate(-8deg) translateY(36px) translateX(28px)",
                 zIndex: 10,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                boxShadow: "0 16px 36px -4px rgba(79, 70, 229, 0.08), 0 4px 12px -2px rgba(28, 25, 23, 0.04)",
+                boxShadow: "0 16px 36px -4px rgba(28, 25, 23, 0.08), 0 4px 12px -2px rgba(28, 25, 23, 0.04)",
               }}
               tabIndex={0}
               aria-label="Kartu Target Kelulusan"
@@ -419,31 +421,32 @@ export default function HomePage() {
                     style={{
                       fontSize: 10,
                       fontWeight: 700,
-                      color: "#4F46E5",
+                      color: "#1E3A8A",
                       letterSpacing: "0.08em",
-                      background: "rgba(79, 70, 229, 0.10)",
+                      background: "rgba(30, 58, 138, 0.07)",
+                      border: "1px solid rgba(30, 58, 138, 0.14)",
                       padding: "4px 8px",
                       borderRadius: 6,
                     }}
                   >
                     TARGET LULUS
                   </span>
-                  {/* Frosted Blurred Icon */}
+                  {/* Clean Icon Container */}
                   <div
                     className="card-frosted-icon"
                     style={{
-                      background: "rgba(79, 70, 229, 0.08)",
-                      borderColor: "rgba(79, 70, 229, 0.25)",
+                      background: "rgba(30, 58, 138, 0.06)",
+                      borderColor: "rgba(30, 58, 138, 0.16)",
                     }}
                   >
-                    <Calendar size={18} color="#4F46E5" />
+                    <Calendar size={18} color="#1E3A8A" />
                   </div>
                 </div>
 
                 <div style={{ fontSize: 36, fontWeight: 800, color: "#18181B", letterSpacing: "-0.04em", lineHeight: 1, fontFamily: "var(--font-inter, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>
                   2026
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#4F46E5", marginTop: 4, marginBottom: 20 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "#1E3A8A", marginTop: 4, marginBottom: 20 }}>
                   Semester 8 • Wisuda
                 </div>
 
@@ -456,7 +459,7 @@ export default function HomePage() {
                         flex: 1,
                         height: 6,
                         borderRadius: 3,
-                        background: s <= 4 ? "#4F46E5" : "rgba(0, 0, 0, 0.08)",
+                        background: s <= 4 ? "#1E3A8A" : "rgba(0, 0, 0, 0.08)",
                       }}
                     />
                   ))}
@@ -467,11 +470,11 @@ export default function HomePage() {
               </div>
 
               <div>
-                {/* Single Hero Status Pill */}
+                {/* Single Status Pill */}
                 <div
                   style={{
-                    background: "rgba(13, 148, 136, 0.08)",
-                    border: "1px solid rgba(13, 148, 136, 0.22)",
+                    background: "rgba(21, 128, 61, 0.08)",
+                    border: "1px solid rgba(21, 128, 61, 0.20)",
                     borderRadius: 10,
                     padding: "8px 10px",
                     display: "flex",
@@ -479,7 +482,7 @@ export default function HomePage() {
                     gap: 8,
                   }}
                 >
-                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#0D9488" }} />
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#15803D" }} />
                   <span style={{ fontSize: 11, color: "#18181B", fontWeight: 700 }}>On-Track • IPK 3.78</span>
                 </div>
               </div>
@@ -492,14 +495,14 @@ export default function HomePage() {
                 width: 270,
                 height: 410,
                 background: "#FFFFFF",
-                border: "1px solid rgba(124, 58, 237, 0.20)",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
                 padding: "24px 20px",
                 transform: "rotate(-4deg) translateY(14px) translateX(12px)",
                 zIndex: 20,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                boxShadow: "0 20px 45px -4px rgba(124, 58, 237, 0.09), 0 4px 14px -2px rgba(28, 25, 23, 0.04)",
+                boxShadow: "0 20px 45px -4px rgba(28, 25, 23, 0.08), 0 4px 14px -2px rgba(28, 25, 23, 0.04)",
               }}
               tabIndex={0}
               aria-label="Kartu Progres Studi"
@@ -510,24 +513,25 @@ export default function HomePage() {
                     style={{
                       fontSize: 10,
                       fontWeight: 700,
-                      color: "#7C3AED",
+                      color: "#1E3A8A",
                       letterSpacing: "0.08em",
-                      background: "rgba(124, 58, 237, 0.08)",
+                      background: "rgba(30, 58, 138, 0.07)",
+                      border: "1px solid rgba(30, 58, 138, 0.14)",
                       padding: "4px 8px",
                       borderRadius: 6,
                     }}
                   >
                     PROGRES STUDI
                   </span>
-                  {/* Frosted Blurred Icon: Book */}
+                  {/* Icon Container: Book */}
                   <div
                     className="card-frosted-icon"
                     style={{
-                      background: "rgba(124, 58, 237, 0.08)",
-                      borderColor: "rgba(124, 58, 237, 0.25)",
+                      background: "rgba(30, 58, 138, 0.06)",
+                      borderColor: "rgba(30, 58, 138, 0.16)",
                     }}
                   >
-                    <BookOpen size={18} color="#7C3AED" />
+                    <BookOpen size={18} color="#1E3A8A" />
                   </div>
                 </div>
 
@@ -536,21 +540,21 @@ export default function HomePage() {
                   <span style={{ fontSize: 44, fontWeight: 800, color: "#18181B", letterSpacing: "-0.04em", lineHeight: 1, fontFamily: "var(--font-inter, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>
                     51%
                   </span>
-                  <span style={{ fontSize: 13, color: "#7C3AED", fontWeight: 700 }}>
+                  <span style={{ fontSize: 13, color: "#1E3A8A", fontWeight: 700 }}>
                     74 / 144 SKS
                   </span>
                 </div>
 
-                {/* Sleek Progress Bar */}
+                {/* Structured Progress Bar */}
                 <div style={{ width: "100%", height: 8, borderRadius: 4, background: "rgba(0,0,0,0.06)", overflow: "hidden", margin: "10px 0 20px" }}>
-                  <div style={{ width: "51.4%", height: "100%", borderRadius: 4, background: "linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%)" }} />
+                  <div style={{ width: "51.4%", height: "100%", borderRadius: 4, background: "#1E3A8A" }} />
                 </div>
 
                 {/* Two Clean Metric Chips */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <div style={{ background: "#FAF9F5", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
                     <div style={{ fontSize: 20, fontWeight: 800, color: "#18181B", fontFamily: "var(--font-inter, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>22</div>
-                    <div style={{ fontSize: 10, color: "#7C3AED", fontWeight: 700 }}>MK Tuntas ✓</div>
+                    <div style={{ fontSize: 10, color: "#15803D", fontWeight: 700 }}>MK Tuntas ✓</div>
                   </div>
                   <div style={{ background: "#FAF9F5", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
                     <div style={{ fontSize: 20, fontWeight: 800, color: "#18181B", fontFamily: "var(--font-inter, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>3.78</div>
@@ -559,11 +563,11 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Single Milestone Chip */}
+              {/* Milestone Chip */}
               <div
                 style={{
-                  background: "rgba(124, 58, 237, 0.06)",
-                  border: "1px solid rgba(124, 58, 237, 0.18)",
+                  background: "#FAF9F5",
+                  border: "1px solid rgba(0, 0, 0, 0.08)",
                   borderRadius: 10,
                   padding: "9px 12px",
                   display: "flex",
@@ -572,7 +576,7 @@ export default function HomePage() {
                 }}
               >
                 <span style={{ fontSize: 11, fontWeight: 700, color: "#18181B" }}>Target Sem 5: KRS 24 SKS</span>
-                <span style={{ fontSize: 10, fontWeight: 800, color: "#0D9488", background: "rgba(13,148,136,0.12)", padding: "2px 7px", borderRadius: 5 }}>Siap</span>
+                <span style={{ fontSize: 10, fontWeight: 800, color: "#15803D", background: "rgba(21, 128, 61, 0.10)", border: "1px solid rgba(21, 128, 61, 0.20)", padding: "2px 7px", borderRadius: 5 }}>Siap</span>
               </div>
             </div>
 
@@ -596,7 +600,7 @@ export default function HomePage() {
               aria-label="Kartu Utama Perjalanan Akademik STARA"
             >
               <div>
-                {/* Header with Frosted Blurred Compass Icon */}
+                {/* Header with Compass Icon */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div
@@ -682,11 +686,11 @@ export default function HomePage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                   {/* Stage 1: Sem 1-3 */}
                   <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#F5F3ED", borderRadius: 10, border: "1px solid rgba(0,0,0,0.05)" }}>
-                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(13,148,136,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Check size={12} color="#0D9488" strokeWidth={3} />
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(21,128,61,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Check size={12} color="#15803D" strokeWidth={3} />
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 700, color: "#27272A", flex: 1 }}>Sem 1–3 • Pondasi & Teori</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "#0D9488" }}>54 SKS ✓</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#15803D" }}>54 SKS ✓</span>
                   </div>
 
                   {/* Stage 2: Sem 4 (Active) */}
@@ -699,12 +703,12 @@ export default function HomePage() {
                   </div>
 
                   {/* Stage 3: Sem 6 MBKM */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "rgba(13, 148, 136, 0.08)", borderRadius: 10, border: "1px solid rgba(13, 148, 136, 0.2)" }}>
-                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(13, 148, 136, 0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Zap size={12} color="#0D9488" />
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "rgba(21, 128, 61, 0.08)", borderRadius: 10, border: "1px solid rgba(21, 128, 61, 0.18)" }}>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(21, 128, 61, 0.14)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Briefcase size={12} color="#15803D" />
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 700, color: "#18181B", flex: 1 }}>Sem 6 • Magang MBKM</span>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: "#0D9488", background: "rgba(13,148,136,0.12)", padding: "2px 7px", borderRadius: 5 }}>+20 SKS</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "#15803D", background: "rgba(21,128,61,0.12)", padding: "2px 7px", borderRadius: 5 }}>+20 SKS</span>
                   </div>
 
                   {/* Stage 4: Sem 8 Wisuda */}
@@ -713,14 +717,15 @@ export default function HomePage() {
                       <GraduationCap size={12} color="#71717A" />
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 700, color: "#52525B", flex: 1 }}>Sem 8 • Kelulusan</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "#4F46E5" }}>Target 2026</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#1E3A8A" }}>Target 2026</span>
                   </div>
                 </div>
               </div>
 
               {/* Bottom tag */}
-              <div style={{ borderTop: "1px solid rgba(0, 0, 0, 0.06)", paddingTop: 10, fontSize: 10.5, color: "#0D9488", textAlign: "center", fontWeight: 700 }}>
-                ✦ Sinkronisasi SIAKAD Otomatis
+              <div style={{ borderTop: "1px solid rgba(0, 0, 0, 0.06)", paddingTop: 10, fontSize: 10.5, color: "#15803D", textAlign: "center", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                <Check size={12} color="#15803D" strokeWidth={3} />
+                <span>Sinkronisasi SIAKAD Aktif</span>
               </div>
             </div>
 
@@ -758,7 +763,7 @@ export default function HomePage() {
                   >
                     WHAT-IF SIMULATOR
                   </span>
-                  {/* Frosted Blurred Icon: Zap */}
+                  {/* Clean Icon: SlidersHorizontal */}
                   <div
                     className="card-frosted-icon"
                     style={{
@@ -766,7 +771,7 @@ export default function HomePage() {
                       borderColor: "rgba(245, 205, 71, 0.35)",
                     }}
                   >
-                    <Zap size={18} color="#B45309" />
+                    <SlidersHorizontal size={18} color="#B45309" />
                   </div>
                 </div>
 
@@ -818,7 +823,7 @@ export default function HomePage() {
               {/* Two Clean Result Badges */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: "#18181B" }}>
-                  <CheckCircle2 size={15} color="#0D9488" />
+                  <CheckCircle2 size={15} color="#15803D" />
                   <span>Wisuda Tetap Sem 8 (Tepat Waktu)</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: "#B45309" }}>
@@ -835,14 +840,14 @@ export default function HomePage() {
                 width: 220,
                 height: 350,
                 background: "#FFFFFF",
-                border: "1px solid rgba(13, 148, 136, 0.22)",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
                 padding: "22px 18px",
                 transform: "rotate(8deg) translateY(36px) translateX(-28px)",
                 zIndex: 10,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                boxShadow: "0 16px 36px -4px rgba(13, 148, 136, 0.08), 0 4px 12px -2px rgba(28, 25, 23, 0.04)",
+                boxShadow: "0 16px 36px -4px rgba(28, 25, 23, 0.08), 0 4px 12px -2px rgba(28, 25, 23, 0.04)",
               }}
               tabIndex={0}
               aria-label="Kartu Skripsi dan Tugas Akhir"
@@ -853,24 +858,25 @@ export default function HomePage() {
                     style={{
                       fontSize: 10,
                       fontWeight: 700,
-                      color: "#0D9488",
+                      color: "#15803D",
                       letterSpacing: "0.08em",
-                      background: "rgba(13, 148, 136, 0.12)",
+                      background: "rgba(21, 128, 61, 0.08)",
+                      border: "1px solid rgba(21, 128, 61, 0.18)",
                       padding: "4px 8px",
                       borderRadius: 6,
                     }}
                   >
                     SKRIPSI / TA
                   </span>
-                  {/* Frosted Blurred Icon: FileText */}
+                  {/* Clean Icon Container: FileText */}
                   <div
                     className="card-frosted-icon"
                     style={{
-                      background: "rgba(13, 148, 136, 0.10)",
-                      borderColor: "rgba(13, 148, 136, 0.3)",
+                      background: "rgba(21, 128, 61, 0.06)",
+                      borderColor: "rgba(21, 128, 61, 0.18)",
                     }}
                   >
-                    <FileText size={18} color="#0D9488" />
+                    <FileText size={18} color="#15803D" />
                   </div>
                 </div>
 
@@ -879,8 +885,8 @@ export default function HomePage() {
                 </div>
 
                 {/* Big Visual Metric: 6 SKS */}
-                <div style={{ background: "rgba(13, 148, 136, 0.08)", border: "1px solid rgba(13, 148, 136, 0.22)", borderRadius: 12, padding: "12px", textAlign: "center", marginBottom: 14 }}>
-                  <div style={{ fontSize: 32, fontWeight: 900, color: "#0D9488", lineHeight: 1, fontFamily: "var(--font-inter, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>
+                <div style={{ background: "#FAF9F5", border: "1px solid rgba(0, 0, 0, 0.06)", borderRadius: 12, padding: "12px", textAlign: "center", marginBottom: 14 }}>
+                  <div style={{ fontSize: 32, fontWeight: 900, color: "#15803D", lineHeight: 1, fontFamily: "var(--font-inter, 'Plus Jakarta Sans', system-ui, sans-serif)" }}>
                     6 SKS
                   </div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: "#52525B", marginTop: 4 }}>
@@ -891,20 +897,20 @@ export default function HomePage() {
                 {/* Minimal Status Chips */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, fontWeight: 700, color: "#27272A" }}>
-                    <Check size={12} color="#0D9488" strokeWidth={3} />
+                    <Check size={12} color="#15803D" strokeWidth={3} />
                     <span>Topik & Proposal Siap</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5, fontWeight: 700, color: "#27272A" }}>
-                    <Check size={12} color="#0D9488" strokeWidth={3} />
+                    <Check size={12} color="#15803D" strokeWidth={3} />
                     <span>Dosen Pembimbing OK</span>
                   </div>
                 </div>
               </div>
 
               {/* Single Bottom Pill */}
-              <div style={{ background: "rgba(13, 148, 136, 0.12)", border: "1px solid rgba(13, 148, 136, 0.22)", borderRadius: 8, padding: "6px 8px", display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#0D9488" }} />
-                <span style={{ fontSize: 10.5, color: "#0D9488", fontWeight: 700 }}>Syarat SKS Terpenuhi</span>
+              <div style={{ background: "rgba(21, 128, 61, 0.08)", border: "1px solid rgba(21, 128, 61, 0.20)", borderRadius: 8, padding: "6px 8px", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#15803D" }} />
+                <span style={{ fontSize: 10.5, color: "#15803D", fontWeight: 700 }}>Syarat SKS Terpenuhi</span>
               </div>
             </div>
           </div>
@@ -1027,31 +1033,31 @@ export default function HomePage() {
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#F5CD47", boxShadow: "0 0 6px #F5CD47" }} />
                       Sem 5 (Aktif)
                     </span>
-                    <span style={{ color: "#71717A" }}>Target Wisuda 🎓</span>
+                    <span style={{ color: "#71717A" }}>Target Wisuda</span>
                   </div>
                 </div>
               ),
             },
             {
               id: 1,
-              icon: <Zap size={20} />,
+              icon: <SlidersHorizontal size={20} />,
               tag: "What-If Simulator",
               title: "Simulasi Skenario Studi",
               desc: "Uji skenario magang MBKM, double degree, atau cuti tanpa menebak dampaknya pada kelulusan.",
-              accent: "#0D9488",
+              accent: "#B45309",
               link: "/app/simulator",
               visual: (
                 <div style={{ margin: "16px 0 14px", background: "#F5F3ED", borderRadius: 14, padding: "14px 12px", border: "1px solid rgba(0,0,0,0.05)" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10, background: "#FAF9F5", padding: 3, borderRadius: 8 }}>
                     <div style={{ textAlign: "center", fontSize: 10.5, color: "#71717A", padding: "4px" }}>Reguler</div>
-                    <div style={{ textAlign: "center", fontSize: 10.5, color: "#FFFFFF", background: "#0D9488", fontWeight: 700, borderRadius: 6, padding: "4px" }}>✓ MBKM Magang</div>
+                    <div style={{ textAlign: "center", fontSize: 10.5, color: "#18181B", background: "var(--lime)", fontWeight: 700, borderRadius: 6, padding: "4px" }}>✓ MBKM Magang</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
                     <div>
-                      <span style={{ fontSize: 24, fontWeight: 900, color: "#0D9488", lineHeight: 1 }}>-36%</span>
+                      <span style={{ fontSize: 24, fontWeight: 900, color: "#B45309", lineHeight: 1 }}>-36%</span>
                       <span style={{ fontSize: 10.5, color: "#71717A", marginLeft: 6 }}>Beban Sem 7</span>
                     </div>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "#047857", background: "rgba(16,185,129,0.12)", padding: "3px 7px", borderRadius: 5 }}>Tepat Waktu ✓</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#15803D", background: "rgba(21,128,61,0.12)", padding: "3px 7px", borderRadius: 5 }}>Tepat Waktu ✓</span>
                   </div>
                 </div>
               ),
@@ -1062,24 +1068,24 @@ export default function HomePage() {
               tag: "Skripsi Compass",
               title: "Panduan Tugas Akhir",
               desc: "Strukturkan eksplorasi topik skripsi, kriteria calon dosen pembimbing, hingga persiapan sidang.",
-              accent: "#7C3AED",
+              accent: "#15803D",
               link: "/app/thesis",
               visual: (
                 <div style={{ margin: "16px 0 14px", background: "#F5F3ED", borderRadius: 14, padding: "12px", border: "1px solid rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: 7 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "#18181B" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Check size={12} color="#7C3AED" strokeWidth={3} /> Topik & AI Recommendation</span>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#7C3AED" }}>Siap</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Check size={12} color="#15803D" strokeWidth={3} /> Topik & Analisis Minat</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#15803D" }}>Siap</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "#18181B" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Check size={12} color="#7C3AED" strokeWidth={3} /> Rekomendasi Pembimbing</span>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#0D9488" }}>Match</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Check size={12} color="#15803D" strokeWidth={3} /> Rekomendasi Pembimbing</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#15803D" }}>Match</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "#71717A" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px dashed #7C3AED", display: "inline-block" }} />
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px dashed #15803D", display: "inline-block" }} />
                       Draf Bab 1–3
                     </span>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#7C3AED" }}>6 SKS</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#15803D" }}>6 SKS</span>
                   </div>
                 </div>
               ),
@@ -1096,14 +1102,14 @@ export default function HomePage() {
                 <div style={{ margin: "16px 0 14px", background: "#F5F3ED", borderRadius: 14, padding: "14px 12px", border: "1px solid rgba(0,0,0,0.05)" }}>
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
                     <span style={{ fontSize: 20, fontWeight: 900, color: "#EA580C" }}>125 <span style={{ fontSize: 12, fontWeight: 600, color: "#71717A" }}>/ 100 TAK</span></span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "#047857", background: "rgba(16,185,129,0.12)", padding: "2px 6px", borderRadius: 4 }}>Lulus Syarat ✓</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#15803D", background: "rgba(21,128,61,0.12)", padding: "2px 6px", borderRadius: 4 }}>Lulus Syarat ✓</span>
                   </div>
                   <div style={{ width: "100%", height: 6, background: "rgba(0,0,0,0.06)", borderRadius: 3, overflow: "hidden", marginBottom: 10 }}>
                     <div style={{ width: "100%", height: "100%", background: "linear-gradient(90deg, #EA580C, #F97316)", borderRadius: 3, boxShadow: "0 0 10px rgba(249,115,22,0.4)" }} />
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#18181B", background: "#FAF9F5", padding: "2px 7px", borderRadius: 4, border: "1px solid rgba(0,0,0,0.05)" }}>🏆 Hackathon</span>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#EA580C", background: "rgba(234,88,12,0.12)", padding: "2px 7px", borderRadius: 4 }}>📄 Format CV ATS</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#18181B", background: "#FAF9F5", padding: "2px 7px", borderRadius: 4, border: "1px solid rgba(0,0,0,0.05)" }}>Prestasi & Lomba</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#EA580C", background: "rgba(234,88,12,0.12)", padding: "2px 7px", borderRadius: 4 }}>Format CV ATS</span>
                   </div>
                 </div>
               ),
@@ -1280,13 +1286,13 @@ export default function HomePage() {
                 step: "02",
                 title: "Dapatkan Roadmap Cerdas",
                 desc: "Sistem STARA menyusun milestone semester dan merekomendasikan distribusi mata kuliah yang seimbang.",
-                accent: "#0D9488",
+                accent: "#15803D",
               },
               {
                 step: "03",
                 title: "Eksplorasi Skenario What-If",
                 desc: "Bandingkan alternatif rencana bila ingin magang MBKM, mengambil semester pendek, atau cuti studi.",
-                accent: "#7C3AED",
+                accent: "#B45309",
               },
               {
                 step: "04",
@@ -1306,13 +1312,13 @@ export default function HomePage() {
                   step: "02",
                   title: "Dapatkan Roadmap Cerdas",
                   desc: "Sistem STARA menyusun milestone semester dan merekomendasikan distribusi mata kuliah yang seimbang.",
-                  accent: "#0D9488",
+                  accent: "#15803D",
                 },
                 {
                   step: "03",
                   title: "Eksplorasi Skenario What-If",
                   desc: "Bandingkan alternatif rencana bila ingin magang MBKM, mengambil semester pendek, atau cuti studi.",
-                  accent: "#7C3AED",
+                  accent: "#B45309",
                 },
                 {
                   step: "04",
