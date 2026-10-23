@@ -30,7 +30,6 @@ const navItems = [
   { href: "/app/simulator", label: "Simulasi Skenario", icon: Zap },
   { href: "/app/templates", label: "Jelajahi Template", icon: BookMarked },
   { href: "/app/thesis", label: "Panduan Skripsi", icon: BookOpen },
-  { href: "/app/career", label: "Rencana Setelah Lulus", icon: Compass },
   { href: "/app/achievements", label: "Prestasi & CV", icon: Award },
   { href: "/app/reminders", label: "Pengingat", icon: Bell },
 ];
