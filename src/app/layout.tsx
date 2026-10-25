@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+  style: ["normal"],
+  axes: ["opsz"],
 });
 
 export const metadata: Metadata = {
@@ -26,12 +34,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning style={{ backgroundColor: "#0B0D0C", colorScheme: "dark" }}>
+    <html lang="id" suppressHydrationWarning style={{ backgroundColor: "#FAF9F5", colorScheme: "light" }}>
       <body
-        className={inter.variable}
+        className={`${inter.variable} ${fraunces.variable}`}
         style={{
-          backgroundColor: "#0B0D0C",
-          color: "#F5F5F0",
+          backgroundColor: "#FAF9F5",
+          color: "#18181B",
           margin: 0,
           minHeight: "100vh",
         }}

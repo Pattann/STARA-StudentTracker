@@ -32,7 +32,6 @@ model User {
   achievements      Achievement[]
   thesisAssessments ThesisAssessment[]
   advisingLogs      AdvisingLog[]
-  careerAssessments CareerAssessment[]
   cvProfile         CVProfile?
 }
 
@@ -311,19 +310,6 @@ model AdvisingLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model CareerAssessment {
-  id         String   @id @default(cuid())
-  userId     String
-  direction  String   // kerja | s2 | wirausaha | eksplorasi
-  interests  String
-  experience String?
-  skills     String
-  priorities String?
-  actionPlan String?  // JSON
-  createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
 // ===== ACHIEVEMENTS =====
 

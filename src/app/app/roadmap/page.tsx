@@ -458,14 +458,15 @@ export default function RoadmapPage() {
 
   if (!data?.roadmap || !data.roadmap.currentVersion || currentPlans.length === 0) {
     return (
-      <div style={{ maxWidth: 720, margin: "32px auto", padding: "0 16px" }}>
+      <div style={{ maxWidth: 740, margin: "36px auto", padding: "0 16px" }}>
         <div
           className="card"
           style={{
-            padding: "48px 28px",
-            background: "linear-gradient(180deg, var(--bg-card) 0%, rgba(18, 20, 26, 0.98) 100%)",
-            border: "1px dashed var(--border)",
+            padding: "48px 36px",
+            background: "#FFFFFF",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
             borderRadius: "var(--radius-xl)",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -474,40 +475,43 @@ export default function RoadmapPage() {
         >
           <div
             style={{
-              width: 58,
-              height: 58,
+              width: 64,
+              height: 64,
               borderRadius: "50%",
-              background: "rgba(215, 243, 106, 0.12)",
-              color: "var(--lime)",
+              background: "rgba(245, 205, 71, 0.22)",
+              border: "1px solid rgba(217, 119, 6, 0.28)",
+              color: "#92400E",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 18,
+              boxShadow: "0 4px 14px rgba(245, 205, 71, 0.2)",
             }}
           >
-            <BookMarked size={28} />
+            <BookMarked size={30} strokeWidth={2.2} />
           </div>
 
           <span
-            className="badge"
             style={{
-              fontSize: 11,
+              fontSize: 11.5,
               fontWeight: 700,
-              background: "rgba(215, 243, 106, 0.15)",
-              color: "var(--lime)",
-              padding: "3px 10px",
+              background: "rgba(245, 205, 71, 0.22)",
+              color: "#92400E",
+              border: "1px solid rgba(217, 119, 6, 0.3)",
+              padding: "4px 12px",
               borderRadius: "var(--radius-pill)",
-              marginBottom: 12,
+              marginBottom: 14,
+              letterSpacing: "0.02em",
             }}
           >
             Roadmap Belum Dipilih
           </span>
 
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", marginBottom: 8, letterSpacing: "-0.01em" }}>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: "var(--text-primary)", marginBottom: 10, letterSpacing: "-0.02em" }}>
             Roadmap Akademik Kamu Masih Kosong
           </h2>
 
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", maxWidth: 500, lineHeight: 1.6, marginBottom: 24 }}>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", maxWidth: 520, lineHeight: 1.6, marginBottom: 28 }}>
             Kamu belum memilih template kurikulum atau membuat roadmap studi. Kamu dapat langsung men-generate blueprint otomatis berdasarkan profil onboarding kamu, atau menjelajahi katalog template.
           </p>
 
@@ -515,64 +519,88 @@ export default function RoadmapPage() {
             <div
               style={{
                 width: "100%",
-                maxWidth: 480,
-                background: "var(--bg-secondary)",
-                borderRadius: "var(--radius-md)",
+                maxWidth: 520,
+                background: "var(--bg-base)",
+                borderRadius: "var(--radius-lg)",
                 border: "1px solid var(--border)",
-                padding: "14px 16px",
-                marginBottom: 24,
+                padding: "16px 20px",
+                marginBottom: 28,
                 textAlign: "left",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: 12,
+                gap: 16,
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
               }}
             >
               <div>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>
                   Profil Onboarding Terhubung
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginTop: 2 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
                   {data.profile.programName}
                 </div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 1 }}>
+                <div style={{ fontSize: 12.5, color: "var(--text-secondary)", marginTop: 2 }}>
                   {data.profile.institutionName} • Angkatan {data.profile.entryYear} (Semester {data.profile.currentSemester})
                 </div>
               </div>
               <span
                 style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: "var(--lime)",
-                  background: "rgba(215, 243, 106, 0.12)",
-                  padding: "4px 8px",
-                  borderRadius: "var(--radius-sm)",
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: "#15803D",
+                  background: "rgba(22, 163, 74, 0.12)",
+                  border: "1px solid rgba(22, 163, 74, 0.25)",
+                  padding: "5px 12px",
+                  borderRadius: "var(--radius-pill)",
                   flexShrink: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
                 }}
               >
+                <CheckCircle2 size={12} />
                 Siap Digenerate
               </span>
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
             <button
               className="btn btn-primary"
               onClick={handleGenerateFromProfile}
               disabled={isGeneratingFromProfile}
-              style={{ gap: 8, padding: "11px 20px", fontSize: 13, fontWeight: 700 }}
+              style={{
+                gap: 8,
+                padding: "12px 24px",
+                fontSize: 13.5,
+                fontWeight: 700,
+                background: "#F5CD47",
+                color: "#18181B",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                boxShadow: "0 2px 10px rgba(245, 205, 71, 0.35)",
+              }}
               id="btn-generate-empty-roadmap"
             >
-              <Plus size={15} />
+              <Plus size={16} strokeWidth={2.5} />
               {isGeneratingFromProfile ? "Merancang Roadmap..." : "Generate Roadmap dari Profil Onboarding"}
             </button>
             <Link
               href="/app/templates"
               className="btn btn-secondary"
-              style={{ gap: 8, padding: "11px 18px", fontSize: 13 }}
+              style={{
+                gap: 8,
+                padding: "12px 22px",
+                fontSize: 13.5,
+                fontWeight: 600,
+                background: "#FFFFFF",
+                color: "var(--text-primary)",
+                border: "1px solid rgba(0, 0, 0, 0.12)",
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.03)",
+              }}
               id="link-explore-templates"
             >
-              <LayoutTemplate size={15} />
+              <LayoutTemplate size={16} />
               Jelajahi Template
             </Link>
           </div>
@@ -785,7 +813,7 @@ export default function RoadmapPage() {
             <div style={{ fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600 }}>
               SKS Lulus
             </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "var(--lime)", lineHeight: 1.2 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#92400E", lineHeight: 1.2 }}>
               {completedCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>/ {totalCurriculum} SKS</span>
             </div>
           </div>
@@ -796,7 +824,7 @@ export default function RoadmapPage() {
                 className="progress-fill"
                 style={{
                   width: `${Math.min(100, (completedCredits / totalCurriculum) * 100)}%`,
-                  background: "var(--lime)",
+                  background: "var(--amber)",
                 }}
               />
             </div>
@@ -927,15 +955,15 @@ export default function RoadmapPage() {
             }}
             id="tab-view-split"
           >
-            <Columns2 size={13} color={activeView === "split" ? "var(--lime)" : "var(--text-muted)"} />
+            <Columns2 size={13} color={activeView === "split" ? "var(--amber)" : "var(--text-muted)"} />
             <span>Berdampingan</span>
           </button>
         </div>
 
         {/* Quiet Mode Indicator */}
         {activeMode === "edit" ? (
-          <div style={{ fontSize: 11.5, color: "var(--lime)", display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--lime)" }} />
+          <div style={{ fontSize: 11.5, color: "var(--amber-deep)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--amber)" }} />
             <span>Mode penyesuaian susunan aktif: klik matkul atau tombol tambah untuk mengubah</span>
           </div>
         ) : (
@@ -973,15 +1001,16 @@ export default function RoadmapPage() {
                     key={f.id}
                     onClick={() => setStatusFilter(f.id)}
                     style={{
-                      padding: "4px 11px",
+                      padding: "5px 12px",
                       borderRadius: "var(--radius-sm)",
                       fontSize: 11.5,
                       fontWeight: 600,
-                      border: statusFilter === f.id ? "1px solid rgba(245, 205, 71, 0.35)" : "1px solid var(--border-subtle)",
-                      background: statusFilter === f.id ? "rgba(245, 205, 71, 0.1)" : "rgba(255, 255, 255, 0.02)",
-                      color: statusFilter === f.id ? "var(--lime)" : "var(--text-muted)",
+                      border: statusFilter === f.id ? "1px solid rgba(217, 119, 6, 0.4)" : "1px solid var(--border)",
+                      background: statusFilter === f.id ? "rgba(245, 205, 71, 0.22)" : "#FFFFFF",
+                      color: statusFilter === f.id ? "#92400E" : "var(--text-secondary)",
                       cursor: "pointer",
                       transition: "all 0.15s ease",
+                      boxShadow: statusFilter === f.id ? "0 1px 4px rgba(245, 205, 71, 0.2)" : "none",
                     }}
                   >
                     {f.label}
@@ -1261,7 +1290,7 @@ export default function RoadmapPage() {
                           <span className="badge badge-gray" style={{ fontSize: 10, fontWeight: 700 }}>
                             {course.code}
                           </span>
-                          <span style={{ fontSize: 11, color: "var(--lime)", fontWeight: 700 }}>
+                          <span style={{ fontSize: 11, color: "var(--amber-deep)", fontWeight: 700 }}>
                             {course.credits} SKS
                           </span>
                           <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
@@ -1299,7 +1328,7 @@ export default function RoadmapPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: 12 }}>
-                    Nama Mata Kuliah <span style={{ color: "var(--lime)" }}>*</span>
+                    Nama Mata Kuliah <span style={{ color: "var(--coral)" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -1446,7 +1475,7 @@ export default function RoadmapPage() {
                         {m.notes}
                       </div>
                     </div>
-                    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, color: "var(--lime)", fontSize: 11, fontWeight: 700 }}>
+                    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, color: "var(--amber-deep)", fontSize: 11, fontWeight: 700 }}>
                       <Plus size={11} /> Pasang (0 SKS)
                     </div>
                   </div>
@@ -1462,7 +1491,7 @@ export default function RoadmapPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontSize: 12 }}>
-                    Judul Milestone / Kegiatan <span style={{ color: "var(--lime)" }}>*</span>
+                    Judul Milestone / Kegiatan <span style={{ color: "var(--coral)" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -1767,9 +1796,9 @@ function SemesterCardItem({
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "var(--lime)",
-                    background: "rgba(245, 205, 71, 0.08)",
-                    border: "1px solid rgba(245, 205, 71, 0.25)",
+                    color: "#92400E",
+                    background: "rgba(245, 205, 71, 0.22)",
+                    border: "1px solid rgba(217, 119, 6, 0.3)",
                     padding: "2px 8px",
                     borderRadius: "var(--radius-sm)",
                     display: "inline-flex",
@@ -1777,7 +1806,7 @@ function SemesterCardItem({
                     gap: 4,
                   }}
                 >
-                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--lime)" }} />
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#D97706" }} />
                   Semester Berjalan
                 </span>
               )}
@@ -1850,10 +1879,10 @@ function SemesterCardItem({
             <span
               style={{
                 fontSize: 11,
-                fontWeight: 600,
-                color: "var(--lime)",
-                background: "rgba(245, 205, 71, 0.08)",
-                border: "1px solid rgba(245, 205, 71, 0.2)",
+                fontWeight: 700,
+                color: "#15803D",
+                background: "rgba(22, 163, 74, 0.12)",
+                border: "1px solid rgba(22, 163, 74, 0.25)",
                 padding: "3px 8px",
                 borderRadius: "var(--radius-sm)",
                 display: "inline-flex",
@@ -2104,10 +2133,10 @@ function SemesterCardItem({
                               <span
                                 style={{
                                   fontSize: 10,
-                                  fontWeight: 600,
-                                  background: "rgba(245, 205, 71, 0.08)",
-                                  border: "1px solid rgba(245, 205, 71, 0.2)",
-                                  color: "var(--lime)",
+                                  fontWeight: 700,
+                                  background: "rgba(22, 163, 74, 0.12)",
+                                  border: "1px solid rgba(22, 163, 74, 0.25)",
+                                  color: "#15803D",
                                   padding: "1px 6px",
                                   borderRadius: "var(--radius-sm)",
                                   display: "inline-flex",
@@ -2197,15 +2226,15 @@ function SemesterCardItem({
               href={`/app/simulator?semester=${plan.semesterNum}`}
               style={{
                 fontSize: 11.5,
-                color: "var(--lime)",
+                color: "var(--amber-deep)",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 5,
                 textDecoration: "none",
-                fontWeight: 600,
+                fontWeight: 700,
               }}
             >
-              <Compass size={13} />
+              <Compass size={13} color="var(--amber)" />
               Uji Alternatif Semester Ini di Simulator
             </Link>
 
@@ -2320,8 +2349,8 @@ function InteractiveVisualRoadmap({
           100% { transform: scale(1.65); opacity: 0; }
         }
         .road-callout-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 16px 40px rgba(0,0,0,0.26), 0 0 18px rgba(245, 205, 71, 0.25) !important;
+          transform: translateY(-4px);
+          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(245, 205, 71, 0.22) !important;
         }
       `}</style>
 
@@ -2344,11 +2373,12 @@ function InteractiveVisualRoadmap({
               width: 32,
               height: 32,
               borderRadius: "var(--radius-sm)",
-              background: "rgba(245, 205, 71, 0.1)",
+              background: "rgba(245, 205, 71, 0.22)",
+              border: "1px solid rgba(217, 119, 6, 0.25)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "var(--lime)",
+              color: "#92400E",
             }}
           >
             <GitBranch size={16} />
@@ -2364,21 +2394,21 @@ function InteractiveVisualRoadmap({
         </div>
 
         {/* Legend */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontSize: 11 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--text-secondary)" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--lime)" }} /> Lulus
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", fontSize: 11.5 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--text-secondary)", fontWeight: 500 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#15803D" }} /> Selesai / Lulus
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--text-secondary)" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--teal)" }} /> Berjalan
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--text-secondary)", fontWeight: 500 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D97706" }} /> Berjalan
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--text-secondary)" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--blue)" }} /> Rencana
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--text-secondary)", fontWeight: 500 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4F46E5" }} /> Rencana
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--text-secondary)" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--coral)" }} /> Perlu Diulang
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--text-secondary)", fontWeight: 500 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#E11D48" }} /> Perlu Diulang
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--text-secondary)" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--orange)" }} /> Milestone Non-SKS
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--text-secondary)", fontWeight: 500 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#0D9488" }} /> Milestone Non-SKS
           </span>
         </div>
       </div>
@@ -2395,7 +2425,7 @@ function InteractiveVisualRoadmap({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 11.5, color: "var(--text-muted)", fontWeight: 500, marginRight: 2 }}>
+          <span style={{ fontSize: 11.5, color: "var(--text-muted)", fontWeight: 600, marginRight: 2 }}>
             Pilih Semester:
           </span>
           {sortedPlans.map((p) => {
@@ -2405,15 +2435,16 @@ function InteractiveVisualRoadmap({
                 key={p.semesterNum}
                 onClick={() => scrollToSemester(p.semesterNum)}
                 style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: "3px 9px",
+                  fontSize: 11.5,
+                  fontWeight: isCurrent ? 700 : 600,
+                  padding: "4px 10px",
                   borderRadius: "var(--radius-sm)",
-                  border: isCurrent ? "1px solid var(--lime)" : "1px solid var(--border-subtle)",
-                  background: isCurrent ? "rgba(245, 205, 71, 0.12)" : "rgba(255, 255, 255, 0.03)",
-                  color: isCurrent ? "var(--lime)" : "var(--text-muted)",
+                  border: isCurrent ? "1.5px solid #D97706" : "1px solid rgba(0, 0, 0, 0.08)",
+                  background: isCurrent ? "rgba(245, 205, 71, 0.25)" : "#FFFFFF",
+                  color: isCurrent ? "#92400E" : "var(--text-secondary)",
                   cursor: "pointer",
                   transition: "all 0.15s ease",
+                  boxShadow: isCurrent ? "0 1px 4px rgba(245, 205, 71, 0.25)" : "0 1px 2px rgba(0, 0, 0, 0.02)",
                 }}
               >
                 Sem {p.semesterNum}{isCurrent ? " • Aktif" : ""}
@@ -2627,14 +2658,14 @@ function InteractiveVisualRoadmap({
                       background: isCurrent
                         ? "var(--lime)"
                         : isPast
-                        ? "rgba(117, 189, 165, 0.25)"
-                        : "rgba(22, 27, 24, 0.95)",
+                        ? "#15803D"
+                        : "#1E2320",
                       border: isCurrent
                         ? "3px solid #FFFFFF"
                         : isPast
-                        ? "2px solid var(--teal)"
-                        : "2px solid rgba(133, 136, 255, 0.6)",
-                      color: isCurrent ? "#0C0D12" : isPast ? "var(--teal)" : "#FFFFFF",
+                        ? "2px solid #86EFAC"
+                        : "2px solid #52525B",
+                      color: isCurrent ? "#18181B" : "#FFFFFF",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -2643,8 +2674,8 @@ function InteractiveVisualRoadmap({
                       boxShadow: isCurrent
                         ? "0 0 20px rgba(245, 205, 71, 0.6)"
                         : isPast
-                        ? "0 0 10px rgba(117, 189, 165, 0.3)"
-                        : "0 4px 12px rgba(0,0,0,0.5)",
+                        ? "0 0 12px rgba(21, 128, 61, 0.35)"
+                        : "0 4px 12px rgba(0,0,0,0.4)",
                     }}
                   >
                     {String(pt.plan.semesterNum).padStart(2, "0")}
@@ -2657,11 +2688,12 @@ function InteractiveVisualRoadmap({
                           width: 15,
                           height: 15,
                           borderRadius: "50%",
-                          background: "var(--teal)",
-                          color: "#0c0d12",
+                          background: "#FFFFFF",
+                          color: "#15803D",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
                         }}
                       >
                         <Check size={9} strokeWidth={3} />
@@ -2686,18 +2718,17 @@ function InteractiveVisualRoadmap({
                 >
                   <div
                     style={{
-                      background: "rgba(20, 25, 22, 0.96)",
-                      backdropFilter: "blur(16px)",
-                      border: isCurrent
-                        ? "2px solid var(--lime)"
-                        : isOverMax
-                        ? "1px solid var(--coral)"
-                        : "1px solid rgba(255, 255, 255, 0.14)",
+                      background: "#FFFFFF",
                       borderRadius: "var(--radius-lg)",
-                      padding: "13px 15px",
+                      border: isCurrent
+                        ? "2px solid #F5CD47"
+                        : isOverMax
+                        ? "1.5px solid var(--coral)"
+                        : "1px solid rgba(0, 0, 0, 0.09)",
+                      padding: "14px 16px",
                       boxShadow: isCurrent
-                        ? "0 14px 36px rgba(0,0,0,0.24), 0 0 16px rgba(245, 205, 71, 0.25)"
-                        : "0 10px 28px rgba(0,0,0,0.16)",
+                        ? "0 14px 36px rgba(245, 205, 71, 0.25), 0 4px 14px rgba(28, 25, 23, 0.08)"
+                        : "0 10px 28px rgba(28, 25, 23, 0.08), 0 2px 6px rgba(28, 25, 23, 0.04)",
                       position: "relative",
                     }}
                   >
@@ -2717,11 +2748,11 @@ function InteractiveVisualRoadmap({
                       >
                         <polygon
                           points="0,0 24,0 12,11"
-                          fill="rgba(20, 25, 22, 0.96)"
-                          stroke={isCurrent ? "var(--lime)" : isOverMax ? "var(--coral)" : "rgba(255, 255, 255, 0.16)"}
+                          fill="#FFFFFF"
+                          stroke={isCurrent ? "#F5CD47" : isOverMax ? "var(--coral)" : "rgba(0, 0, 0, 0.12)"}
                           strokeWidth="1.5"
                         />
-                        <rect x="1" y="-1" width="22" height="2" fill="rgba(20, 25, 22, 0.96)" />
+                        <rect x="1" y="-1" width="22" height="2" fill="#FFFFFF" />
                       </svg>
                     ) : (
                       <svg
@@ -2738,11 +2769,11 @@ function InteractiveVisualRoadmap({
                       >
                         <polygon
                           points="12,1 24,12 0,12"
-                          fill="rgba(20, 25, 22, 0.96)"
-                          stroke={isCurrent ? "var(--lime)" : isOverMax ? "var(--coral)" : "rgba(255, 255, 255, 0.16)"}
+                          fill="#FFFFFF"
+                          stroke={isCurrent ? "#F5CD47" : isOverMax ? "var(--coral)" : "rgba(0, 0, 0, 0.12)"}
                           strokeWidth="1.5"
                         />
-                        <rect x="1" y="11" width="22" height="2" fill="rgba(20, 25, 22, 0.96)" />
+                        <rect x="1" y="11" width="22" height="2" fill="#FFFFFF" />
                       </svg>
                     )}
 
@@ -2751,55 +2782,68 @@ function InteractiveVisualRoadmap({
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div
                           style={{
-                            width: 28,
-                            height: 28,
+                            width: 30,
+                            height: 30,
                             borderRadius: "50%",
                             background: isCurrent
                               ? "var(--lime)"
                               : isPast
-                              ? "var(--teal)"
+                              ? "#DCFCE7"
                               : isOverMax
-                              ? "var(--coral)"
-                              : "var(--blue)",
+                              ? "#FEE2E2"
+                              : "#F4F4F5",
+                            border: isCurrent
+                              ? "2px solid #D97706"
+                              : isPast
+                              ? "1.5px solid #16A34A"
+                              : isOverMax
+                              ? "1.5px solid var(--coral)"
+                              : "1.5px solid #E4E4E7",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            color: isCurrent ? "#0c0d12" : "#FFFFFF",
-                            fontSize: 12,
+                            color: isCurrent
+                              ? "#78350F"
+                              : isPast
+                              ? "#15803D"
+                              : isOverMax
+                              ? "#BE123C"
+                              : "#3F3F46",
+                            fontSize: 12.5,
                             fontWeight: 900,
                             flexShrink: 0,
-                            boxShadow: isCurrent ? "0 0 10px rgba(245, 205, 71, 0.4)" : "none",
+                            boxShadow: isCurrent ? "0 2px 8px rgba(245, 205, 71, 0.45)" : "none",
                           }}
                         >
                           {pt.plan.semesterNum}
                         </div>
                         <div>
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text-primary)" }}>
+                            <span style={{ fontSize: 13.5, fontWeight: 800, color: "var(--text-primary)" }}>
                               Semester {pt.plan.semesterNum}
                             </span>
                             {isCurrent && (
-                              <span className="badge badge-lime" style={{ fontSize: 9 }}>
+                              <span className="badge badge-lime" style={{ fontSize: 9.5, fontWeight: 700 }}>
                                 Berjalan
                               </span>
                             )}
                             {isPast && (
-                              <span className="badge badge-teal" style={{ fontSize: 9 }}>
+                              <span className="badge badge-teal" style={{ fontSize: 9.5, fontWeight: 700 }}>
                                 Lulus
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 1 }}>
+                          <div style={{ fontSize: 10.5, color: "var(--text-secondary)", marginTop: 1, fontWeight: 500 }}>
                             {pt.plan.semesterLabel ?? (profile ? semesterLabel(pt.plan.semesterNum, profile.entryYear) : `Tahun Ke-${Math.ceil(pt.plan.semesterNum / 2)}`)}
                           </div>
                         </div>
                       </div>
 
                       <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <span style={{ fontSize: 12.5, fontWeight: 800, color: isOverMax ? "var(--coral)" : "var(--lime)" }}>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: isOverMax ? "var(--coral)" : isCurrent ? "#92400E" : "#18181B" }}>
                           {academicCredits} SKS
                         </span>
-                        <div style={{ fontSize: 9.5, color: "var(--text-muted)" }}>
+                        <div style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 500 }}>
                           Target {pt.plan.targetCredits || 20}
                         </div>
                       </div>
@@ -2807,18 +2851,18 @@ function InteractiveVisualRoadmap({
 
                     {/* Load warnings */}
                     {isOverMax && (
-                      <div style={{ fontSize: 10.5, color: "var(--coral)", fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
-                        <AlertTriangle size={11} /> Beban Padat (&gt;24 SKS)
+                      <div style={{ fontSize: 11, color: "#BE123C", background: "#FFF1F2", border: "1px solid #FFE4E6", borderRadius: 6, padding: "3px 8px", fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                        <AlertTriangle size={12} /> Beban Padat (&gt;24 SKS)
                       </div>
                     )}
                     {!isOverMax && isTooLight && (
-                      <div style={{ fontSize: 10.5, color: "var(--orange)", fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
-                        <AlertCircle size={11} /> Beban Ringan (&lt;12 SKS)
+                      <div style={{ fontSize: 11, color: "#9A3412", background: "#FFF7ED", border: "1px solid #FFEDD5", borderRadius: 6, padding: "3px 8px", fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                        <AlertCircle size={12} /> Beban Ringan (&lt;12 SKS)
                       </div>
                     )}
 
                     {/* Courses Preview (Max 3 items) */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 10 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
                       {pt.plan.tasks.slice(0, 3).map((task) => {
                         const isMilestone = task.credits === 0;
                         const isCompleted = task.status === "done";
@@ -2834,29 +2878,32 @@ function InteractiveVisualRoadmap({
                               }
                             }}
                             style={{
-                              padding: "5px 8px",
+                              padding: "6px 9px",
                               background: isCompleted
-                                ? "rgba(255, 255, 255, 0.02)"
+                                ? "#F0FDF4"
                                 : isNeedsRepeat
-                                ? "rgba(255, 126, 138, 0.06)"
+                                ? "#FFF1F2"
                                 : isMilestone
-                                ? "rgba(117, 189, 165, 0.06)"
-                                : "rgba(255, 255, 255, 0.04)",
+                                ? "#F0FDFA"
+                                : "#FAF9F5",
                               borderRadius: "var(--radius-sm)",
                               border: isCompleted
-                                ? "1px solid rgba(245, 205, 71, 0.2)"
+                                ? "1px solid #BBF7D0"
+                                : isNeedsRepeat
+                                ? "1px solid #FECDD3"
                                 : isMilestone
-                                ? "1px dashed rgba(117, 189, 165, 0.3)"
-                                : "1px solid var(--border-subtle)",
+                                ? "1px dashed #99F6E4"
+                                : "1px solid rgba(0, 0, 0, 0.07)",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
                               gap: 6,
                               fontSize: 11.5,
                               cursor: mode === "edit" ? "pointer" : "default",
+                              transition: "background 0.15s ease",
                             }}
                           >
-                            <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0, flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flex: 1 }}>
                               <TaskStatusBadge status={task.status} />
                               <span
                                 style={{
@@ -2865,7 +2912,7 @@ function InteractiveVisualRoadmap({
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
-                                  fontWeight: 500,
+                                  fontWeight: isCompleted ? 400 : 500,
                                 }}
                                 title={task.title}
                               >
@@ -2874,8 +2921,8 @@ function InteractiveVisualRoadmap({
                             </div>
 
                             <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                              {isCompleted && <Lock size={9} color="var(--lime)" />}
-                              <span style={{ fontSize: 10, fontWeight: 700, color: isMilestone ? "var(--teal)" : "var(--text-muted)" }}>
+                              {isCompleted && <Lock size={10} color="#15803D" />}
+                              <span style={{ fontSize: 10, fontWeight: 700, color: isMilestone ? "#0D9488" : isCompleted ? "#15803D" : "var(--text-secondary)" }}>
                                 {isMilestone ? "0 SKS" : `${task.credits} SKS`}
                               </span>
                             </div>
@@ -2884,17 +2931,26 @@ function InteractiveVisualRoadmap({
                       })}
 
                       {pt.plan.tasks.length > 3 && (
-                        <div style={{ fontSize: 10.5, color: "var(--text-muted)", textAlign: "center", fontStyle: "italic" }}>
+                        <div style={{ fontSize: 10.5, color: "var(--text-muted)", textAlign: "center", fontWeight: 500 }}>
                           +{pt.plan.tasks.length - 3} item lainnya
                         </div>
                       )}
                     </div>
 
                     {/* Pop-up Card Footer Actions */}
-                    <div style={{ display: "flex", gap: 6, alignItems: "center", borderTop: "1px solid var(--border-subtle)", paddingTop: 8 }}>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", borderTop: "1px solid rgba(0, 0, 0, 0.07)", paddingTop: 9 }}>
                       <button
                         className="btn btn-primary btn-sm"
-                        style={{ flex: 1, fontSize: 11, padding: "4px 8px" }}
+                        style={{
+                          flex: 1,
+                          fontSize: 11.5,
+                          padding: "6px 10px",
+                          fontWeight: 700,
+                          background: "var(--lime)",
+                          color: "#18181B",
+                          border: "1px solid rgba(0, 0, 0, 0.08)",
+                          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)",
+                        }}
                         onClick={() => setSelectedSemesterModal(pt.plan.semesterNum)}
                       >
                         {mode === "edit" ? "Sesuaikan Semester" : "Rincian Semester"}
@@ -2904,25 +2960,25 @@ function InteractiveVisualRoadmap({
                         <>
                           <button
                             className="btn btn-secondary btn-sm"
-                            style={{ fontSize: 11, padding: "4px 7px" }}
+                            style={{ fontSize: 11, padding: "5px 8px" }}
                             onClick={(e) => {
                               e.stopPropagation();
                               onOpenAddCourse(pt.plan.semesterNum);
                             }}
                             title="Tambah Mata Kuliah"
                           >
-                            <Plus size={11} />
+                            <Plus size={12} />
                           </button>
                           <button
                             className="btn btn-secondary btn-sm"
-                            style={{ fontSize: 11, padding: "4px 7px", color: "var(--teal)" }}
+                            style={{ fontSize: 11, padding: "5px 8px", color: "var(--teal)" }}
                             onClick={(e) => {
                               e.stopPropagation();
                               onOpenAddMilestone(pt.plan.semesterNum);
                             }}
                             title="Tambah Milestone Non-SKS"
                           >
-                            <Target size={11} />
+                            <Target size={12} />
                           </button>
                         </>
                       )}
@@ -3041,7 +3097,7 @@ function SemesterInspectorModal({
             <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Beban Kuliah Akademik
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: isOverMax ? "var(--coral)" : "var(--lime)" }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: isOverMax ? "var(--coral)" : "#18181B" }}>
               {academicCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>/ Target {plan.targetCredits || 20} SKS</span>
             </div>
           </div>
@@ -3077,20 +3133,20 @@ function SemesterInspectorModal({
         {isOverMax && (
           <div
             style={{
-              background: "rgba(255, 126, 138, 0.06)",
-              border: "1px solid rgba(255, 126, 138, 0.22)",
+              background: "#FFF1F2",
+              border: "1px solid #FFE4E6",
               borderRadius: "var(--radius-md)",
               padding: "10px 14px",
               marginBottom: 14,
               fontSize: 12,
-              color: "#FFA8B2",
+              color: "#9F1239",
               lineHeight: 1.5,
               display: "flex",
               alignItems: "flex-start",
               gap: 10,
             }}
           >
-            <AlertTriangle size={15} color="var(--coral)" style={{ flexShrink: 0, marginTop: 2 }} />
+            <AlertTriangle size={15} color="#E11D48" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>Peringatan Beban Kuliah:</strong> Semester ini memiliki beban <strong>{academicCredits} SKS</strong> yang melebihi batas reguler nasional (24 SKS).
             </div>
@@ -3099,20 +3155,20 @@ function SemesterInspectorModal({
         {!isOverMax && isTooLight && (
           <div
             style={{
-              background: "rgba(245, 205, 71, 0.05)",
-              border: "1px solid rgba(245, 205, 71, 0.18)",
+              background: "#FFF7ED",
+              border: "1px solid #FFEDD5",
               borderRadius: "var(--radius-md)",
               padding: "10px 14px",
               marginBottom: 14,
               fontSize: 12,
-              color: "#E8D992",
+              color: "#9A3412",
               lineHeight: 1.5,
               display: "flex",
               alignItems: "flex-start",
               gap: 10,
             }}
           >
-            <AlertCircle size={15} color="var(--lime)" style={{ flexShrink: 0, marginTop: 2 }} />
+            <AlertCircle size={15} color="#EA580C" style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>Catatan Beban Semester:</strong> Beban semester ini ({academicCredits} SKS) tergolong ringan (&lt; 12 SKS).
             </div>
@@ -3163,12 +3219,19 @@ function SemesterInspectorModal({
                       className="task-item"
                       style={{
                         background: isCompleted
-                          ? "rgba(255, 255, 255, 0.015)"
+                          ? "#F0FDF4"
                           : isNeedsRepeat
-                          ? "rgba(255, 126, 138, 0.03)"
+                          ? "#FFF1F2"
                           : isMilestone
-                          ? "rgba(117, 189, 165, 0.03)"
-                          : "rgba(255, 255, 255, 0.02)",
+                          ? "#F0FDFA"
+                          : "#FAF9F5",
+                        border: isCompleted
+                          ? "1px solid #BBF7D0"
+                          : isNeedsRepeat
+                          ? "1px solid #FECDD3"
+                          : isMilestone
+                          ? "1px dashed #99F6E4"
+                          : "1px solid rgba(0, 0, 0, 0.07)",
                       }}
                     >
                       <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
@@ -3228,10 +3291,10 @@ function SemesterInspectorModal({
                             <span
                               style={{
                                 fontSize: 10,
-                                fontWeight: 600,
-                                background: "rgba(245, 205, 71, 0.08)",
-                                border: "1px solid rgba(245, 205, 71, 0.2)",
-                                color: "var(--lime)",
+                                fontWeight: 700,
+                                background: "rgba(22, 163, 74, 0.12)",
+                                border: "1px solid rgba(22, 163, 74, 0.25)",
+                                color: "#15803D",
                                 padding: "1px 6px",
                                 borderRadius: "var(--radius-sm)",
                                 display: "inline-flex",
@@ -3299,15 +3362,15 @@ function SemesterInspectorModal({
             href={`/app/simulator?semester=${plan.semesterNum}`}
             style={{
               fontSize: 12,
-              color: "var(--lime)",
+              color: "var(--amber-deep)",
               display: "inline-flex",
               alignItems: "center",
               gap: 5,
               textDecoration: "none",
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
-            <Compass size={13} />
+            <Compass size={13} color="var(--amber)" />
             Uji Alternatif Semester Ini di Simulator
           </Link>
 
@@ -3485,9 +3548,9 @@ function TaskRowEditForm({
 // Task Status Icon Helper
 // ─────────────────────────────────────────────────────────────────────────────
 function TaskStatusBadge({ status }: { status: string }) {
-  if (status === "done") return <CheckCircle2 size={16} color="var(--lime)" />;
-  if (status === "in_progress") return <Clock size={16} color="var(--teal)" />;
-  if (status === "delayed") return <AlertCircle size={16} color="var(--coral)" />;
-  if (status === "cancelled") return <Circle size={16} color="var(--text-muted)" />;
-  return <Circle size={16} color="var(--blue)" />;
+  if (status === "done") return <CheckCircle2 size={15} color="#15803D" />;
+  if (status === "in_progress") return <Clock size={15} color="#0D9488" />;
+  if (status === "delayed") return <AlertCircle size={15} color="#E11D48" />;
+  if (status === "cancelled") return <Circle size={15} color="#71717A" />;
+  return <Circle size={15} color="#4F46E5" />;
 }

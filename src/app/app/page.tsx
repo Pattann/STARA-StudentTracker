@@ -129,7 +129,7 @@ export default function DashboardPage() {
           label="SKS Selesai"
           value={`${profile?.completedCredits ?? 0} SKS`}
           sub={`dari ${profile?.totalCurriculumCredits ?? 144} SKS kurikulum`}
-          accent="var(--lime)"
+          accent="var(--amber-deep)"
           progress={progress}
         />
         <StatCard
@@ -199,7 +199,7 @@ export default function DashboardPage() {
             {currentSemesterPlan.tasks.slice(0, 6).map((task) => (
               <div key={task.id} className="task-item">
                 {task.status === "done" ? (
-                  <CheckCircle2 size={16} color="var(--lime)" />
+                  <CheckCircle2 size={16} color="var(--forest-green)" />
                 ) : task.status === "in_progress" ? (
                   <Clock size={16} color="var(--teal)" />
                 ) : (
@@ -241,7 +241,7 @@ export default function DashboardPage() {
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
           {[
-            { href: "/app/simulator", icon: Zap, label: "Buat Simulasi", sub: "Evaluasi skenario akademik", color: "var(--lime)" },
+            { href: "/app/simulator", icon: Zap, label: "Buat Simulasi", sub: "Evaluasi skenario akademik", color: "var(--amber)" },
             { href: "/app/roadmap", icon: Map, label: "Lihat Roadmap", sub: "Timeline semester", color: "var(--teal)" },
             { href: "/app/templates", icon: BookOpen, label: "Jelajahi Template", sub: "Dari mahasiswa lain", color: "var(--blue)" },
             { href: "/app/reminders", icon: Bell, label: "Pengingat", sub: "Deadline penting", color: "var(--coral)" },

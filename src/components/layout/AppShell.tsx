@@ -31,7 +31,6 @@ const navItems = [
   { href: "/app/simulator", label: "Simulasi Skenario", icon: Zap },
   { href: "/app/templates", label: "Jelajahi Template", icon: BookMarked },
   { href: "/app/thesis", label: "Panduan Skripsi", icon: BookOpen },
-  { href: "/app/career", label: "Rencana Setelah Lulus", icon: Compass },
   { href: "/app/achievements", label: "Prestasi & CV", icon: Award },
   { href: "/app/reminders", label: "Pengingat", icon: Bell },
 ];
@@ -68,7 +67,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
         {/* Logo */}
         <div className="sidebar-logo" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img
-            src="/whitestara.svg"
+            src="/blackstara.svg"
             alt="Logo STARA"
             width={26}
             height={26}
@@ -150,8 +149,8 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               className="sidebar-nav-item"
               onClick={() => onClose()}
             >
-              <Sparkles size={17} aria-hidden="true" color="var(--lime)" />
-              <span style={{ color: "var(--lime)", fontWeight: 600 }}>Setup Onboarding</span>
+              <Sparkles size={17} aria-hidden="true" color="#D97706" />
+              <span style={{ color: "#92400E", fontWeight: 700 }}>Setup Onboarding</span>
             </Link>
             <Link
               href="/app/check-ins"
@@ -177,10 +176,11 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           <div
             style={{
               margin: "8px",
-              background: "rgba(245, 205, 71, 0.06)",
-              border: "1px solid rgba(245, 205, 71, 0.2)",
+              background: "#FFFFFF",
+              border: "1px solid var(--border)",
               borderRadius: "var(--radius-md)",
               padding: "12px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
             }}
           >
             <div
@@ -196,16 +196,16 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  background: "var(--lime)",
-                  boxShadow: "0 0 6px var(--lime)",
+                  background: "#16A34A",
+                  boxShadow: "0 0 6px rgba(22, 163, 74, 0.4)",
                 }}
               />
               <span
                 style={{
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: 800,
-                  color: "var(--lime)",
-                  letterSpacing: "0.05em",
+                  color: "#15803D",
+                  letterSpacing: "0.06em",
                   textTransform: "uppercase",
                 }}
               >
@@ -216,7 +216,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               style={{
                 fontSize: 13,
                 fontWeight: 700,
-                color: "#F5F5F0",
+                color: "var(--text-primary)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -227,7 +227,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             <div
               style={{
                 fontSize: 11,
-                color: "#A4AAA5",
+                color: "var(--text-secondary)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -284,12 +284,13 @@ export function Topbar({
           <span
             style={{
               fontSize: 12,
-              color: "var(--lime)",
-              background: "rgba(215,243,106,0.1)",
-              border: "1px solid rgba(215,243,106,0.2)",
+              color: "#92400E",
+              background: "rgba(245, 205, 71, 0.22)",
+              border: "1px solid rgba(217, 119, 6, 0.3)",
               borderRadius: "var(--radius-pill)",
               padding: "4px 12px",
-              fontWeight: 600,
+              fontWeight: 700,
+              letterSpacing: "0.02em",
             }}
           >
             Demo Workspace
