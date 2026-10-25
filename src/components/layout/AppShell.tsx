@@ -21,6 +21,7 @@ import {
   X,
   Menu,
   Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { useSession } from "@/features/session/context";
 
@@ -131,6 +132,18 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             >
               <User size={17} aria-hidden="true" />
               <span>Profil & Pengaturan</span>
+            </Link>
+            <Link
+              href="/admin"
+              className="sidebar-nav-item"
+              style={{
+                background: "rgba(245, 205, 71, 0.08)",
+                border: "1px solid rgba(245, 205, 71, 0.2)",
+              }}
+              onClick={() => onClose()}
+            >
+              <ShieldCheck size={17} aria-hidden="true" color="var(--lime)" />
+              <span style={{ color: "var(--lime)", fontWeight: 700 }}>Dashboard Admin</span>
             </Link>
             <Link
               href="/onboarding"
@@ -282,6 +295,25 @@ export function Topbar({
             Demo Workspace
           </span>
         )}
+        <Link
+          href="/admin"
+          style={{
+            fontSize: 12,
+            color: "var(--text-primary)",
+            background: "rgba(245, 205, 71, 0.12)",
+            border: "1px solid rgba(245, 205, 71, 0.3)",
+            borderRadius: "var(--radius-pill)",
+            padding: "4px 12px",
+            fontWeight: 700,
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <ShieldCheck size={14} color="var(--lime)" />
+          <span>Mode Admin</span>
+        </Link>
         <Link href="/app/profile" aria-label="Profil pengguna">
           <div
             style={{

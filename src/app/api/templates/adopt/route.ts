@@ -65,10 +65,40 @@ export async function POST(req: NextRequest) {
 
     if (steps.length === 0) {
       steps = [
-        { semesterNum: 5, targetCredits: 20, courses: ["Mata Kuliah Inti I (3 SKS)", "Mata Kuliah Inti II (3 SKS)"] },
-        { semesterNum: 6, targetCredits: 20, courses: ["Magang MBKM (20 SKS)"] },
-        { semesterNum: 7, targetCredits: 18, courses: ["Kerja Praktik (3 SKS)", "Proposal Skripsi (3 SKS)"] },
-        { semesterNum: 8, targetCredits: 10, courses: ["Skripsi / Tugas Akhir (6 SKS)"] },
+        {
+          semesterNum: 5,
+          targetCredits: 20,
+          courses: [
+            "Kecerdasan Buatan & Machine Learning (4 SKS)",
+            "Pengembangan Aplikasi Web & Cloud (3 SKS)",
+            "Keamanan Informasi & Kriptografi (3 SKS)",
+            "Basis Data Terdistribusi & Big Data (3 SKS)",
+            "Sistem Operasi Lanjut & Virtualisasi (3 SKS)",
+            "Analisis & Desain Algoritma Kompleks (3 SKS)",
+          ],
+        },
+        { semesterNum: 6, targetCredits: 20, courses: ["Program Magang MBKM Industri (20 SKS)"] },
+        {
+          semesterNum: 7,
+          targetCredits: 19,
+          courses: [
+            "Proyek Capstone Rekayasa Terpadu (4 SKS)",
+            "Seminar Proposal Skripsi (2 SKS)",
+            "Etika Profesi & Hukum Teknologi (2 SKS)",
+            "Tata Kelola TI & Manajemen Proyek (3 SKS)",
+            "Cloud Architecture & DevOps (3 SKS)",
+            "Computer Vision & AI Terapan (3 SKS)",
+            "Technopreneurship Digital (2 SKS)",
+          ],
+        },
+        {
+          semesterNum: 8,
+          targetCredits: 8,
+          courses: [
+            "Skripsi / Tugas Akhir (6 SKS)",
+            "Kolokium & Publikasi Ilmiah (2 SKS)",
+          ],
+        },
       ];
     }
 

@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/prisma";
 import { calculateFullRoadmap, applyScenarioToDraftRoadmap, compareRoadmaps, generateRuleBasedTradeoffs } from "@/server/rules-engine";
 import { parseJsonSafe } from "@/lib/utils";
 import { z } from "zod";
+import { getDefaultTasksForSemester } from "@/server/curriculum/defaults";
 
 const ScenarioParamsSchema = z.object({
   type: z.enum(["magang", "mbkm", "advanced_course", "exchange", "cuti"]),
@@ -50,12 +51,88 @@ export async function POST(req: NextRequest) {
 
     const params = parsed.data;
 
-    // Get roadmap and profile
-    const roadmap = await prisma.roadmap.findFirst({
+    // Get or auto-initialize profile
+    let profile = await prisma.academicProfile.findUnique({
+      where: { guestSessionId: session.id },
+    });
+
+    if (!profile) {
+      profile = await prisma.academicProfile.create({
+        data: {
+          guestSessionId: session.id,
+          institutionName: "Telkom University",
+          programName: "S1 Informatika",
+          educationLevel: "S1",
+          entryYear: 2023,
+          currentSemester: 5,
+          totalCurriculumCredits: 144,
+          completedCredits: 84,
+          inProgressCredits: 20,
+          gpa: 3.65,
+          goals: "balanced",
+          interests: "Software Engineering & Artificial Intelligence",
+        },
+      });
+    }
+
+    // Get or auto-initialize roadmap
+    let roadmap = await prisma.roadmap.findFirst({
       where: { guestSessionId: session.id },
       orderBy: { createdAt: "desc" },
     });
-    if (!roadmap) return NextResponse.json({ error: "Roadmap tidak ditemukan." }, { status: 404 });
+
+    if (!roadmap) {
+      roadmap = await prisma.roadmap.create({
+        data: {
+          guestSessionId: session.id,
+          title: `Roadmap Akademik: ${profile.programName}`,
+          status: "active",
+        },
+      });
+
+      const newVersion = await prisma.roadmapVersion.create({
+        data: {
+          roadmapId: roadmap.id,
+          versionNum: 1,
+          label: "Baseline Akademik",
+          isBaseline: true,
+        },
+      });
+
+      await prisma.roadmap.update({
+        where: { id: roadmap.id },
+        data: { currentVersionId: newVersion.id },
+      });
+
+      for (let s = profile.currentSemester; s <= 8; s++) {
+        const defaultTasks = getDefaultTasksForSemester(s, profile.programName, s === profile.currentSemester);
+        const academicCredits = defaultTasks.reduce((sum, t) => sum + (t.credits || 0), 0);
+
+        const plan = await prisma.semesterPlan.create({
+          data: {
+            roadmapVersionId: newVersion.id,
+            semesterNum: s,
+            isCurrentSemester: s === profile.currentSemester,
+            targetCredits: academicCredits > 0 ? academicCredits : (s === 8 ? 8 : 20),
+            plannedCredits: academicCredits > 0 ? academicCredits : (s === 8 ? 8 : 20),
+            semesterLabel: `Semester ${s} (${s % 2 === 1 ? "Ganjil" : "Genap"})`,
+          },
+        });
+
+        await prisma.roadmapTask.createMany({
+          data: defaultTasks.map((t) => ({
+            semesterPlanId: plan.id,
+            title: t.title,
+            category: t.category,
+            credits: t.credits,
+            status: t.status,
+            courseCode: t.courseCode || null,
+            notes: t.notes || (t.credits > 0 ? "Kurikulum reguler" : "Milestone akademik"),
+            certaintyLevel: t.certaintyLevel,
+          })),
+        });
+      }
+    }
 
     const version = roadmap.currentVersionId
       ? await prisma.roadmapVersion.findUnique({
@@ -68,10 +145,6 @@ export async function POST(req: NextRequest) {
           },
         })
       : null;
-
-    const profile = await prisma.academicProfile.findUnique({
-      where: { guestSessionId: session.id },
-    });
 
     if (!version || !profile) {
       return NextResponse.json({ error: "Data tidak lengkap." }, { status: 400 });
@@ -119,6 +192,16 @@ export async function POST(req: NextRequest) {
         scenarioSummary: `Skenario: ${scenarioResult.remainingCredits} SKS tersisa menuju estimasi lulus semester ${scenarioResult.estimatedGraduationSemester ?? 8}.`,
         conflicts: [...diff.risks, ...scenarioResult.conflicts],
         unknowns: diff.unknowns,
+        studentProfile: {
+          institutionName: profile.institutionName,
+          programName: profile.programName,
+          educationLevel: profile.educationLevel,
+          currentSemester: profile.currentSemester,
+          completedCredits: profile.completedCredits,
+          totalCurriculumCredits: profile.totalCurriculumCredits,
+          gpa: profile.gpa ?? 3.5,
+          interests: profile.interests ?? "",
+        },
       });
     } catch {
       explanation = generateRuleBasedTradeoffs(params.type, diff);

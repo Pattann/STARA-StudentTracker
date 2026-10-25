@@ -34,32 +34,45 @@ export const CURRICULUM_CATALOG: Record<string, CatalogCourse[]> = {
     { code: "IF2103", name: "Sistem Operasi", credits: 3, semesterNum: 3, category: "akademik", prerequisites: ["IF1202"], description: "Manajemen proses, threads, konkurensi, memori virtual, dan file system." },
     { code: "IF2104", name: "Strategi Algoritma", credits: 3, semesterNum: 3, category: "akademik", prerequisites: ["IF1201"], description: "Divide and conquer, greedy, dynamic programming, dan branch and bound." },
 
-    // Semester 4
+    // Semester 4 (20 SKS)
     { code: "IF2201", name: "Rekayasa Perangkat Lunak (RPL)", credits: 3, semesterNum: 4, category: "akademik", prerequisites: ["IF2101"], description: "SDLC, Scrum/Agile, analisis kebutuhan sistem, dan testing software." },
     { code: "IF2202", name: "Jaringan Komputer", credits: 3, semesterNum: 4, category: "akademik", prerequisites: ["IF2103"], description: "OSI Layer, TCP/IP, routing, subnetting, dan socket programming." },
     { code: "IF2203", name: "Probabilitas & Statistika Komputasi", credits: 3, semesterNum: 4, category: "akademik", description: "Distribusi probabilitas, regresi linier, pengujian hipotesis, dan data analytics." },
     { code: "IF2204", name: "Interaksi Manusia & Komputer (UI/UX)", credits: 3, semesterNum: 4, category: "akademik", description: "Prinsip desain UX, wireframing Figma, usability testing, dan aksesibilitas web." },
+    { code: "IF2205", name: "Teori Bahasa & Otomata", credits: 3, semesterNum: 4, category: "akademik", description: "Finite state automata, regular grammar, pushdown automata, dan mesin Turing." },
+    { code: "IF2206", name: "Pemrograman Berorientasi Objek Lanjut", credits: 3, semesterNum: 4, category: "akademik", prerequisites: ["IF2101"], description: "Design patterns, concurrent programming, dan arsitektur modular." },
+    { code: "KU2001", name: "Pancasila & Kewarganegaraan", credits: 2, semesterNum: 4, category: "akademik", description: "Pendidikan kebangsaan, integritas moral, dan etika warga negara." },
 
-    // Semester 5
+    // Semester 5 (19 SKS)
     { code: "IF3101", name: "Kecerdasan Buatan & Pembelajaran Mesin", credits: 4, semesterNum: 5, category: "akademik", prerequisites: ["IF2104", "IF2203"], description: "Algoritma supervised & unsupervised learning, decision tree, neural network, dan evaluasi model." },
     { code: "IF3102", name: "Pengembangan Aplikasi Web Lanjut", credits: 3, semesterNum: 5, category: "akademik", prerequisites: ["IF2102"], description: "Next.js, REST API, GraphQL, authentication JWT/OAuth, dan web deployment." },
     { code: "IF3103", name: "Basis Data Terdistribusi & Big Data", credits: 3, semesterNum: 5, category: "akademik", prerequisites: ["IF2102"], description: "NoSQL (MongoDB/Redis), sharding, replikasi data, dan Apache Spark." },
     { code: "IF3104", name: "Keamanan Informasi & Kriptografi", credits: 3, semesterNum: 5, category: "akademik", description: "Enkripsi simetrik/asimetrik, hash SHA, SSL/TLS, ethical hacking, dan OWASP Top 10." },
+    { code: "IF3105", name: "Sistem Operasi Lanjut & Virtualisasi", credits: 3, semesterNum: 5, category: "akademik", description: "Kernel programming, containers Docker, dan hypervisor management." },
+    { code: "IF3106", name: "Analisis & Desain Algoritma Kompleks", credits: 3, semesterNum: 5, category: "akademik", description: "Graph algorithms lanjut, NP-completeness, dan optimasi heuristik." },
 
-    // Semester 6
+    // Semester 6 (19 SKS)
     { code: "IF3201", name: "Sistem Terdistribusi & Cloud Computing", credits: 3, semesterNum: 6, category: "akademik", description: "Microservices architecture, Docker, Kubernetes, dan cloud AWS/GCP." },
     { code: "IF3202", name: "Pra-Tugas Akhir & Metodologi Penelitian", credits: 2, semesterNum: 6, category: "skripsi", description: "Penulisan karya ilmiah ilmiah, penelusuran pustaka IEEE/Scopus, dan draf proposal skripsi." },
     { code: "IF3203", name: "Kerja Praktik / Magang Industri (KP)", credits: 3, semesterNum: 6, category: "karier", description: "Praktik kerja di perusahaan teknologi selama 2-3 bulan." },
     { code: "IF3204", name: "Pemrosesan Bahasa Alami (NLP)", credits: 3, semesterNum: 6, category: "akademik", description: "Tokenisasi, word embeddings, transformer architecture, dan Large Language Models (LLM)." },
+    { code: "IF3205", name: "Rekayasa Kebutuhan & Kualitas Perangkat Lunak", credits: 3, semesterNum: 6, category: "akademik", description: "Requirement engineering, automated QA testing, CI/CD pipeline, dan TDD." },
+    { code: "IF3206", name: "Internet of Things (IoT) & Embedded System", credits: 3, semesterNum: 6, category: "akademik", description: "Sensor, mikrokontroler ESP32/Raspberry Pi, dan protokol MQTT/CoAP." },
+    { code: "IF3207", name: "Kapita Selekta Informatika I", credits: 2, semesterNum: 6, category: "akademik", description: "Kuliah praktisi industri tentang tren software architecture modern." },
 
-    // Semester 7
+    // Semester 7 (19 SKS Reguler atau 20 SKS MBKM)
     { code: "IF4101", name: "Program MBKM Magang Bersertifikat", credits: 20, semesterNum: 7, category: "karier", description: "Konversi SKS magang industri penuh 1 semester di perusahaan mitra resmi." },
     { code: "IF4102", name: "Seminar Proposal Skripsi", credits: 2, semesterNum: 7, category: "skripsi", prerequisites: ["IF3202"], description: "Ujian dan presentasi proposal Tugas Akhir di hadapan dewan penguji." },
     { code: "IF4103", name: "Etika Profesi & Hukum Teknologi", credits: 2, semesterNum: 7, category: "akademik", description: "UU ITE, hak cipta software, etika kecerdasan buatan, dan tanggung jawab profesional." },
+    { code: "IF4104", name: "Proyek Capstone Rekayasa Terpadu", credits: 4, semesterNum: 7, category: "akademik", description: "Pengembangan produk software komprehensif skala produksi secara berkelompok." },
+    { code: "IF4105", name: "Tata Kelola TI & Manajemen Proyek", credits: 3, semesterNum: 7, category: "akademik", description: "IT governance COBIT, ITIL, risk management, dan kepemimpinan tim teknologi." },
+    { code: "IF4106", name: "Peminatan: Cloud Architecture & DevOps", credits: 3, semesterNum: 7, category: "akademik", description: "Infrastructure as Code (Terraform), serverless architecture, dan site reliability." },
+    { code: "IF4107", name: "Peminatan: Computer Vision & AI Terapan", credits: 3, semesterNum: 7, category: "akademik", description: "Object detection YOLO, segmentation, OpenCV, dan deep learning PyTorch." },
+    { code: "IF4108", name: "Technopreneurship & Inovasi Bisnis Digital", credits: 2, semesterNum: 7, category: "akademik", description: "Validasi ide startup, lean canvas model, pitch deck, dan valuasi produk." },
 
-    // Semester 8
+    // Semester 8 (8 SKS)
     { code: "IF4201", name: "Tugas Akhir / Skripsi", credits: 6, semesterNum: 8, category: "skripsi", prerequisites: ["IF4102"], description: "Penyusunan naskah riset/produk inovatif, bimbingan dosen, dan sidang sarjana." },
-    { code: "IF4202", name: "Kapita Selekta Informatika", credits: 2, semesterNum: 8, category: "akademik", description: "Kuliah tamu industri mengenai tren terkini teknologi perangkat lunak." },
+    { code: "IF4202", name: "Kolokium & Publikasi Ilmiah", credits: 2, semesterNum: 8, category: "skripsi", description: "Publikasi paper prosiding nasional atau jurnal terindeks Sinta/Scopus." },
   ],
 
   "Manajemen": [

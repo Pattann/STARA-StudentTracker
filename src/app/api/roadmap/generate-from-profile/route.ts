@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
+import { getDefaultTasksForSemester } from "@/server/curriculum/defaults";
 
 async function resolveSession(req: NextRequest) {
   const token = req.headers.get("x-demo-token") ?? req.nextUrl.searchParams.get("token");
@@ -110,8 +111,12 @@ Rancanglah rencana semester dan mata kuliah yang realistis untuk mahasiswa:
 - Target Ritme: ${profile.goals} (fast = lulus semester 7, balanced = semester 8, active = fokus magang/MBKM di semester 6-7)
 - Minat Spesifik: ${profile.interests || "Umum"}
 
+ATURAN KRUSIAL BEBAN SKS AKADEMIK:
+1. Setiap semester reguler (di luar semester akhir skripsi) WAJIB memiliki beban realistis minimal 18–20 SKS akademik (terdiri dari 5–7 mata kuliah nyata dengan bobot 2–4 SKS per mata kuliah). DILARANG KERAS hanya menyusun 1–2 mata kuliah atau di bawah 18 SKS!
+2. Semester akhir (Semester ${targetSem}) berisi Skripsi / Tugas Akhir (6 SKS) dan mata kuliah pendukung / kolokium (2 SKS) total 8 SKS.
+3. Total akumulasi SKS semester harus mencukupi sisa SKS kelulusan (${remainingCredits} SKS).
+
 Susunlah daftar semester mulai dari semester ${currSem} hingga target lulus (semester ${targetSem}).
-Untuk setiap semester, sertakan mata kuliah khas prodi ${profile.programName} (misal mata kuliah wajib, peminatan yang sesuai minat, magang/proyek, dan skripsi di semester akhir).
 HANYA kembalikan format JSON valid tanpa backtick \`\`\`json:
 {
   "semesters": [
@@ -120,20 +125,35 @@ HANYA kembalikan format JSON valid tanpa backtick \`\`\`json:
       "semesterLabel": "Semester ${currSem} (Berjalan)",
       "targetCredits": 20,
       "tasks": [
-        { "title": "Nama Mata Kuliah Nyata / Tugas", "category": "akademik", "credits": 3, "status": "in_progress", "notes": "Keterangan singkat" }
+        { "title": "Nama Mata Kuliah Nyata", "category": "akademik", "credits": 3, "status": "in_progress", "notes": "Keterangan singkat" }
       ]
     }
   ]
 }
 `;
-        const res = await ai.models.generateContent({
-          model: "gemini-1.5-flash",
-          contents: prompt,
-          config: { responseMimeType: "application/json" },
-        });
-        const parsed = JSON.parse(res.text || "{}");
-        if (Array.isArray(parsed.semesters) && parsed.semesters.length > 0) {
-          aiSemesterData = parsed.semesters;
+        const CANDIDATE_MODELS = [
+          "gemini-3.1-flash-lite",
+          "gemini-3.5-flash-lite",
+          "gemini-3-flash-preview",
+          "gemini-3.5-flash",
+          "gemini-3.6-flash",
+        ];
+
+        for (const model of CANDIDATE_MODELS) {
+          try {
+            const res = await ai.models.generateContent({
+              model,
+              contents: prompt,
+              config: { responseMimeType: "application/json" },
+            });
+            const parsed = JSON.parse(res.text || "{}");
+            if (Array.isArray(parsed.semesters) && parsed.semesters.length > 0) {
+              aiSemesterData = parsed.semesters;
+              break;
+            }
+          } catch (modelErr) {
+            console.warn(`[Generate AI Roadmap] Model ${model} limit/gagal, mencoba cadangan...`);
+          }
         }
       } catch (e) {
         console.warn("[Generate AI Roadmap Fallback]", e);
@@ -170,123 +190,37 @@ HANYA kembalikan format JSON valid tanpa backtick \`\`\`json:
         }
       }
     } else {
-      // Deterministic Fallback jika AI tidak merespon
+      // Deterministic Fallback menggunakan kurikulum standar nasional / institusi (18-20 SKS per semester)
       for (let sem = currSem; sem <= targetSem; sem++) {
         const isCurrent = sem === currSem;
-        const isFinal = sem === targetSem;
-        const targetCredits = isFinal
-          ? Math.max(6, remainingCredits - avgCredits * (futureSemCount - 1))
-          : avgCredits;
+        const defaultTasks = getDefaultTasksForSemester(sem, profile.programName, isCurrent);
+        const academicCredits = defaultTasks.reduce((sum, t) => sum + (t.credits || 0), 0);
 
         const plan = await prisma.semesterPlan.create({
           data: {
             roadmapVersionId: version.id,
             semesterNum: sem,
             isCurrentSemester: isCurrent,
-            targetCredits,
-            plannedCredits: targetCredits,
+            targetCredits: academicCredits > 0 ? academicCredits : (sem === 8 ? 8 : 20),
+            plannedCredits: academicCredits > 0 ? academicCredits : (sem === 8 ? 8 : 20),
             semesterLabel: `Semester ${sem} (${sem % 2 === 1 ? "Ganjil" : "Genap"})`,
           },
         });
 
-      if (isCurrent) {
         await prisma.roadmapTask.createMany({
-          data: [
-            {
-              semesterPlanId: plan.id,
-              title: `Mata Kuliah Inti ${profile.programName} I`,
-              category: "akademik",
-              credits: 3,
-              status: "in_progress",
-              certaintyLevel: "pasti",
-            },
-            {
-              semesterPlanId: plan.id,
-              title: `Mata Kuliah Inti ${profile.programName} II`,
-              category: "akademik",
-              credits: 3,
-              status: "in_progress",
-              certaintyLevel: "pasti",
-            },
-            {
-              semesterPlanId: plan.id,
-              title: "Praktikum & Tugas Terapan",
-              category: "akademik",
-              credits: 3,
-              status: "in_progress",
-              certaintyLevel: "pasti",
-            },
-            {
-              semesterPlanId: plan.id,
-              title: "Konsultasi Rencana Studi Dosen Wali",
-              category: "akademik",
-              credits: 0,
-              status: "done",
-              certaintyLevel: "pasti",
-            },
-          ],
-        });
-      } else if (isFinal) {
-        await prisma.roadmapTask.createMany({
-          data: [
-            {
-              semesterPlanId: plan.id,
-              title: "Skripsi / Tugas Akhir",
-              category: "skripsi",
-              credits: 6,
-              status: "planned",
-              certaintyLevel: "estimasi",
-            },
-            {
-              semesterPlanId: plan.id,
-              title: "Bimbingan & Revisi Draf Naskah",
-              category: "skripsi",
-              credits: 0,
-              status: "planned",
-              certaintyLevel: "estimasi",
-            },
-            {
-              semesterPlanId: plan.id,
-              title: "Sidang Tugas Akhir & Yudisium",
-              category: "skripsi",
-              credits: 0,
-              status: "planned",
-              certaintyLevel: "estimasi",
-            },
-          ],
-        });
-      } else {
-        await prisma.roadmapTask.createMany({
-          data: [
-            {
-              semesterPlanId: plan.id,
-              title: sem === 6 && profile.goals === "active" ? "Program Magang MBKM Industri" : `Mata Kuliah Lanjut Semester ${sem}`,
-              category: sem === 6 && profile.goals === "active" ? "magang" : "akademik",
-              credits: sem === 6 && profile.goals === "active" ? 20 : 3,
-              status: "planned",
-              certaintyLevel: "estimasi",
-            },
-            {
-              semesterPlanId: plan.id,
-              title: `Mata Kuliah Pilihan ${profile.programName}`,
-              category: "akademik",
-              credits: 3,
-              status: "planned",
-              certaintyLevel: "estimasi",
-            },
-            {
-              semesterPlanId: plan.id,
-              title: "Eksplorasi Topik Skripsi & Calon Pembimbing",
-              category: "skripsi",
-              credits: 0,
-              status: "planned",
-              certaintyLevel: "estimasi",
-            },
-          ],
+          data: defaultTasks.map((t) => ({
+            semesterPlanId: plan.id,
+            title: t.title,
+            category: t.category,
+            credits: t.credits,
+            status: t.status,
+            courseCode: t.courseCode || null,
+            notes: t.notes || (t.credits > 0 ? "Kurikulum reguler" : "Milestone akademik"),
+            certaintyLevel: t.certaintyLevel,
+          })),
         });
       }
     }
-  }
 
     return NextResponse.json({
       success: true,

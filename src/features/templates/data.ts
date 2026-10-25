@@ -1032,11 +1032,30 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
       { question: "Apakah bisa magang di semester 6?", answer: "Bisa jika sisa SKS memungkinkan dan telah disetujui oleh koordinator MBKM prodi." },
     ],
     items: [
+      // Semester 5 (20 SKS)
       { title: "Pemrograman Berorientasi Objek Lanjut (Tel-U)", category: "akademik", credits: 3, courseCode: "CSI3A3", notes: "Mata kuliah wajib keahlian komputasi.", targetSemesterNum: 5, certaintyLevel: "pasti" },
       { title: "Rekayasa Perangkat Lunak Berorientasi Komponen", category: "akademik", credits: 3, courseCode: "CSI3B3", notes: "Microservices & Cloud-Native Architecture.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Kecerdasan Buatan & Pembelajaran Mesin", category: "akademik", credits: 4, courseCode: "CSI3D4", notes: "Algoritma supervised & unsupervised learning.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Keamanan Informasi & Kriptografi", category: "akademik", credits: 3, courseCode: "CSI3E3", notes: "Kriptografi & pengamanan jaringan.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Basis Data Terdistribusi & Big Data", category: "akademik", credits: 4, courseCode: "CSI3F4", notes: "NoSQL, Cassandra, dan Hadoop ecosystem.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Sistem Operasi Lanjut & Virtualisasi", category: "akademik", credits: 3, courseCode: "CSI3G3", notes: "Container orchestration & kernel programming.", targetSemesterNum: 5, certaintyLevel: "pasti" },
       { title: "Pengumpulan Poin TAK Ekstrakurikuler (Target 40 Poin)", category: "tak", credits: 0, notes: "Upload sertifikat ke portal I-Gracias.", targetSemesterNum: 5, certaintyLevel: "pasti" },
-      { title: "Magang MBKM Bersertifikat (Konversi 20 SKS)", category: "karier", credits: 20, notes: "Konversi mata kuliah elektif dan kerja praktik.", targetSemesterNum: 7, certaintyLevel: "pasti" },
+
+      // Semester 6 (18 SKS)
+      { title: "Sistem Terdistribusi & Komputasi Awan", category: "akademik", credits: 3, courseCode: "CSI3C3", notes: "Arsitektur cloud AWS/GCP.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Pra-Tugas Akhir & Metodologi Penelitian", category: "skripsi", credits: 2, courseCode: "CSI3H2", notes: "Penulisan karya ilmiah & proposal TA.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Kerja Praktik Lapangan (KP)", category: "karier", credits: 3, courseCode: "CSI3I3", notes: "Magang industri 2-3 bulan.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Pemrosesan Bahasa Alami (NLP)", category: "akademik", credits: 3, courseCode: "CSI3J3", notes: "Transformer & Large Language Models.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Internet of Things & Sistem Tertanam", category: "akademik", credits: 4, courseCode: "CSI3K4", notes: "ESP32, sensor array, dan MQTT.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Kapita Selekta Informatika Industri", category: "akademik", credits: 3, courseCode: "CSI3L3", notes: "Kuliah tamu praktisi software engineer.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Eksplorasi Topik Skripsi & Calon Pembimbing", category: "skripsi", credits: 0, notes: "Konsultasi ke Kelompok Keahlian (KK).", targetSemesterNum: 6, certaintyLevel: "estimasi" },
+
+      // Semester 7 (20 SKS MBKM)
+      { title: "Magang MBKM Bersertifikat (Konversi 20 SKS)", category: "karier", credits: 20, notes: "Konversi mata kuliah elektif dan kerja praktik penuh.", targetSemesterNum: 7, certaintyLevel: "pasti" },
+
+      // Semester 8 (8 SKS)
       { title: "Tugas Akhir Informatika (Skripsi)", category: "skripsi", credits: 6, courseCode: "CSI4Z6", notes: "Penyusunan naskah skripsi dan sidang sarjana.", targetSemesterNum: 8, certaintyLevel: "pasti" },
+      { title: "Kolokium & Publikasi Ilmiah", category: "skripsi", credits: 2, courseCode: "CSI4Y2", notes: "Paper jurnal terindeks Sinta/Scopus.", targetSemesterNum: 8, certaintyLevel: "pasti" },
     ],
   },
   {
@@ -1067,16 +1086,34 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
       { semesterNum: 5, title: "Blok Keahlian Komputasi", focus: "Arsitektur Sistem & Rekayasa Data", targetCredits: 20, strategyTip: "Pilih peminatan Data Science, Cyber Security, atau Software Engineering." },
       { semesterNum: 6, title: "Pengayaan & Proyek Inovasi", focus: "Mata Kuliah Pilihan Prodi & Seminar", targetCredits: 18, strategyTip: "Ikuti sosialisasi program MBKM semester depan." },
       { semesterNum: 7, title: "Program Pengalaman Lapangan / MBKM", focus: "Magang / Studi Independen / Riset", targetCredits: 20, strategyTip: "Lapor kemajuan bulanan ke dosen pembimbing lapangan." },
-      { semesterNum: 8, title: "Penyelesaian Tugas Akhir", focus: "Sidang Tugas Akhir & Yudisium", targetCredits: 6, strategyTip: "Cek syarat bebas pustaka dan verifikasi TAK." },
+      { semesterNum: 8, title: "Penyelesaian Tugas Akhir", focus: "Sidang Tugas Akhir & Yudisium", targetCredits: 8, strategyTip: "Cek syarat bebas pustaka dan verifikasi TAK." },
     ],
     faq: [
       { question: "Berapa batas masa studi maksimal?", answer: "Maksimal 14 semester (7 tahun) sesuai peraturan akademik Telkom University." },
     ],
     items: [
+      // Semester 5 (20 SKS)
       { title: "Sistem Terdistribusi & Komputasi Awan", category: "akademik", credits: 3, courseCode: "CSI3C3", notes: "Kurikulum standar institusi.", targetSemesterNum: 5, certaintyLevel: "pasti" },
-      { title: "Kecerdasan Artifisial & Pembelajaran Mesin", category: "akademik", credits: 3, courseCode: "CSI3D3", notes: "Kurikulum standar institusi.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Pemrograman Berorientasi Objek Lanjut", category: "akademik", credits: 3, courseCode: "CSI3A3", notes: "Design patterns & modular software.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Rekayasa Perangkat Lunak Berorientasi Komponen", category: "akademik", credits: 3, courseCode: "CSI3B3", notes: "Microservices architecture.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Kecerdasan Artifisial & Pembelajaran Mesin", category: "akademik", credits: 4, courseCode: "CSI3D4", notes: "Supervised & deep learning.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Keamanan Informasi & Kriptografi", category: "akademik", credits: 3, courseCode: "CSI3E3", notes: "Enkripsi, digital signature, dan pentesting.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Basis Data Terdistribusi & Big Data", category: "akademik", credits: 4, courseCode: "CSI3F4", notes: "Distributed SQL & NoSQL warehousing.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+
+      // Semester 6 (18 SKS)
+      { title: "Pra-Tugas Akhir & Metodologi Riset Informatika", category: "skripsi", credits: 2, courseCode: "CSI3H2", notes: "Penyusunan draf proposal skripsi.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Kerja Praktik Lapangan Terakreditasi", category: "karier", credits: 3, courseCode: "CSI3I3", notes: "Magang industri 2-3 bulan.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Pemrosesan Bahasa Alami (NLP)", category: "akademik", credits: 3, courseCode: "CSI3J3", notes: "LLM, RAG, dan prompt engineering.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Rekayasa Kebutuhan & Mutu Perangkat Lunak", category: "akademik", credits: 3, courseCode: "CSI3M3", notes: "Automated QA & CI/CD pipeline.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Internet of Things & Sistem Tertanam", category: "akademik", credits: 4, courseCode: "CSI3K4", notes: "Sensor network & edge computing.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+      { title: "Kapita Selekta Informatika", category: "akademik", credits: 3, courseCode: "CSI3L3", notes: "Studi kasus industri teknologi.", targetSemesterNum: 6, certaintyLevel: "pasti" },
+
+      // Semester 7 (20 SKS)
       { title: "Program MBKM Terakreditasi Kampus", category: "karier", credits: 20, notes: "Konversi mata kuliah elektif sesuai panduan akademik.", targetSemesterNum: 7, certaintyLevel: "pasti" },
+
+      // Semester 8 (8 SKS)
       { title: "Sidang Tugas Akhir & Yudisium Sarjana", category: "skripsi", credits: 6, courseCode: "CSI4Z6", notes: "Ujian komprehensif dan pendaftaran wisuda.", targetSemesterNum: 8, certaintyLevel: "pasti" },
+      { title: "Kolokium & Publikasi Ilmiah Nasional", category: "skripsi", credits: 2, courseCode: "CSI4Y2", notes: "Publikasi paper prosiding terakreditasi.", targetSemesterNum: 8, certaintyLevel: "pasti" },
     ],
   },
   {

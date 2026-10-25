@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useSession } from "@/features/session/context";
 import { SCENARIO_TYPES } from "@/lib/constants";
+import CustomAIPlan from "./CustomAIPlan";
 import {
-  Zap, AlertCircle, CheckCircle2, ChevronDown, ChevronUp, History, Play, ArrowRight
+  Zap, AlertCircle, CheckCircle2, History, Play, ArrowRight, Sparkles, RefreshCw
 } from "lucide-react";
 
 type ScenarioType = keyof typeof SCENARIO_TYPES;
@@ -46,13 +47,17 @@ interface SimulationResult {
   };
 }
 
+const CUSTOM_PLAN_TITLE = "Rencana Kustom dengan AI";
+
 export default function SimulatorPage() {
   const { token } = useSession();
-  const [step, setStep] = useState<"select" | "configure" | "result">("select");
+  const [step, setStep] = useState<"select" | "configure" | "result" | "custom">("select");
   const [selectedType, setSelectedType] = useState<ScenarioType | null>(null);
+  const [customSelected, setCustomSelected] = useState(false);
   const [params, setParams] = useState<Record<string, string | number | boolean>>({});
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState("Mengkalkulasi SKS...");
   const [error, setError] = useState<string | null>(null);
   const [pastSimulations, setPastSimulations] = useState<Array<{ id: string; title: string; scenarioType: string; status: string; createdAt: string }>>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -84,7 +89,12 @@ export default function SimulatorPage() {
   const runSimulation = async () => {
     if (!token || !selectedType) return;
     setLoading(true);
+    setLoadingStatus("Mengkalkulasi SKS & semester...");
     setError(null);
+
+    const timer1 = setTimeout(() => setLoadingStatus("STARA AI menganalisis risiko & dampak..."), 1200);
+    const timer2 = setTimeout(() => setLoadingStatus("Menyusun rekomendasi langkah akademis..."), 2800);
+
     try {
       const payload = {
         type: selectedType,
@@ -100,6 +110,8 @@ export default function SimulatorPage() {
         headers: { "Content-Type": "application/json", "x-demo-token": token },
         body: JSON.stringify(payload),
       });
+      clearTimeout(timer1);
+      clearTimeout(timer2);
       const data = await res.json() as SimulationResult & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Gagal menjalankan simulasi.");
       setResult(data);
@@ -138,7 +150,7 @@ export default function SimulatorPage() {
             Simulasi Skenario
           </h1>
           <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-            Evaluasi dampak keputusan akademik sebelum diterapkan.
+            Evaluasi dampak keputusan akademik sebelum diterapkan — dianalisis oleh AI.
           </p>
         </div>
         <button
@@ -192,11 +204,11 @@ export default function SimulatorPage() {
               <div
                 key={type}
                 className={`scenario-card ${selectedType === type ? "selected" : ""}`}
-                onClick={() => setSelectedType(type)}
+                onClick={() => { setSelectedType(type); setCustomSelected(false); }}
                 role="radio"
                 tabIndex={0}
                 aria-checked={selectedType === type}
-                onKeyDown={(e) => e.key === "Enter" && setSelectedType(type)}
+                onKeyDown={(e) => e.key === "Enter" && (setSelectedType(type), setCustomSelected(false))}
               >
                 <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 4 }}>
                   {label}
@@ -206,18 +218,40 @@ export default function SimulatorPage() {
                 </div>
               </div>
             ))}
+            <div
+              className={`scenario-card ${customSelected ? "selected" : ""}`}
+              onClick={() => { setCustomSelected(true); setSelectedType(null); setStep("custom"); }}
+              role="radio"
+              tabIndex={0}
+              aria-checked={customSelected}
+              id="scenario-card-custom-ai"
+              onKeyDown={(e) => e.key === "Enter" && (setCustomSelected(true), setSelectedType(null), setStep("custom"))}
+            >
+              <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                <Sparkles size={14} color="var(--lime)" />
+                {CUSTOM_PLAN_TITLE}
+              </div>
+              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                {CUSTOM_PLAN_DESC}
+              </div>
+            </div>
           </div>
           <div style={{ marginTop: 20 }}>
             <button
               className="btn btn-primary"
-              disabled={!selectedType}
-              onClick={() => setStep("configure")}
+              disabled={!selectedType && !customSelected}
+              onClick={() => setStep(customSelected ? "custom" : "configure")}
             >
               Lanjutkan
               <ArrowRight size={16} />
             </button>
           </div>
         </div>
+      )}
+
+      {/* Step: Rencana Kustom dengan AI */}
+      {step === "custom" && (
+        <CustomAIPlan token={token} onBack={() => setStep("select")} />
       )}
 
       {/* Step: Configure Parameters */}
@@ -246,7 +280,12 @@ export default function SimulatorPage() {
             onClick={runSimulation}
             disabled={loading}
           >
-            {loading ? "Menghitung..." : (
+            {loading ? (
+              <>
+                <RefreshCw size={16} style={{ animation: "spin 1s linear infinite" }} />
+                <span>{loadingStatus}</span>
+              </>
+            ) : (
               <>
                 <Play size={16} />
                 Jalankan Simulasi
@@ -270,10 +309,12 @@ export default function SimulatorPage() {
 
           {/* AI Notice */}
           {result.explanation && (
-            <div className="assumption-notice" style={{ marginBottom: 20 }}>
-              <AlertCircle size={16} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: 13 }}>
-                {result.explanation.isAiGenerated ? "Penjelasan dihasilkan oleh AI." : (result.explanation.fallbackReason ?? "Penjelasan otomatis berbasis aturan.")}
+            <div className="assumption-notice" style={{ marginBottom: 20, background: result.explanation.isAiGenerated ? "rgba(124, 230, 168, 0.08)" : undefined, borderColor: result.explanation.isAiGenerated ? "rgba(124, 230, 168, 0.3)" : undefined }}>
+              {result.explanation.isAiGenerated ? <Sparkles size={16} style={{ flexShrink: 0, color: "var(--lime)" }} /> : <AlertCircle size={16} style={{ flexShrink: 0 }} />}
+              <span style={{ fontSize: 13, color: result.explanation.isAiGenerated ? "var(--lime)" : undefined }}>
+                {result.explanation.isAiGenerated
+                  ? "✨ Analisis mendalam ini dipersonalisasi oleh STARA AI (Google Gemini)."
+                  : (result.explanation.fallbackReason ?? "Penjelasan otomatis berbasis aturan.")}
               </span>
             </div>
           )}
@@ -320,7 +361,7 @@ export default function SimulatorPage() {
           {/* Explanation */}
           <div className="card" style={{ marginBottom: 16 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 12 }}>
-              Ringkasan
+              Ringkasan Analisis AI
             </h3>
             <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
               {result.explanation?.summary}
@@ -340,11 +381,17 @@ export default function SimulatorPage() {
 
             {result.explanation?.risks?.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--coral)", marginBottom: 6, textTransform: "uppercase" }}>Risiko</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--coral)", marginBottom: 6, textTransform: "uppercase" }}>Risiko & Trade-off</div>
                 {result.explanation.risks.map((r, i) => (
                   <div key={i} style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 6, marginBottom: 4 }}>
                     <AlertCircle size={14} color="var(--coral)" style={{ flexShrink: 0, marginTop: 2 }} />
                     {r}
+                  </div>
+                ))}
+                {result.explanation?.tradeoffs?.map((t, i) => (
+                  <div key={`t-${i}`} style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 6, marginBottom: 4 }}>
+                    <AlertCircle size={14} color="var(--orange)" style={{ flexShrink: 0, marginTop: 2 }} />
+                    {t}
                   </div>
                 ))}
               </div>
@@ -438,6 +485,8 @@ export default function SimulatorPage() {
     </div>
   );
 }
+
+const CUSTOM_PLAN_DESC = "Susun rencana studi sendiri bersama AI — tanya jawab bebas dan rekomendasi alternatif.";
 
 const scenarioDescriptions: Record<ScenarioType, string> = {
   magang: "Simulasikan dampak magang terhadap jadwal kuliah dan SKS.",
