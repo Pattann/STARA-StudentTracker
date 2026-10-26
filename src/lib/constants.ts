@@ -59,17 +59,6 @@ export const TEMPLATE_CATEGORIES = {
   organisasi: "Organisasi & Akademik",
 } as const;
 
-export const ACHIEVEMENT_CATEGORIES = {
-  magang: "Magang / Kerja Praktik",
-  organisasi: "Organisasi",
-  proyek: "Proyek",
-  lomba: "Lomba / Kompetisi",
-  sertifikasi: "Sertifikasi",
-  akademik: "Akademik",
-  relawan: "Kesukarelaan",
-  lainnya: "Lainnya",
-} as const;
-
 export const REMINDER_CATEGORIES = {
   akademik: "Deadline Akademik",
   krs: "KRS / Registrasi",

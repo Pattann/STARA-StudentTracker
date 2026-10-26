@@ -98,19 +98,71 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
               semesterPlanId: newPlan.id,
               title: task.title,
               description: task.description,
+              itemType: task.itemType || "COURSE",
               category: task.category,
               credits: task.credits,
               priority: task.priority,
               status: task.status,
               targetDate: task.targetDate,
+              completedDate: task.completedDate,
               courseCode: task.courseCode,
               notes: task.notes,
+              activityPeriod: task.activityPeriod,
+              weeklyHours: task.weeklyHours,
               dataSource: task.dataSource,
               certaintyLevel: task.certaintyLevel,
               prerequisites: task.prerequisites,
             },
           });
         }
+      }
+
+      // Add scenario task if magang, mbkm, exchange, or advanced_course
+      if (sim.scenarioType === "magang" || sim.scenarioType === "mbkm" || sim.scenarioType === "exchange") {
+        const startSem = (params.startSemester as number) || 5;
+        const dur = (params.durationSemesters as number) || 1;
+        const convertedCredits = params.creditsToConvert ? Number(params.creditsToConvert) : 0;
+        const isConfirmed = params.conversionStatus === "dikonfirmasi";
+
+        const targetPlan = await tx.semesterPlan.findFirst({
+          where: { roadmapVersionId: nv.id, semesterNum: startSem },
+        });
+
+        if (targetPlan) {
+          await tx.roadmapTask.create({
+            data: {
+              semesterPlanId: targetPlan.id,
+              title: sim.title || `Program ${sim.scenarioType.toUpperCase()}`,
+              description: `Hasil penerapan simulasi ${sim.scenarioType}.`,
+              itemType: "ACTIVITY",
+              category: "karier",
+              credits: isConfirmed ? convertedCredits : 0,
+              priority: "high",
+              status: "planned",
+              activityPeriod: `${dur} Semester`,
+              weeklyHours: 40,
+              dataSource: "mahasiswa",
+              certaintyLevel: isConfirmed ? "pasti" : "estimasi",
+            },
+          });
+        }
+      }
+
+      // Recalculate plannedCredits for all plans in the new version
+      const allNewPlans = await tx.semesterPlan.findMany({
+        where: { roadmapVersionId: nv.id },
+        include: { tasks: true },
+      });
+
+      for (const p of allNewPlans) {
+        const planned = p.tasks
+          .filter((t) => t.status !== "cancelled" && (t.itemType === "COURSE" || t.category === "akademik" || t.credits > 0))
+          .reduce((sum, t) => sum + (Number(t.credits) || 0), 0);
+
+        await tx.semesterPlan.update({
+          where: { id: p.id },
+          data: { plannedCredits: planned },
+        });
       }
 
       await tx.roadmap.update({
@@ -127,6 +179,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
 
     return NextResponse.json({ success: true, newVersionId: newVersion.id });
+  }
+
+  if (body.action === "archive" || body.action === "cancel") {
+    const sim = await prisma.simulation.findUnique({ where: { id } });
+    if (!sim || sim.guestSessionId !== session.id) {
+      return NextResponse.json({ error: "Tidak ditemukan." }, { status: 404 });
+    }
+    await prisma.simulation.update({
+      where: { id },
+      data: { status: "archived" },
+    });
+    return NextResponse.json({ success: true, message: "Simulasi diarsipkan." });
   }
 
   return NextResponse.json({ error: "Aksi tidak dikenali." }, { status: 400 });

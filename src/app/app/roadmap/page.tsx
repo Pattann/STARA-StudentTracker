@@ -17,6 +17,7 @@ import {
   LayoutTemplate,
   BookOpen,
   BookMarked,
+  Sparkles,
   Users,
   Building2,
   Trash2,
@@ -41,6 +42,11 @@ import {
   PauseCircle,
   Columns2,
   CheckCheck,
+  FileEdit,
+  ShieldAlert,
+  ShieldCheck,
+  MoreHorizontal,
+  Info,
 } from "lucide-react";
 import { TASK_CATEGORIES, TASK_STATUSES, TEMPLATE_CATEGORIES } from "@/lib/constants";
 import { semesterLabel } from "@/lib/utils";
@@ -53,9 +59,13 @@ type Task = {
   title: string;
   status: string; // "planned" | "in_progress" | "done" | "delayed" | "cancelled"
   category: string;
+  itemType?: "COURSE" | "ACTIVITY" | "MILESTONE";
   credits: number;
   courseCode?: string;
   notes?: string;
+  activityPeriod?: string;
+  weeklyHours?: number;
+  prerequisites?: string[];
   certaintyLevel: string;
   dataSource?: string;
   targetDate?: string;
@@ -72,17 +82,35 @@ type SemesterPlan = {
   tasks: Task[];
 };
 
+type ValidationIssue = {
+  type: "error" | "warning" | "info";
+  code: string;
+  message: string;
+  semesterNum?: number;
+  taskId?: string;
+  courseCode?: string;
+};
+
 type RoadmapData = {
   roadmap: {
     id: string;
     title: string;
+    isDraftMode?: boolean;
     currentVersion: {
       id: string;
       versionNum: number;
       label: string | null;
+      isDraft?: boolean;
       semesterPlans: SemesterPlan[];
     } | null;
-    versions: Array<{ id: string; versionNum: number; label: string | null; createdAt: string; isBaseline: boolean }>;
+    versions: Array<{
+      id: string;
+      versionNum: number;
+      label: string | null;
+      isDraft?: boolean;
+      createdAt: string;
+      isBaseline: boolean;
+    }>;
   } | null;
   profile: {
     institutionName: string;
@@ -91,6 +119,7 @@ type RoadmapData = {
     entryYear: number;
     totalCurriculumCredits: number;
     completedCredits: number;
+    inProgressCredits?: number;
     goals: string;
   } | null;
   calculation: {
@@ -98,8 +127,74 @@ type RoadmapData = {
     estimatedGraduationSemester: number | null;
     isProvisional: boolean;
     conflicts: string[];
+    issues?: ValidationIssue[];
+    validationStatus?: "valid" | "warning" | "error";
     creditsByStatus: Record<string, number>;
   } | null;
+  ruleValidation?: {
+    issues: ValidationIssue[];
+    conflicts: string[];
+    validationStatus: "valid" | "warning" | "error";
+  } | null;
+};
+
+const ACTIVITY_CATEGORY_PRESETS: Record<
+  "organisasi" | "kompetisi" | "sertifikasi" | "proyek" | "pengabdian",
+  Array<{ title: string; category: string; defaultHours: number; period: string; notes: string }>
+> = {
+  organisasi: [
+    { title: "Badan Eksekutif Mahasiswa (BEM)", category: "organisasi", defaultHours: 12, period: "1 Periode", notes: "Pengembangan kepemimpinan, advokasi kemahasiswaan, dan tata kelola program kerja." },
+    { title: "Himpunan Mahasiswa Program Studi (HMPS)", category: "organisasi", defaultHours: 10, period: "1 Periode", notes: "Koordinasi kegiatan akademik prodi, mentoring angkatan, dan jejaring alumni." },
+    { title: "Ketua / Koordinator Divisi Kepanitiaan Event", category: "organisasi", defaultHours: 8, period: "3-4 Bulan", notes: "Manajemen tim lintas divisi, perumusan anggaran, dan eksekusi acara kampus." },
+    { title: "Unit Kegiatan Mahasiswa (UKM) Minat & Bakat", category: "organisasi", defaultHours: 6, period: "1 Semester", notes: "Pengembangan bakat seni, olahraga, atau penalaran ilmiah terstruktur." },
+  ],
+  kompetisi: [
+    { title: "Program Kreativitas Mahasiswa (PKM Kemendikbud)", category: "kompetisi", defaultHours: 14, period: "3 Bulan Intensif", notes: "Penyusunan proposal riset/karsa cipta dan pendanaan kompetitif nasional." },
+    { title: "Kompetisi Hackathon & Inovasi Digital", category: "kompetisi", defaultHours: 16, period: "1-2 Bulan", notes: "Pengembangan prototipe solusi berbasis perangkat lunak dalam batasan waktu lomba." },
+    { title: "Lomba Karya Tulis Ilmiah (LKTI) Nasional", category: "kompetisi", defaultHours: 8, period: "2 Bulan", notes: "Penulisan artikel ilmiah berbasis studi pustaka dan metodologi terapan." },
+    { title: "Business Case Competition / Debat Ilmiah", category: "kompetisi", defaultHours: 10, period: "1-2 Bulan", notes: "Penyelesaian studi kasus bisnis nyata dan presentasi di hadapan juri ahli." },
+  ],
+  sertifikasi: [
+    { title: "Sertifikasi Cloud Computing (AWS / GCP / Azure)", category: "sertifikasi", defaultHours: 8, period: "2 Bulan", notes: "Pemahaman infrastruktur komputasi awan dan simulasi ujian sertifikasi global." },
+    { title: "Sertifikasi Profesi Teknologi (BNSP / Scrum / Cisco)", category: "sertifikasi", defaultHours: 10, period: "1-2 Bulan", notes: "Uji kompetensi teknis terstandar dan sertifikat lisensi industri." },
+    { title: "Tes Kemahiran Bahasa Asing (TOEFL / IELTS)", category: "sertifikasi", defaultHours: 6, period: "2-3 Bulan", notes: "Persiapan skor kemampuan bahasa Inggris untuk syarat yudisium dan karier." },
+  ],
+  proyek: [
+    { title: "Pengembangan Aplikasi Portofolio Fullstack", category: "proyek", defaultHours: 12, period: "1 Semester", notes: "Membangun produk web atau mobile mandiri yang siap dipamerkan ke industri." },
+    { title: "Kontributor Proyek Open Source Software", category: "proyek", defaultHours: 8, period: "Fleksibel", notes: "Pengiriman pull request, code review, dan kolaborasi di repositori komunitas." },
+    { title: "Proyek Riset Laboratorium & Asisten Dosen", category: "proyek", defaultHours: 14, period: "1 Semester", notes: "Pendampingan riset dosen dan pemeliharaan modul praktikum jurusan." },
+  ],
+  pengabdian: [
+    { title: "Kuliah Kerja Nyata (KKN) Tematik", category: "pengabdian", defaultHours: 20, period: "1-2 Bulan", notes: "Penerapan keilmuan langsung dan pemberdayaan masyarakat desa mitra." },
+    { title: "Relawan Pengajar & Literasi Digital Komunitas", category: "pengabdian", defaultHours: 6, period: "1 Semester", notes: "Kegiatan sukarelawan edukasi, lingkungan, atau bantuan sosial kemanusiaan." },
+    { title: "Program Pengabdian Bina Desa Mandiri", category: "pengabdian", defaultHours: 8, period: "3 Bulan", notes: "Inisiasi program berkelanjutan bersama komunitas lokal non-profit." },
+  ],
+};
+
+const MILESTONE_CATEGORY_PRESETS: Record<
+  "krs" | "dosen_wali" | "persiapan_magang" | "target_akademik",
+  Array<{ title: string; category: string; notes: string; targetHint: string }>
+> = {
+  krs: [
+    { title: "Pengisian & Finalisasi KRS Online", category: "krs", notes: "Pilih kelas sesuai kuota dan sesuaikan beban SKS sebelum batas penutupan KRS.", targetHint: "Minggu ke-1 Kuliah" },
+    { title: "Masa Revisi / Batal Tambah KRS", category: "krs", notes: "Penyesuaian jadwal kuliah yang bertabrakan atau penambahan kelas cadangan.", targetHint: "Minggu ke-2 Kuliah" },
+    { title: "Validasi Registrasi & Pembayaran UKT", category: "krs", notes: "Penyelesaian administrasi keuangan semester untuk aktivasi status akademik.", targetHint: "Sebelum Pengisian KRS" },
+  ],
+  dosen_wali: [
+    { title: "Bimbingan Rencana Akademik Awal Semester", category: "dosen_wali", notes: "Konsultasi pengambilan mata kuliah dan persetujuan tanda tangan digital KRS oleh DPA.", targetHint: "Awal Semester" },
+    { title: "Evaluasi Tengah Semester (Pasca UTS)", category: "dosen_wali", notes: "Review capaian nilai tengah semester dan antisipasi mata kuliah kritis.", targetHint: "Minggu ke-8 Kuliah" },
+    { title: "Persetujuan Beban SKS Khusus / Dispensasi", category: "dosen_wali", notes: "Pengajuan dispensasi beban di atas 20 SKS dengan pertimbangan IPK memadai.", targetHint: "Sebelum Finalisasi KRS" },
+  ],
+  persiapan_magang: [
+    { title: "Penyusunan CV ATS & Portofolio Karya", category: "persiapan_magang", notes: "Review resume ringkas, tautan portofolio GitHub/Figma, dan studi kasus proyek.", targetHint: "Bulan ke-2 Semester" },
+    { title: "Pendaftaran Program MBKM / Magang Industri", category: "persiapan_magang", notes: "Pengunggahan berkas rekomendasi jurusan dan pendaftaran mitra resmi kampus.", targetHint: "Bulan ke-3 Semester" },
+    { title: "Simulasi Wawancara & Uji Teknis Industri", category: "persiapan_magang", notes: "Latihan interview perilaku dan uji studi kasus teknis bersama mentor.", targetHint: "Bulan ke-4 Semester" },
+  ],
+  target_akademik: [
+    { title: "Target IPK Semester Ini >= 3.50", category: "target_akademik", notes: "Menjaga ritme belajar konsisten pada seluruh mata kuliah berbobot tinggi.", targetHint: "Akhir Semester" },
+    { title: "Eksplorasi Topik & Calon Pembimbing Skripsi", category: "target_akademik", notes: "Menentukan arah topik penelitian dan konsultasi draf awal proposal skripsi.", targetHint: "Semester 6 atau 7" },
+    { title: "Penyusunan Draf Bab 1–3 Tugas Akhir", category: "target_akademik", notes: "Menuntaskan latar belakang masalah, kajian pustaka, dan metodologi riset.", targetHint: "Sebelum Ujian Sempro" },
+  ],
 };
 
 export default function RoadmapPage() {
@@ -118,13 +213,28 @@ export default function RoadmapPage() {
   // Mode Switcher: Mode 1: "view" (Lihat Roadmap) vs Mode 2: "edit" (Sesuaikan Roadmap)
   const [activeMode, setActiveMode] = useState<"view" | "edit">("view");
 
+  // Secondary Menu Dropdown (Template, Riwayat, Kosongkan)
+  const [showSecondaryMenu, setShowSecondaryMenu] = useState(false);
+
+  // Panel Validasi Akademik: Toggle Detail
+  const [showValidationDetails, setShowValidationDetails] = useState(false);
+
   // Mode 1: Status Filter
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Modal: Tambah Mata Kuliah (Kemampuan A)
-  const [showAddCourseModal, setShowAddCourseModal] = useState(false);
-  const [addCourseSemester, setAddCourseSemester] = useState<number>(5);
+  // Modal: Tambah Item (COURSE, ACTIVITY, MILESTONE)
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [addItemSemester, setAddItemSemester] = useState<number>(5);
+  const [itemModalTab, setItemModalTab] = useState<"COURSE" | "ACTIVITY" | "MILESTONE">("COURSE");
   const [courseModalTab, setCourseModalTab] = useState<"katalog" | "kustom">("katalog");
+  const [courseGroup, setCourseGroup] = useState<"wajib" | "pilihan" | "pengulangan" | "prasyarat" | "kustom">("wajib");
+  const [customizingCardKey, setCustomizingCardKey] = useState<string | null>(null);
+  const [customItemTitle, setCustomItemTitle] = useState<string>("");
+  const [customItemCredits, setCustomItemCredits] = useState<number>(3);
+  const [activityCategoryTab, setActivityCategoryTab] = useState<"organisasi" | "kompetisi" | "sertifikasi" | "proyek" | "pengabdian">("organisasi");
+  const [milestoneCategoryTab, setMilestoneCategoryTab] = useState<"krs" | "dosen_wali" | "persiapan_magang" | "target_akademik">("krs");
+  const [showCustomActivity, setShowCustomActivity] = useState(false);
+  const [showCustomMilestone, setShowCustomMilestone] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [customCourseForm, setCustomCourseForm] = useState({
     title: "",
@@ -132,16 +242,54 @@ export default function RoadmapPage() {
     credits: 3,
     category: "akademik",
     notes: "",
+    prerequisitesText: "",
   });
-
-  // Modal: Tambah Milestone Pribadi (Kemampuan C - Non-SKS)
-  const [showAddMilestoneModal, setShowAddMilestoneModal] = useState(false);
-  const [addMilestoneSemester, setAddMilestoneSemester] = useState<number>(5);
-  const [customMilestoneForm, setCustomMilestoneForm] = useState({
+  const [customActivityForm, setCustomActivityForm] = useState({
     title: "",
-    category: "karier",
+    category: "organisasi",
+    activityPeriod: "",
+    weeklyHours: 10,
+    hasConversion: false,
+    credits: 0,
     notes: "",
   });
+  const [customMilestoneForm, setCustomMilestoneForm] = useState({
+    title: "",
+    category: "krs",
+    targetDate: "",
+    notes: "",
+  });
+
+  // Backward compatibility modal toggles
+  const showAddCourseModal = false;
+  const setShowAddCourseModal = (val: boolean) => {
+    if (val) {
+      setItemModalTab("COURSE");
+      setShowAddItemModal(true);
+    } else {
+      setShowAddItemModal(false);
+    }
+  };
+  const addCourseSemester = addItemSemester;
+  const setAddCourseSemester = (sem: number) => setAddItemSemester(sem);
+
+  const showAddMilestoneModal = false;
+  const setShowAddMilestoneModal = (val: boolean) => {
+    if (val) {
+      setItemModalTab("MILESTONE");
+      setShowAddItemModal(true);
+    } else {
+      setShowAddItemModal(false);
+    }
+  };
+  const addMilestoneSemester = addItemSemester;
+  const setAddMilestoneSemester = (sem: number) => setAddItemSemester(sem);
+
+  const openAddItemModal = (semNum: number, tab: "COURSE" | "ACTIVITY" | "MILESTONE" = "COURSE") => {
+    setAddItemSemester(semNum);
+    setItemModalTab(tab);
+    setShowAddItemModal(true);
+  };
 
   // Template Picker Modal
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
@@ -289,13 +437,77 @@ export default function RoadmapPage() {
     }
   };
 
-  // Kemampuan A: Tambah Mata Kuliah dari Katalog / Kustom
-  const handleAddCourse = async (course: {
+  // Draft & Edit Mode Management Actions
+  const handleStartEditAndDraft = async () => {
+    if (!token) return;
+    setActiveMode("edit");
+    if (!data?.roadmap?.isDraftMode) {
+      try {
+        const res = await fetch("/api/roadmap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-demo-token": token },
+          body: JSON.stringify({ action: "create_draft" }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Gagal membuat draf rencana");
+        showToast("Mode penyesuaian draf aktif. Perubahan belum mengubah roadmap tersimpan.", "success");
+        fetchRoadmap();
+      } catch (e: unknown) {
+        showToast(e instanceof Error ? e.message : "Gagal membuat draf", "error");
+      }
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/roadmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-demo-token": token },
+        body: JSON.stringify({ action: "save_draft" }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Gagal menyimpan draf");
+      showToast(json.message || "Perubahan roadmap berhasil disimpan sebagai versi aktif!", "success");
+      setActiveMode("view");
+      fetchRoadmap();
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Gagal menyimpan draf", "error");
+    }
+  };
+
+  const handleCancelDraft = async (skipConfirm = false) => {
+    if (!token) return;
+    if (!skipConfirm && !window.confirm("Batalkan perubahan? Seluruh perubahan pada draf ini akan dibuang dan roadmap akan kembali ke versi aktif.")) return;
+    try {
+      const res = await fetch("/api/roadmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-demo-token": token },
+        body: JSON.stringify({ action: "cancel_draft" }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Gagal membatalkan draf");
+      showToast(json.message || "Perubahan draf dibatalkan.", "success");
+      setActiveMode("view");
+      fetchRoadmap();
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Gagal membatalkan draf", "error");
+    }
+  };
+
+  // Unified Item Creation Handler (COURSE, ACTIVITY, MILESTONE)
+  const handleAddItem = async (params: {
+    semesterNum: number;
+    itemType: "COURSE" | "ACTIVITY" | "MILESTONE";
     title: string;
-    courseCode?: string;
-    credits: number;
     category?: string;
+    credits?: number;
+    courseCode?: string;
     notes?: string;
+    targetDate?: string;
+    activityPeriod?: string;
+    weeklyHours?: number;
+    prerequisites?: string[];
   }) => {
     if (!token) return;
     try {
@@ -303,26 +515,38 @@ export default function RoadmapPage() {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
         body: JSON.stringify({
-          action: "add_task",
-          semesterNum: addCourseSemester,
-          title: course.title,
-          courseCode: course.courseCode,
-          credits: course.credits,
-          category: course.category || "akademik",
-          notes: course.notes,
-          status: "planned",
-          isMilestone: false,
+          action: "add_item",
+          ...params,
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal menambahkan mata kuliah.");
+      if (!res.ok) throw new Error(json.error || "Gagal menambahkan item.");
       showToast(json.message, "success");
-      setShowAddCourseModal(false);
-      setExpandedSemesters((prev) => new Set([...prev, addCourseSemester]));
+      setShowAddItemModal(false);
+      setExpandedSemesters((prev) => new Set([...prev, params.semesterNum]));
       fetchRoadmap();
     } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : "Gagal menambahkan", "error");
+      showToast(e instanceof Error ? e.message : "Gagal menambahkan item", "error");
     }
+  };
+
+  // Backward-compatible course & milestone adders
+  const handleAddCourse = async (course: {
+    title: string;
+    courseCode?: string;
+    credits: number;
+    category?: string;
+    notes?: string;
+  }) => {
+    await handleAddItem({
+      semesterNum: addItemSemester,
+      itemType: "COURSE",
+      title: course.title,
+      courseCode: course.courseCode,
+      credits: course.credits,
+      category: course.category || "akademik",
+      notes: course.notes,
+    });
   };
 
   // Kemampuan B: Update Target Beban SKS Semester
@@ -348,32 +572,17 @@ export default function RoadmapPage() {
     title: string;
     category: string;
     notes?: string;
+    targetDate?: string;
   }) => {
-    if (!token) return;
-    try {
-      const res = await fetch(`/api/roadmap`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-demo-token": token },
-        body: JSON.stringify({
-          action: "add_task",
-          semesterNum: addMilestoneSemester,
-          title: milestone.title,
-          category: milestone.category,
-          credits: 0, // MUST BE 0 SKS
-          notes: milestone.notes,
-          status: "planned",
-          isMilestone: true,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal menambahkan milestone.");
-      showToast(json.message, "success");
-      setShowAddMilestoneModal(false);
-      setExpandedSemesters((prev) => new Set([...prev, addMilestoneSemester]));
-      fetchRoadmap();
-    } catch (e: unknown) {
-      showToast(e instanceof Error ? e.message : "Gagal menambahkan milestone", "error");
-    }
+    await handleAddItem({
+      semesterNum: addItemSemester,
+      itemType: "MILESTONE",
+      title: milestone.title,
+      category: milestone.category,
+      credits: 0,
+      notes: milestone.notes,
+      targetDate: milestone.targetDate,
+    });
   };
 
   // Switch Roadmap Version
@@ -617,8 +826,40 @@ export default function RoadmapPage() {
   const majorKey = profile?.programName?.includes("Manajemen") ? "Manajemen" : "Teknik Informatika";
   const catalogList = CURRICULUM_CATALOG[majorKey] ?? CURRICULUM_CATALOG["Teknik Informatika"];
 
-  const filteredCatalog = catalogList.filter((c) => {
-    const q = catalogSearch.toLowerCase();
+  // 1. Kelompok Mata Kuliah (Wajib/Inti, Pilihan, Pengulangan, Prasyarat)
+  const coursesInGroup = catalogList.filter((c) => {
+    if (courseGroup === "wajib") {
+      return (
+        c.semesterNum === addItemSemester ||
+        (c.category === "akademik" && (!c.prerequisites || c.prerequisites.length === 0) && Math.abs(c.semesterNum - addItemSemester) <= 1)
+      );
+    }
+    if (courseGroup === "pilihan") {
+      return (
+        c.category === "tak" ||
+        c.category === "karier" ||
+        c.code.includes("3103") ||
+        c.code.includes("3104") ||
+        c.code.includes("3204") ||
+        c.code.includes("4101") ||
+        c.code.includes("4202") ||
+        (c.semesterNum >= 5 && c.credits <= 3 && !c.name.includes("Tugas Akhir"))
+      );
+    }
+    if (courseGroup === "pengulangan") {
+      return addItemSemester > 1 ? c.semesterNum < addItemSemester : c.semesterNum === 1;
+    }
+    if (courseGroup === "prasyarat") {
+      return (
+        (c.prerequisites && c.prerequisites.length > 0) ||
+        catalogList.some((other) => other.prerequisites?.includes(c.code))
+      );
+    }
+    return true;
+  });
+
+  const filteredCatalog = coursesInGroup.filter((c) => {
+    const q = catalogSearch.toLowerCase().trim();
     if (!q) return true;
     return (
       c.name.toLowerCase().includes(q) ||
@@ -626,6 +867,11 @@ export default function RoadmapPage() {
       c.description.toLowerCase().includes(q)
     );
   });
+
+  const countWajib = catalogList.filter((c) => c.semesterNum === addItemSemester || (c.category === "akademik" && (!c.prerequisites || c.prerequisites.length === 0) && Math.abs(c.semesterNum - addItemSemester) <= 1)).length;
+  const countPilihan = catalogList.filter((c) => c.category === "tak" || c.category === "karier" || c.code.includes("3103") || c.code.includes("3104") || c.code.includes("3204") || c.code.includes("4101") || c.code.includes("4202") || (c.semesterNum >= 5 && c.credits <= 3 && !c.name.includes("Tugas Akhir"))).length;
+  const countPengulangan = catalogList.filter((c) => (addItemSemester > 1 ? c.semesterNum < addItemSemester : c.semesterNum === 1)).length;
+  const countPrasyarat = catalogList.filter((c) => (c.prerequisites && c.prerequisites.length > 0) || catalogList.some((other) => other.prerequisites?.includes(c.code))).length;
 
   // Calculate comprehensive metrics
   const totalCurriculum = profile?.totalCurriculumCredits ?? 144;
@@ -640,9 +886,20 @@ export default function RoadmapPage() {
   const totalMilestones = allTasks.filter((t) => t.credits === 0).length;
   const retakeCount = allTasks.filter((t) => t.status === "delayed" || t.status === "cancelled").length;
 
+  // Validation issues grouping (Errors, Warnings, Unverified)
+  const validationIssues = data.ruleValidation?.issues ?? calc?.issues ?? [];
+  const errorIssues = validationIssues.filter((i) => i.type === "error");
+  const warningIssues = validationIssues.filter((i) => i.type === "warning");
+  const unverifiedIssues = validationIssues.filter((i) => i.type === "info" || i.code === "MISSING_DATA");
+  const totalIssuesCount = validationIssues.length;
+  const hasErrors = errorIssues.length > 0;
+  const hasWarnings = warningIssues.length > 0;
+
+  const isEditOrDraft = data.roadmap.isDraftMode || activeMode === "edit";
+
   return (
     <div>
-      {/* ── Page Header & Actions ── */}
+      {/* ── Page Header & Dua Aksi Utama ── */}
       <div
         style={{
           display: "flex",
@@ -661,6 +918,24 @@ export default function RoadmapPage() {
             <span className="badge badge-gray" style={{ fontSize: 10 }}>
               v{data.roadmap.currentVersion?.versionNum ?? 1}
             </span>
+            {data.roadmap.isDraftMode && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: "rgba(245, 158, 11, 0.15)",
+                  color: "#B45309",
+                  border: "1px solid rgba(245, 158, 11, 0.35)",
+                  padding: "2px 8px",
+                  borderRadius: "var(--radius-sm)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <FileEdit size={10} /> Draf Aktif
+              </span>
+            )}
             {data.roadmap.currentVersion?.label?.includes("Template") && (
               <span className="badge badge-blue" style={{ fontSize: 10 }}>
                 Template
@@ -672,74 +947,233 @@ export default function RoadmapPage() {
           </p>
         </div>
 
-        {/* Action Group */}
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          {/* Toggle Sesuaikan Susunan (subtle, quiet toggle without noisy banners) */}
-          <button
-            onClick={() => setActiveMode(activeMode === "edit" ? "view" : "edit")}
-            className={activeMode === "edit" ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"}
-            style={{ gap: 6, fontSize: 12 }}
-            id="btn-toggle-edit-mode"
-            title={activeMode === "edit" ? "Selesai Penyesuaian" : "Atur Beban SKS & Urutan"}
-          >
-            <SlidersHorizontal size={13} />
-            <span>{activeMode === "edit" ? "Selesai Mengatur" : "Sesuaikan Susunan"}</span>
-          </button>
+        {/* Action Group: Dua Aksi Utama & Menu Sekunder */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
+          {isEditOrDraft ? (
+            <>
+              {/* Tombol Simpan Perubahan */}
+              <button
+                onClick={handleSaveDraft}
+                className="btn btn-primary btn-sm"
+                style={{ gap: 6, fontSize: 12.5, fontWeight: 700 }}
+                id="btn-save-draft"
+                title="Terapkan seluruh perubahan ke roadmap aktif"
+              >
+                <Check size={14} />
+                <span>Simpan Perubahan</span>
+              </button>
 
-          {/* Add Course */}
-          <button
+              {/* Tombol Batalkan */}
+              <button
+                onClick={() => handleCancelDraft(false)}
+                className="btn btn-secondary btn-sm"
+                style={{ gap: 6, fontSize: 12.5 }}
+                id="btn-cancel-draft"
+                title="Batalkan perubahan dan kembali ke roadmap tersimpan"
+              >
+                <RotateCcw size={13} />
+                <span>Batalkan</span>
+              </button>
+            </>
+          ) : (
+            /* Aksi Utama 1: Sesuaikan Roadmap */
+            <button
+              onClick={handleStartEditAndDraft}
+              className="btn btn-primary btn-sm"
+              style={{ gap: 6, fontSize: 12.5, fontWeight: 700 }}
+              id="btn-adjust-roadmap"
+              title="Mulai penyesuaian susunan roadmap secara aman dalam draf"
+            >
+              <SlidersHorizontal size={13} />
+              <span>Sesuaikan Roadmap</span>
+            </button>
+          )}
+
+          {/* Aksi Utama 2: Simulasi What-If */}
+          <Link
+            href="/app/simulator"
             className="btn btn-secondary btn-sm"
-            onClick={() => {
-              setAddCourseSemester(profile?.currentSemester ?? 4);
-              setShowAddCourseModal(true);
-            }}
-            style={{ gap: 5, fontSize: 12 }}
-            id="btn-add-course-top"
+            style={{ gap: 6, fontSize: 12.5, fontWeight: 600 }}
+            id="btn-link-what-if"
+            title="Coba skenario magang, cuti, atau percepatan tanpa mengubah roadmap utama"
           >
-            <Plus size={13} />
-            Mata Kuliah
-          </button>
+            <Compass size={13} color="#475569" />
+            <span>Simulasi What-If</span>
+          </Link>
 
-          {/* Template Picker */}
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              setTargetSemesterForApply(0);
-              setSelectedTemplateForApply(null);
-              setShowTemplatePicker(true);
-            }}
-            id="btn-open-template-picker"
-            style={{ gap: 5, fontSize: 12 }}
-          >
-            <LayoutTemplate size={13} />
-            Template
-          </button>
+          {/* Menu Sekunder (Dropdown: Template, Riwayat, Kosongkan) */}
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setShowSecondaryMenu(!showSecondaryMenu)}
+              className="btn btn-ghost btn-sm"
+              style={{
+                padding: "6px 9px",
+                color: "var(--text-secondary)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-sm)",
+              }}
+              id="btn-secondary-menu"
+              aria-expanded={showSecondaryMenu}
+              title="Opsi Tambahan (Template, Riwayat, Kosongkan)"
+            >
+              <MoreHorizontal size={16} />
+            </button>
 
-          {/* Version History Toggle */}
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => setShowHistory(!showHistory)}
-            aria-expanded={showHistory}
-            style={{ gap: 5, fontSize: 12 }}
-            id="btn-toggle-history"
-          >
-            <History size={13} />
-            Riwayat
-          </button>
+            {showSecondaryMenu && (
+              <>
+                <div
+                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                  onClick={() => setShowSecondaryMenu(false)}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    right: 0,
+                    top: "calc(100% + 6px)",
+                    width: 215,
+                    background: "#FFFFFF",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
+                    zIndex: 50,
+                    padding: 5,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setShowSecondaryMenu(false);
+                      setTargetSemesterForApply(0);
+                      setSelectedTemplateForApply(null);
+                      setShowTemplatePicker(true);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 10px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--text-primary)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      width: "100%",
+                    }}
+                  >
+                    <LayoutTemplate size={14} color="var(--blue)" />
+                    <span>Jelajahi Template</span>
+                  </button>
 
-          {/* Clear / Reset Roadmap */}
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={handleClearRoadmap}
-            style={{ gap: 5, fontSize: 12, color: "var(--text-muted)" }}
-            id="btn-clear-roadmap"
-            title="Kosongkan roadmap saat ini"
-          >
-            <Trash2 size={13} />
-            Kosongkan
-          </button>
+                  <button
+                    onClick={() => {
+                      setShowSecondaryMenu(false);
+                      setShowHistory(!showHistory);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 10px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--text-primary)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      width: "100%",
+                    }}
+                  >
+                    <History size={14} />
+                    <span>Riwayat Versi Roadmap</span>
+                  </button>
+
+                  <div style={{ height: 1, background: "var(--border-subtle)", margin: "3px 0" }} />
+
+                  <button
+                    onClick={() => {
+                      setShowSecondaryMenu(false);
+                      handleClearRoadmap();
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 10px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--coral)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      width: "100%",
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    <span>Kosongkan Roadmap</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* ── Mode Draf Rencana Aktif Banner (Minimalist & Responsive) ── */}
+      {isEditOrDraft && (
+        <div
+          style={{
+            background: "rgba(245, 158, 11, 0.08)",
+            border: "1px solid rgba(245, 158, 11, 0.3)",
+            borderRadius: "var(--radius-md)",
+            padding: "10px 16px",
+            marginBottom: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <FileEdit size={16} color="#D97706" />
+            <div>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)" }}>
+                Mode Penyesuaian Draf Aktif:
+              </span>{" "}
+              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                Kamu dapat menambah item, mengedit beban SKS, atau memindahkan semester. Roadmap tersimpan tidak akan berubah hingga kamu menyimpan.
+              </span>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button
+              onClick={() => handleCancelDraft(false)}
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: 11.5, gap: 5 }}
+            >
+              <RotateCcw size={12} />
+              Batalkan
+            </button>
+            <button
+              onClick={handleSaveDraft}
+              className="btn btn-primary btn-sm"
+              style={{ fontSize: 11.5, gap: 5, fontWeight: 700 }}
+            >
+              <Check size={12} />
+              Simpan Perubahan
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Version History Drawer (Conditional) ── */}
       {showHistory && (
@@ -793,83 +1227,298 @@ export default function RoadmapPage() {
         </div>
       )}
 
-      {/* ── Consolidated Academic Progress & What-If Summary Strip ── */}
+      {/* ── Ringkasan SKS Akademik (Lulus, Sedang Ditempuh, Direncanakan, Sisa) ── */}
       <div
         style={{
-          background: "var(--bg-card)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-lg)",
-          padding: "12px 18px",
-          marginBottom: 16,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 16,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+          gap: 12,
+          marginBottom: 14,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <div>
-            <div style={{ fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600 }}>
+        {/* 1. SKS Lulus */}
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            padding: "12px 14px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
               SKS Lulus
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#92400E", lineHeight: 1.2 }}>
-              {completedCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>/ {totalCurriculum} SKS</span>
-            </div>
+            </span>
+            <span style={{ fontSize: 11, color: completedCredits > 0 ? "#15803D" : "var(--text-muted)", fontWeight: 700 }}>
+              {Math.round((completedCredits / totalCurriculum) * 100)}%
+            </span>
           </div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: "#18181B", lineHeight: 1.2 }}>
+            {completedCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>/ {totalCurriculum} SKS</span>
+          </div>
+          <div className="progress-track" style={{ height: 4, marginTop: 8 }}>
+            <div
+              className="progress-fill"
+              style={{
+                width: `${Math.min(100, (completedCredits / totalCurriculum) * 100)}%`,
+                background: "#15803D",
+              }}
+            />
+          </div>
+        </div>
 
-          <div style={{ width: 110 }}>
-            <div className="progress-track" style={{ height: 5 }}>
-              <div
-                className="progress-fill"
+        {/* 2. Sedang Ditempuh */}
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            padding: "12px 14px",
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
+            Sedang Ditempuh
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: "#18181B", lineHeight: 1.2 }}>
+            {inProgressCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>SKS</span>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+            Semester {profile?.currentSemester ?? 1} Berjalan
+          </div>
+        </div>
+
+        {/* 3. Direncanakan */}
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            padding: "12px 14px",
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
+            Direncanakan
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: "#18181B", lineHeight: 1.2 }}>
+            {plannedCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>SKS</span>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+            {totalCourses} Matkul • {totalMilestones} Milestone
+          </div>
+        </div>
+
+        {/* 4. Sisa Beban Target */}
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            padding: "12px 14px",
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
+            Sisa Beban
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.2 }}>
+            {remainingCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>SKS</span>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+            Target: <strong>Sem {calc?.estimatedGraduationSemester || 8}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Indikator Validasi Akademik (Ringkas & Collapsible Detail) ── */}
+      <div
+        style={{
+          background: "#FFFFFF",
+          border: hasErrors
+            ? "1px solid #FECACA"
+            : "1px solid var(--border)",
+          borderRadius: "12px",
+          padding: "10px 16px",
+          marginBottom: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+            {hasErrors ? (
+              <AlertCircle size={16} color="#DC2626" />
+            ) : hasWarnings ? (
+              <AlertTriangle size={16} color="#D97706" />
+            ) : (
+              <ShieldCheck size={16} color="#16A34A" />
+            )}
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
+              Validasi Aturan Akademik:
+            </span>
+
+            {/* Badges */}
+            {hasErrors && (
+              <span
                 style={{
-                  width: `${Math.min(100, (completedCredits / totalCurriculum) * 100)}%`,
-                  background: "var(--amber)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: "#FEE2E2",
+                  color: "#991B1B",
+                  border: "1px solid #FCA5A5",
+                  padding: "2px 8px",
+                  borderRadius: "20px",
                 }}
-              />
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 3 }}>
-              {Math.round((completedCredits / totalCurriculum) * 100)}% Selesai
-            </div>
-          </div>
+              >
+                {errorIssues.length} Kesalahan
+              </span>
+            )}
 
-          <div style={{ height: 26, width: 1, background: "var(--border-subtle)" }} />
+            {hasWarnings && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: "#FEF3C7",
+                  color: "#92400E",
+                  border: "1px solid #FCD34D",
+                  padding: "2px 8px",
+                  borderRadius: "20px",
+                }}
+              >
+                {warningIssues.length} Peringatan
+              </span>
+            )}
 
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <span>
-              <strong style={{ color: "var(--text-primary)" }}>{inProgressCredits} SKS</strong> Ditempuh
-            </span>
-            <span style={{ color: "var(--border)" }}>•</span>
-            <span>
-              <strong style={{ color: "var(--text-primary)" }}>{remainingCredits} SKS</strong> Sisa Beban
-            </span>
-            <span style={{ color: "var(--border)" }}>•</span>
-            <span>
-              Target: <strong style={{ color: "var(--text-primary)" }}>Sem {calc?.estimatedGraduationSemester || 8}</strong>
-            </span>
-            {totalMilestones > 0 && (
-              <>
-                <span style={{ color: "var(--border)" }}>•</span>
-                <span style={{ color: "var(--teal)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  <Target size={11} /> {totalMilestones} Milestone Non-SKS
-                </span>
-              </>
+            {unverifiedIssues.length > 0 && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  background: "#EEF2FF",
+                  color: "#4338CA",
+                  border: "1px solid #C7D2FE",
+                  padding: "2px 8px",
+                  borderRadius: "20px",
+                }}
+              >
+                {unverifiedIssues.length} Aturan Belum Terverifikasi
+              </span>
+            )}
+
+            {totalIssuesCount === 0 && (
+              <span style={{ fontSize: 12.5, color: "#15803D", fontWeight: 600 }}>
+                Semua rencana memenuhi regulasi (maksimal 24 SKS & prasyarat runtut).
+              </span>
             )}
           </div>
+
+          {/* Toggle Details Button */}
+          <button
+            onClick={() => setShowValidationDetails(!showValidationDetails)}
+            className="btn btn-ghost btn-sm"
+            style={{
+              fontSize: 11.5,
+              fontWeight: 600,
+              gap: 4,
+              padding: "4px 9px",
+              color: "#475569",
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              borderRadius: "6px",
+            }}
+          >
+            <span>{showValidationDetails ? "Tutup Detail" : "Lihat Detail"}</span>
+            {showValidationDetails ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </button>
         </div>
 
-        {/* What-If Scenario Link */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Link
-            href="/app/simulator"
-            className="btn btn-secondary btn-sm"
-            style={{ fontSize: 11.5, gap: 6, padding: "5px 12px" }}
-            title="Coba skenario magang, cuti, atau percepatan tanpa mengubah roadmap utama"
+        {/* Collapsible Details Drawer */}
+        {showValidationDetails && (
+          <div
+            style={{
+              borderTop: "1px dashed rgba(0,0,0,0.12)",
+              paddingTop: 10,
+              marginTop: 2,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
           >
-            <Compass size={13} color="var(--lime)" />
-            <span>Simulasi What-If</span>
-          </Link>
-        </div>
+            {/* 1. Kesalahan */}
+            {errorIssues.length > 0 && (
+              <div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: "#991B1B", marginBottom: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                  <AlertCircle size={13} /> Kesalahan (Wajib Diperbaiki):
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {errorIssues.map((iss, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        fontSize: 12,
+                        color: "#991B1B",
+                        background: "#FFFFFF",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #FCA5A5",
+                      }}
+                    >
+                      {iss.semesterNum ? `[Sem ${iss.semesterNum}] ` : ""}{iss.message}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 2. Peringatan */}
+            {warningIssues.length > 0 && (
+              <div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: "#92400E", marginBottom: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                  <AlertTriangle size={13} /> Peringatan (Perlu Perhatian):
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {warningIssues.map((iss, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        fontSize: 12,
+                        color: "#92400E",
+                        background: "#FFFFFF",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #FDE68A",
+                      }}
+                    >
+                      {iss.semesterNum ? `[Sem ${iss.semesterNum}] ` : ""}{iss.message}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Aturan Belum Terverifikasi / Disclaimer */}
+            <div
+              style={{
+                fontSize: 11.5,
+                color: "#475569",
+                background: "#FFFFFF",
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "1px solid #E2E8F0",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 7,
+                lineHeight: 1.5,
+              }}
+            >
+              <Info size={14} style={{ flexShrink: 0, marginTop: 1, color: "#4F46E5" }} />
+              <span>
+                <strong>Transparansi Aturan:</strong> Batas beban SKS semester (maks. 24 SKS nasional) dan dependensi prasyarat dihitung berdasarkan regulasi akademik nasional & kurikulum program studi terdaftar.
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Minimalist Segmented View Switcher & Helper ── */}
@@ -886,11 +1535,11 @@ export default function RoadmapPage() {
         <div
           style={{
             display: "inline-flex",
-            background: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: "var(--radius-md)",
-            padding: "3px",
-            gap: 2,
+            background: "#EAE6DF",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            borderRadius: "var(--radius-pill)",
+            padding: "4px",
+            gap: 3,
           }}
         >
           <button
@@ -899,19 +1548,20 @@ export default function RoadmapPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              padding: "5px 14px",
-              borderRadius: "var(--radius-sm)",
+              padding: "6px 14px",
+              borderRadius: "var(--radius-pill)",
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: activeView === "visual" ? 700 : 600,
               border: "none",
               cursor: "pointer",
-              background: activeView === "visual" ? "rgba(255, 255, 255, 0.09)" : "transparent",
-              color: activeView === "visual" ? "var(--text-primary)" : "var(--text-muted)",
+              background: activeView === "visual" ? "#FFFFFF" : "transparent",
+              color: activeView === "visual" ? "#0F172A" : "#64748B",
+              boxShadow: activeView === "visual" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
               transition: "all 0.15s ease",
             }}
             id="tab-view-visual"
           >
-            <GitBranch size={13} color={activeView === "visual" ? "var(--lime)" : "var(--text-muted)"} />
+            <GitBranch size={13} color={activeView === "visual" ? "#0F172A" : "#64748B"} />
             <span>Peta Alur Visual</span>
           </button>
 
@@ -921,19 +1571,20 @@ export default function RoadmapPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              padding: "5px 14px",
-              borderRadius: "var(--radius-sm)",
+              padding: "6px 14px",
+              borderRadius: "var(--radius-pill)",
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: activeView === "timeline" ? 700 : 600,
               border: "none",
               cursor: "pointer",
-              background: activeView === "timeline" ? "rgba(255, 255, 255, 0.09)" : "transparent",
-              color: activeView === "timeline" ? "var(--text-primary)" : "var(--text-muted)",
+              background: activeView === "timeline" ? "#FFFFFF" : "transparent",
+              color: activeView === "timeline" ? "#0F172A" : "#64748B",
+              boxShadow: activeView === "timeline" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
               transition: "all 0.15s ease",
             }}
             id="tab-view-timeline"
           >
-            <Calendar size={13} color={activeView === "timeline" ? "var(--lime)" : "var(--text-muted)"} />
+            <Calendar size={13} color={activeView === "timeline" ? "#0F172A" : "#64748B"} />
             <span>Daftar Semester</span>
           </button>
 
@@ -943,32 +1594,33 @@ export default function RoadmapPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              padding: "5px 14px",
-              borderRadius: "var(--radius-sm)",
+              padding: "6px 14px",
+              borderRadius: "var(--radius-pill)",
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: activeView === "split" ? 700 : 600,
               border: "none",
               cursor: "pointer",
-              background: activeView === "split" ? "rgba(255, 255, 255, 0.09)" : "transparent",
-              color: activeView === "split" ? "var(--text-primary)" : "var(--text-muted)",
+              background: activeView === "split" ? "#FFFFFF" : "transparent",
+              color: activeView === "split" ? "#0F172A" : "#64748B",
+              boxShadow: activeView === "split" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
               transition: "all 0.15s ease",
             }}
             id="tab-view-split"
           >
-            <Columns2 size={13} color={activeView === "split" ? "var(--amber)" : "var(--text-muted)"} />
+            <Columns2 size={13} color={activeView === "split" ? "#0F172A" : "#64748B"} />
             <span>Berdampingan</span>
           </button>
         </div>
 
-        {/* Quiet Mode Indicator */}
+        {/* Mode Indicator */}
         {activeMode === "edit" ? (
-          <div style={{ fontSize: 11.5, color: "var(--amber-deep)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--amber)" }} />
-            <span>Mode penyesuaian susunan aktif: klik matkul atau tombol tambah untuk mengubah</span>
+          <div style={{ fontSize: 12, color: "#92400E", display: "flex", alignItems: "center", gap: 7, fontWeight: 600, background: "#FEF3C7", padding: "5px 12px", borderRadius: "var(--radius-pill)", border: "1px solid #FCD34D" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#D97706" }} />
+            <span>Mode penyesuaian aktif: klik matkul atau tombol tambah untuk mengubah susunan</span>
           </div>
         ) : (
-          <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
-            {activeView === "visual" && "Geser horizontal untuk melihat 8 semester"}
+          <div style={{ fontSize: 12, color: "#64748B" }}>
+            {activeView === "visual" && "Geser horizontal untuk melihat alur 8 semester"}
           </div>
         )}
       </div>
@@ -1005,12 +1657,12 @@ export default function RoadmapPage() {
                       borderRadius: "var(--radius-sm)",
                       fontSize: 11.5,
                       fontWeight: 600,
-                      border: statusFilter === f.id ? "1px solid rgba(217, 119, 6, 0.4)" : "1px solid var(--border)",
-                      background: statusFilter === f.id ? "rgba(245, 205, 71, 0.22)" : "#FFFFFF",
-                      color: statusFilter === f.id ? "#92400E" : "var(--text-secondary)",
+                      border: statusFilter === f.id ? "1px solid #18181B" : "1px solid var(--border)",
+                      background: statusFilter === f.id ? "#18181B" : "#FFFFFF",
+                      color: statusFilter === f.id ? "#FFFFFF" : "var(--text-secondary)",
                       cursor: "pointer",
                       transition: "all 0.15s ease",
-                      boxShadow: statusFilter === f.id ? "0 1px 4px rgba(245, 205, 71, 0.2)" : "none",
+                      boxShadow: statusFilter === f.id ? "0 1px 3px rgba(0, 0, 0, 0.12)" : "none",
                     }}
                   >
                     {f.label}
@@ -1052,6 +1704,7 @@ export default function RoadmapPage() {
                   onMoveTask={handleMoveTask}
                   onDeleteTask={handleDeleteTask}
                   onUpdateTarget={handleUpdateSemesterTarget}
+                  onOpenAddItem={(tab) => openAddItemModal(plan.semesterNum, tab)}
                   onOpenAddCourse={() => {
                     setAddCourseSemester(plan.semesterNum);
                     setShowAddCourseModal(true);
@@ -1083,6 +1736,7 @@ export default function RoadmapPage() {
           onUpdateTask={handleUpdateTask}
           onMoveTask={handleMoveTask}
           onDeleteTask={handleDeleteTask}
+          onOpenAddItem={(semNum, tab) => openAddItemModal(semNum, tab)}
           onOpenAddCourse={(semNum) => {
             setAddCourseSemester(semNum);
             setShowAddCourseModal(true);
@@ -1149,6 +1803,7 @@ export default function RoadmapPage() {
                   onMoveTask={handleMoveTask}
                   onDeleteTask={handleDeleteTask}
                   onUpdateTarget={handleUpdateSemesterTarget}
+                  onOpenAddItem={(tab) => openAddItemModal(plan.semesterNum, tab)}
                   onOpenAddCourse={() => {
                     setAddCourseSemester(plan.semesterNum);
                     setShowAddCourseModal(true);
@@ -1196,6 +1851,7 @@ export default function RoadmapPage() {
                 onUpdateTask={handleUpdateTask}
                 onMoveTask={handleMoveTask}
                 onDeleteTask={handleDeleteTask}
+                onOpenAddItem={(semNum, tab) => openAddItemModal(semNum, tab)}
                 onOpenAddCourse={(semNum) => {
                   setAddCourseSemester(semNum);
                   setShowAddCourseModal(true);
@@ -1210,356 +1866,769 @@ export default function RoadmapPage() {
           </div>
         )}
 
-      {/* ── Modal: Kemampuan A (Tambah Mata Kuliah) ── */}
-      {showAddCourseModal && (
+      {/* ── Modal: Tambah Item Roadmap (COURSE, ACTIVITY, MILESTONE) ── */}
+      {showAddItemModal && (
         <div
           className="dialog-overlay"
-          onClick={() => setShowAddCourseModal(false)}
+          onClick={() => setShowAddItemModal(false)}
           role="dialog"
           aria-modal="true"
         >
           <div
             className="dialog"
-            style={{ maxWidth: 640, maxHeight: "90vh", overflowY: "auto" }}
+            style={{ maxWidth: 720, maxHeight: "90vh", overflowY: "auto", padding: "24px 26px" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            {/* Modal Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
               <div>
-                <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)" }}>
-                  Tambah Mata Kuliah ke Semester {addCourseSemester}
+                <h2 style={{ fontSize: 19, fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+                  Tambah Item ke Semester {addItemSemester}
                 </h2>
-                <p style={{ fontSize: 12.5, color: "var(--text-secondary)", marginTop: 2 }}>
-                  Pilih dari katalog kurikulum program studi atau masukkan mata kuliah kustom.
+                <p style={{ fontSize: 12.5, color: "var(--text-secondary)", marginTop: 4, lineHeight: 1.4 }}>
+                  Kelola mata kuliah kurikulum, kegiatan di luar perkuliahan, atau target milestone akademik penting.
                 </p>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowAddCourseModal(false)} style={{ padding: 6 }}>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowAddItemModal(false)}
+                style={{ padding: 6, borderRadius: "var(--radius-sm)" }}
+                aria-label="Tutup modal"
+              >
                 <X size={16} />
               </button>
             </div>
 
-            {/* Tabs: Katalog vs Kustom */}
-            <div className="tabs" style={{ marginBottom: 16 }}>
+            {/* 3 Main Category Tabs */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 6,
+                background: "rgba(0, 0, 0, 0.04)",
+                padding: 4,
+                borderRadius: "var(--radius-md)",
+                marginBottom: 16,
+              }}
+            >
               <button
-                className={`tab ${courseModalTab === "katalog" ? "active" : ""}`}
-                onClick={() => setCourseModalTab("katalog")}
+                onClick={() => setItemModalTab("COURSE")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "9px 12px",
+                  borderRadius: "var(--radius-sm)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  transition: "all 0.15s ease",
+                  background: itemModalTab === "COURSE" ? "#FFFFFF" : "transparent",
+                  color: itemModalTab === "COURSE" ? "var(--text-primary)" : "var(--text-secondary)",
+                  boxShadow: itemModalTab === "COURSE" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+                }}
               >
-                <BookOpen size={13} />
-                Katalog Kurikulum ({majorKey})
+                <BookOpen size={15} color={itemModalTab === "COURSE" ? "var(--amber-deep)" : "var(--text-muted)"} />
+                <span>Mata Kuliah</span>
               </button>
+
               <button
-                className={`tab ${courseModalTab === "kustom" ? "active" : ""}`}
-                onClick={() => setCourseModalTab("kustom")}
+                onClick={() => setItemModalTab("ACTIVITY")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "9px 12px",
+                  borderRadius: "var(--radius-sm)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  transition: "all 0.15s ease",
+                  background: itemModalTab === "ACTIVITY" ? "#FFFFFF" : "transparent",
+                  color: itemModalTab === "ACTIVITY" ? "var(--text-primary)" : "var(--text-secondary)",
+                  boxShadow: itemModalTab === "ACTIVITY" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+                }}
               >
-                <Plus size={13} />
-                Input Kustom
+                <Briefcase size={15} color={itemModalTab === "ACTIVITY" ? "var(--blue)" : "var(--text-muted)"} />
+                <span>Kegiatan Mahasiswa</span>
+              </button>
+
+              <button
+                onClick={() => setItemModalTab("MILESTONE")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  padding: "9px 12px",
+                  borderRadius: "var(--radius-sm)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  transition: "all 0.15s ease",
+                  background: itemModalTab === "MILESTONE" ? "#FFFFFF" : "transparent",
+                  color: itemModalTab === "MILESTONE" ? "var(--text-primary)" : "var(--text-secondary)",
+                  boxShadow: itemModalTab === "MILESTONE" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+                }}
+              >
+                <Target size={15} color={itemModalTab === "MILESTONE" ? "var(--teal)" : "var(--text-muted)"} />
+                <span>Milestone &amp; Target</span>
               </button>
             </div>
 
-            {courseModalTab === "katalog" ? (
+            {/* ═════════════════════════════════════════════════════════════════════ */}
+            {/* TAB 1: MATA KULIAH (COURSE) */}
+            {/* ═════════════════════════════════════════════════════════════════════ */}
+            {itemModalTab === "COURSE" && (
               <div>
-                {/* Search in Catalog */}
-                <div style={{ position: "relative", marginBottom: 14 }}>
-                  <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Cari nama matkul, kode (misal: IF1201), atau deskripsi..."
-                    value={catalogSearch}
-                    onChange={(e) => setCatalogSearch(e.target.value)}
-                    style={{ paddingLeft: 34, fontSize: 13 }}
-                  />
+                {/* Guidance Banner */}
+                <div
+                  style={{
+                    background: "rgba(245, 205, 71, 0.12)",
+                    border: "1px solid rgba(217, 119, 6, 0.25)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "10px 14px",
+                    marginBottom: 16,
+                    fontSize: 12.5,
+                    color: "#92400E",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Info size={15} style={{ flexShrink: 0 }} />
+                  <span>
+                    <strong>Pilih kelompok mata kuliah</strong>, bukan langsung mencari setiap mata kuliah.
+                  </span>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 380, overflowY: "auto", paddingRight: 4 }}>
-                  {filteredCatalog.map((course) => (
-                    <div
-                      key={course.code}
-                      style={{
-                        padding: "12px 14px",
-                        background: "var(--bg-secondary)",
-                        borderRadius: "var(--radius-md)",
-                        border: "1px solid var(--border-subtle)",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 12,
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                          <span className="badge badge-gray" style={{ fontSize: 10, fontWeight: 700 }}>
-                            {course.code}
-                          </span>
-                          <span style={{ fontSize: 11, color: "var(--amber-deep)", fontWeight: 700 }}>
-                            {course.credits} SKS
-                          </span>
-                          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                            • Bawaan Sem {course.semesterNum}
-                          </span>
-                        </div>
-                        <h4 style={{ fontSize: 13.5, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-                          {course.name}
-                        </h4>
-                        <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "3px 0 0", lineHeight: 1.4 }}>
-                          {course.description}
-                        </p>
-                      </div>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() =>
-                          handleAddCourse({
-                            title: course.name,
-                            courseCode: course.code,
-                            credits: course.credits,
-                            category: course.category,
-                            notes: `Dari katalog ${majorKey} (${course.code})`,
-                          })
-                        }
-                        style={{ flexShrink: 0, gap: 4 }}
+                {/* 4 CARDS: Wajib / Inti, Pilihan, Pengulangan, Prasyarat */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                  {[
+                    {
+                      key: "wajib",
+                      title: "Wajib / Inti",
+                      desc: "Mata kuliah kurikulum pokok yang wajib diselesaikan untuk pemenuhan syarat kelulusan program studi.",
+                      tag: "3 SKS • Kurikulum Pokok",
+                      defaultCredits: 3,
+                      category: "wajib",
+                      defaultTitle: "Mata Kuliah Wajib / Inti",
+                      icon: <BookOpen size={20} color="#D97706" />,
+                      iconBg: "rgba(245, 158, 11, 0.14)",
+                    },
+                    {
+                      key: "pilihan",
+                      title: "Pilihan",
+                      desc: "Mata kuliah peminatan, elektif bebas, atau pengayaan keahlian spesifik program studi.",
+                      tag: "3 SKS • Peminatan & Elektif",
+                      defaultCredits: 3,
+                      category: "pilihan",
+                      defaultTitle: "Mata Kuliah Pilihan",
+                      icon: <Layers size={20} color="#2563EB" />,
+                      iconBg: "rgba(59, 130, 246, 0.14)",
+                    },
+                    {
+                      key: "pengulangan",
+                      title: "Pengulangan",
+                      desc: "Mengulang mata kuliah untuk perbaikan indeks prestasi atau pemenuhan batas minimal kelulusan.",
+                      tag: "3 SKS • Perbaikan Nilai",
+                      defaultCredits: 3,
+                      category: "pengulangan",
+                      defaultTitle: "Pengulangan Mata Kuliah",
+                      icon: <RotateCcw size={20} color="#EA580C" />,
+                      iconBg: "rgba(234, 88, 12, 0.14)",
+                    },
+                    {
+                      key: "prasyarat",
+                      title: "Prasyarat",
+                      desc: "Mata kuliah fondasi yang menjadi syarat wajib sebelum mengambil mata kuliah lanjutan berantai.",
+                      tag: "3 SKS • Syarat Matkul Lanjutan",
+                      defaultCredits: 3,
+                      category: "prasyarat",
+                      defaultTitle: "Mata Kuliah Prasyarat",
+                      icon: <GitBranch size={20} color="#059669" />,
+                      iconBg: "rgba(16, 185, 129, 0.14)",
+                    },
+                  ].map((card) => {
+                    const isCustomizing = customizingCardKey === card.key;
+                    return (
+                      <div
+                        key={card.key}
+                        style={{
+                          background: "#FFFFFF",
+                          border: isCustomizing ? "1.5px solid var(--amber-deep)" : "1px solid var(--border-subtle)",
+                          borderRadius: "var(--radius-md)",
+                          padding: "14px 16px",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
+                          transition: "all 0.15s ease",
+                        }}
                       >
-                        <Plus size={13} /> Pasang
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              /* Custom Course Form */
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: 12 }}>
-                    Nama Mata Kuliah <span style={{ color: "var(--coral)" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Contoh: Pemrograman Mobile Lanjut"
-                    value={customCourseForm.title}
-                    onChange={(e) => setCustomCourseForm((p) => ({ ...p, title: e.target.value }))}
-                  />
-                </div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+                          {/* Left Icon + Text */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 10,
+                                background: card.iconBg,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {card.icon}
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                                <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                                  {card.title}
+                                </h3>
+                                <span
+                                  style={{
+                                    fontSize: 10.5,
+                                    fontWeight: 700,
+                                    color: "var(--text-secondary)",
+                                    background: "rgba(0,0,0,0.05)",
+                                    padding: "2px 7px",
+                                    borderRadius: 6,
+                                  }}
+                                >
+                                  {card.tag}
+                                </span>
+                              </div>
+                              <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0, lineHeight: 1.4 }}>
+                                {card.desc}
+                              </p>
+                            </div>
+                          </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: 12 }}>
-                      Kode Mata Kuliah
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Contoh: IF3205"
-                      value={customCourseForm.courseCode}
-                      onChange={(e) => setCustomCourseForm((p) => ({ ...p, courseCode: e.target.value }))}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: 12 }}>
-                      Jumlah SKS (1–6)
-                    </label>
-                    <select
-                      className="form-input"
-                      value={customCourseForm.credits}
-                      onChange={(e) => setCustomCourseForm((p) => ({ ...p, credits: parseInt(e.target.value) || 3 }))}
-                    >
-                      {[1, 2, 3, 4, 5, 6].map((sks) => (
-                        <option key={sks} value={sks}>
-                          {sks} SKS
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                          {/* Right Action Buttons */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => {
+                                if (isCustomizing) {
+                                  setCustomizingCardKey(null);
+                                } else {
+                                  setCustomizingCardKey(card.key);
+                                  setCustomItemTitle(card.defaultTitle);
+                                  setCustomItemCredits(card.defaultCredits);
+                                }
+                              }}
+                              style={{ fontSize: 11.5, padding: "6px 10px", color: "var(--text-secondary)" }}
+                            >
+                              {isCustomizing ? "Batal" : "Kustom Nama"}
+                            </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() =>
+                                handleAddItem({
+                                  semesterNum: addItemSemester,
+                                  itemType: "COURSE",
+                                  title: card.defaultTitle,
+                                  category: card.category,
+                                  credits: card.defaultCredits,
+                                })
+                              }
+                              style={{ gap: 4, fontSize: 12, padding: "6px 14px", fontWeight: 700 }}
+                            >
+                              <Plus size={13} /> Pasang
+                            </button>
+                          </div>
+                        </div>
 
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: 12 }}>
-                    Catatan Tambahan
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Contoh: Matkul elektif peminatan Cloud Engineering"
-                    value={customCourseForm.notes}
-                    onChange={(e) => setCustomCourseForm((p) => ({ ...p, notes: e.target.value }))}
-                  />
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
-                  <button className="btn btn-secondary btn-sm" onClick={() => setShowAddCourseModal(false)}>
-                    Batal
-                  </button>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    disabled={!customCourseForm.title.trim()}
-                    onClick={() =>
-                      handleAddCourse({
-                        title: customCourseForm.title,
-                        courseCode: customCourseForm.courseCode || undefined,
-                        credits: customCourseForm.credits,
-                        category: customCourseForm.category,
-                        notes: customCourseForm.notes,
-                      })
-                    }
-                  >
-                    Tambahkan ke Semester {addCourseSemester}
-                  </button>
+                        {/* Inline Customization Form */}
+                        {isCustomizing && (
+                          <div
+                            style={{
+                              marginTop: 12,
+                              paddingTop: 12,
+                              borderTop: "1px dashed var(--border)",
+                              display: "flex",
+                              gap: 10,
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 200 }}>
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder={`Nama mata kuliah spesifik (misal: ${card.title} - Basis Data)`}
+                                value={customItemTitle}
+                                onChange={(e) => setCustomItemTitle(e.target.value)}
+                                style={{ fontSize: 12.5, padding: "7px 10px", width: "100%" }}
+                              />
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontSize: 11.5, color: "var(--text-secondary)" }}>SKS:</span>
+                              <input
+                                type="number"
+                                className="form-input"
+                                min={1}
+                                max={6}
+                                value={customItemCredits}
+                                onChange={(e) => setCustomItemCredits(parseInt(e.target.value) || 3)}
+                                style={{ width: 62, fontSize: 12.5, padding: "7px 8px", textAlign: "center" }}
+                              />
+                            </div>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              disabled={!customItemTitle.trim()}
+                              onClick={() => {
+                                handleAddItem({
+                                  semesterNum: addItemSemester,
+                                  itemType: "COURSE",
+                                  title: customItemTitle.trim(),
+                                  category: card.category,
+                                  credits: customItemCredits,
+                                });
+                                setCustomizingCardKey(null);
+                              }}
+                              style={{ fontSize: 12, padding: "7px 14px" }}
+                            >
+                              Simpan ke Sem {addItemSemester}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* ── Modal: Kemampuan C (Tambah Milestone Pribadi - 0 SKS) ── */}
-      {showAddMilestoneModal && (
-        <div
-          className="dialog-overlay"
-          onClick={() => setShowAddMilestoneModal(false)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="dialog"
-            style={{ maxWidth: 620, maxHeight: "90vh", overflowY: "auto" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            {/* ═════════════════════════════════════════════════════════════════════ */}
+            {/* TAB 2: KEGIATAN MAHASISWA (ACTIVITY) */}
+            {/* ═════════════════════════════════════════════════════════════════════ */}
+            {itemModalTab === "ACTIVITY" && (
               <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)" }}>
-                    Tambah Milestone Pribadi
-                  </h2>
-                  <span className="badge badge-teal" style={{ fontSize: 10 }}>Non-SKS (0 SKS)</span>
+                {/* Guidance Banner */}
+                <div
+                  style={{
+                    background: "rgba(59, 130, 246, 0.08)",
+                    border: "1px solid rgba(59, 130, 246, 0.25)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "10px 14px",
+                    marginBottom: 16,
+                    fontSize: 12.5,
+                    color: "#1E40AF",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Info size={15} style={{ flexShrink: 0 }} />
+                  <span>
+                    <strong>Untuk kegiatan di luar perkuliahan.</strong> Secara default bernilai 0 SKS agar beban akademik murni.
+                  </span>
                 </div>
-                <p style={{ fontSize: 12.5, color: "var(--text-secondary)", marginTop: 2 }}>
-                  Tambahkan target magang, sertifikasi, organisasi, lomba, atau bimbingan skripsi ke Semester {addMilestoneSemester}. Item non-SKS <strong>tidak menambah total SKS akademik</strong>.
-                </p>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowAddMilestoneModal(false)} style={{ padding: 6 }}>
-                <X size={16} />
-              </button>
-            </div>
 
-            {/* Quick Templates for Milestones */}
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase" }}>
-                Pilihan Template Cepat
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {MILESTONE_TEMPLATES.map((m, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      background: "var(--bg-secondary)",
-                      border: "1px solid var(--border-subtle)",
-                      borderRadius: "var(--radius-md)",
-                      padding: "10px 12px",
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      transition: "border-color 0.2s",
-                    }}
-                    onClick={() =>
-                      handleAddMilestone({
-                        title: m.title,
-                        category: m.category,
-                        notes: m.notes,
-                      })
-                    }
-                  >
-                    <div>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", marginBottom: 3 }}>
-                        {m.title}
+                {/* 5 CARDS: Organisasi, Kompetisi, Sertifikasi, Proyek / Portofolio, Pengabdian */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                  {[
+                    {
+                      key: "organisasi",
+                      title: "Organisasi",
+                      desc: "Kepengurusan BEM, himpunan mahasiswa (HMJ), unit kegiatan mahasiswa (UKM), atau kepanitiaan.",
+                      tag: "0 SKS • Kepemimpinan & Soft Skill",
+                      category: "organisasi",
+                      defaultTitle: "Kegiatan Organisasi Kampus",
+                      icon: <Users size={20} color="#2563EB" />,
+                      iconBg: "rgba(59, 130, 246, 0.14)",
+                    },
+                    {
+                      key: "kompetisi",
+                      title: "Kompetisi",
+                      desc: "Partisipasi perlombaan akademik dan inovasi (PKM, Gemastik, Hackathon, LKTI, atau lomba minat).",
+                      tag: "0 SKS • Prestasi & Lomba",
+                      category: "kompetisi",
+                      defaultTitle: "Kompetisi & Lomba Mahasiswa",
+                      icon: <Target size={20} color="#D97706" />,
+                      iconBg: "rgba(245, 158, 11, 0.14)",
+                    },
+                    {
+                      key: "sertifikasi",
+                      title: "Sertifikasi",
+                      desc: "Ujian sertifikasi keahlian profesional industri, lisensi profesi terstandarisasi, atau uji kemahiran bahasa.",
+                      tag: "0 SKS • Lisensi & Standar Industri",
+                      category: "sertifikasi",
+                      defaultTitle: "Sertifikasi Kompetensi Profesional",
+                      icon: <CheckCircle2 size={20} color="#15803D" />,
+                      iconBg: "rgba(22, 163, 74, 0.14)",
+                    },
+                    {
+                      key: "proyek",
+                      title: "Proyek / Portofolio",
+                      desc: "Pengerjaan produk aplikasi mandiri, riset laboratorium, capstone project, atau karya portofolio karier.",
+                      tag: "0 SKS • Karya Nyata Portofolio",
+                      category: "proyek",
+                      defaultTitle: "Proyek & Portofolio Mahasiswa",
+                      icon: <Briefcase size={20} color="#7C3AED" />,
+                      iconBg: "rgba(124, 58, 237, 0.14)",
+                    },
+                    {
+                      key: "pengabdian",
+                      title: "Pengabdian",
+                      desc: "Kuliah Kerja Nyata (KKN), bakti sosial kemasyarakatan, kampus mengajar, atau program kerelawanan.",
+                      tag: "0 SKS • Dampak Sosial & KKN",
+                      category: "pengabdian",
+                      defaultTitle: "Pengabdian Masyarakat / KKN",
+                      icon: <Building2 size={20} color="#DC2626" />,
+                      iconBg: "rgba(220, 38, 38, 0.14)",
+                    },
+                  ].map((card) => {
+                    const isCustomizing = customizingCardKey === card.key;
+                    return (
+                      <div
+                        key={card.key}
+                        style={{
+                          background: "#FFFFFF",
+                          border: isCustomizing ? "1.5px solid var(--blue)" : "1px solid var(--border-subtle)",
+                          borderRadius: "var(--radius-md)",
+                          padding: "14px 16px",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+                          {/* Left Icon + Text */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 10,
+                                background: card.iconBg,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {card.icon}
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                                <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                                  {card.title}
+                                </h3>
+                                <span
+                                  style={{
+                                    fontSize: 10.5,
+                                    fontWeight: 700,
+                                    color: "var(--text-secondary)",
+                                    background: "rgba(0,0,0,0.05)",
+                                    padding: "2px 7px",
+                                    borderRadius: 6,
+                                  }}
+                                >
+                                  {card.tag}
+                                </span>
+                              </div>
+                              <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0, lineHeight: 1.4 }}>
+                                {card.desc}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Right Action Buttons */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => {
+                                if (isCustomizing) {
+                                  setCustomizingCardKey(null);
+                                } else {
+                                  setCustomizingCardKey(card.key);
+                                  setCustomItemTitle(card.defaultTitle);
+                                }
+                              }}
+                              style={{ fontSize: 11.5, padding: "6px 10px", color: "var(--text-secondary)" }}
+                            >
+                              {isCustomizing ? "Batal" : "Kustom Nama"}
+                            </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() =>
+                                handleAddItem({
+                                  semesterNum: addItemSemester,
+                                  itemType: "ACTIVITY",
+                                  title: card.defaultTitle,
+                                  category: card.category,
+                                  credits: 0,
+                                })
+                              }
+                              style={{ gap: 4, fontSize: 12, padding: "6px 14px", fontWeight: 700 }}
+                            >
+                              <Plus size={13} /> Pasang
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Inline Customization Form */}
+                        {isCustomizing && (
+                          <div
+                            style={{
+                              marginTop: 12,
+                              paddingTop: 12,
+                              borderTop: "1px dashed var(--border)",
+                              display: "flex",
+                              gap: 10,
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 220 }}>
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder={`Nama program kegiatan (misal: ${card.title} - Divisi Litbang)`}
+                                value={customItemTitle}
+                                onChange={(e) => setCustomItemTitle(e.target.value)}
+                                style={{ fontSize: 12.5, padding: "7px 10px", width: "100%" }}
+                              />
+                            </div>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              disabled={!customItemTitle.trim()}
+                              onClick={() => {
+                                handleAddItem({
+                                  semesterNum: addItemSemester,
+                                  itemType: "ACTIVITY",
+                                  title: customItemTitle.trim(),
+                                  category: card.category,
+                                  credits: 0,
+                                });
+                                setCustomizingCardKey(null);
+                              }}
+                              style={{ fontSize: 12, padding: "7px 14px" }}
+                            >
+                              Simpan ke Sem {addItemSemester}
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.3 }}>
-                        {m.notes}
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ═════════════════════════════════════════════════════════════════════ */}
+            {/* TAB 3: MILESTONE & TARGET (MILESTONE) */}
+            {/* ═════════════════════════════════════════════════════════════════════ */}
+            {itemModalTab === "MILESTONE" && (
+              <div>
+                {/* Guidance Banner */}
+                <div
+                  style={{
+                    background: "rgba(13, 148, 136, 0.08)",
+                    border: "1px solid rgba(13, 148, 136, 0.25)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "10px 14px",
+                    marginBottom: 16,
+                    fontSize: 12.5,
+                    color: "#0F766E",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <Info size={15} style={{ flexShrink: 0 }} />
+                  <span>
+                    <strong>Untuk pencapaian atau tenggat penting.</strong> Pantau tenggat rencana studi, bimbingan dosen wali, persiapan magang, dan target akademik.
+                  </span>
+                </div>
+
+                {/* 4 CARDS: KRS, Konsultasi Dosen Wali, Persiapan Magang, Target Akademik */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                  {[
+                    {
+                      key: "krs",
+                      title: "KRS",
+                      desc: "Pengisian Kartu Rencana Studi semester, validasi akademik, dan penyesuaian jadwal kuliah.",
+                      tag: "0 SKS • Tenggat Rencana Studi",
+                      category: "krs",
+                      defaultTitle: "Pengisian & Validasi KRS",
+                      icon: <FileText size={20} color="#D97706" />,
+                      iconBg: "rgba(245, 158, 11, 0.14)",
+                    },
+                    {
+                      key: "dosen_wali",
+                      title: "Konsultasi dosen wali",
+                      desc: "Bimbingan akademik semesteran, evaluasi indeks prestasi, dan konsultasi progres kelulusan.",
+                      tag: "0 SKS • Bimbingan Akademik Wajib",
+                      category: "dosen_wali",
+                      defaultTitle: "Konsultasi Dosen Wali",
+                      icon: <GraduationCap size={20} color="#2563EB" />,
+                      iconBg: "rgba(59, 130, 246, 0.14)",
+                    },
+                    {
+                      key: "persiapan_magang",
+                      title: "Persiapan magang",
+                      desc: "Penyusunan berkas magang, portofolio industri, seleksi mitra perusahaan, atau program MBKM.",
+                      tag: "0 SKS • Karier & Industri",
+                      category: "persiapan_magang",
+                      defaultTitle: "Persiapan Magang & MBKM",
+                      icon: <Briefcase size={20} color="#0F766E" />,
+                      iconBg: "rgba(13, 148, 136, 0.14)",
+                    },
+                    {
+                      key: "target_akademik",
+                      title: "Target akademik",
+                      desc: "Target pencapaian IPK semester, kelulusan ujian kompetensi, atau target penyusunan skripsi.",
+                      tag: "0 SKS • Sasaran Pribadi",
+                      category: "target_akademik",
+                      defaultTitle: "Target Akademik Semester",
+                      icon: <Target size={20} color="#15803D" />,
+                      iconBg: "rgba(22, 163, 74, 0.14)",
+                    },
+                  ].map((card) => {
+                    const isCustomizing = customizingCardKey === card.key;
+                    return (
+                      <div
+                        key={card.key}
+                        style={{
+                          background: "#FFFFFF",
+                          border: isCustomizing ? "1.5px solid var(--teal)" : "1px solid var(--border-subtle)",
+                          borderRadius: "var(--radius-md)",
+                          padding: "14px 16px",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
+                          {/* Left Icon + Text */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 10,
+                                background: card.iconBg,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {card.icon}
+                            </div>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                                <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                                  {card.title}
+                                </h3>
+                                <span
+                                  style={{
+                                    fontSize: 10.5,
+                                    fontWeight: 700,
+                                    color: "var(--text-secondary)",
+                                    background: "rgba(0,0,0,0.05)",
+                                    padding: "2px 7px",
+                                    borderRadius: 6,
+                                  }}
+                                >
+                                  {card.tag}
+                                </span>
+                              </div>
+                              <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0, lineHeight: 1.4 }}>
+                                {card.desc}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Right Action Buttons */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => {
+                                if (isCustomizing) {
+                                  setCustomizingCardKey(null);
+                                } else {
+                                  setCustomizingCardKey(card.key);
+                                  setCustomItemTitle(card.defaultTitle);
+                                }
+                              }}
+                              style={{ fontSize: 11.5, padding: "6px 10px", color: "var(--text-secondary)" }}
+                            >
+                              {isCustomizing ? "Batal" : "Kustom Nama"}
+                            </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() =>
+                                handleAddItem({
+                                  semesterNum: addItemSemester,
+                                  itemType: "MILESTONE",
+                                  title: card.defaultTitle,
+                                  category: card.category,
+                                  credits: 0,
+                                })
+                              }
+                              style={{ gap: 4, fontSize: 12, padding: "6px 14px", fontWeight: 700 }}
+                            >
+                              <Plus size={13} /> Pasang
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Inline Customization Form */}
+                        {isCustomizing && (
+                          <div
+                            style={{
+                              marginTop: 12,
+                              paddingTop: 12,
+                              borderTop: "1px dashed var(--border)",
+                              display: "flex",
+                              gap: 10,
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 220 }}>
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder={`Judul target spesifik (misal: ${card.title} - Target IPK 3.75)`}
+                                value={customItemTitle}
+                                onChange={(e) => setCustomItemTitle(e.target.value)}
+                                style={{ fontSize: 12.5, padding: "7px 10px", width: "100%" }}
+                              />
+                            </div>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              disabled={!customItemTitle.trim()}
+                              onClick={() => {
+                                handleAddItem({
+                                  semesterNum: addItemSemester,
+                                  itemType: "MILESTONE",
+                                  title: customItemTitle.trim(),
+                                  category: card.category,
+                                  credits: 0,
+                                });
+                                setCustomizingCardKey(null);
+                              }}
+                              style={{ fontSize: 12, padding: "7px 14px" }}
+                            >
+                              Simpan ke Sem {addItemSemester}
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, color: "var(--amber-deep)", fontSize: 11, fontWeight: 700 }}>
-                      <Plus size={11} /> Pasang (0 SKS)
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Milestone Form */}
-            <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", marginBottom: 10, textTransform: "uppercase" }}>
-                Atau Masukkan Milestone Kustom
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: 12 }}>
-                    Judul Milestone / Kegiatan <span style={{ color: "var(--coral)" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Contoh: Mengikuti Google Solution Challenge 2025"
-                    value={customMilestoneForm.title}
-                    onChange={(e) => setCustomMilestoneForm((p) => ({ ...p, title: e.target.value }))}
-                  />
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: 12 }}>
-                      Kategori Milestone
-                    </label>
-                    <select
-                      className="form-input"
-                      value={customMilestoneForm.category}
-                      onChange={(e) => setCustomMilestoneForm((p) => ({ ...p, category: e.target.value }))}
-                    >
-                      <option value="karier">Karier & Magang</option>
-                      <option value="tak">TAK / Organisasi</option>
-                      <option value="skripsi">Persiapan Skripsi</option>
-                      <option value="pribadi">Portofolio & Lomba</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: 12 }}>
-                      Bobot SKS Akademik
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value="0 SKS (Non-Akademik)"
-                      disabled
-                      style={{ opacity: 0.7 }}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label" style={{ fontSize: 12 }}>
-                    Catatan Rencana
-                  </label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Contoh: Target submission proposal sebelum tanggal 15"
-                    value={customMilestoneForm.notes}
-                    onChange={(e) => setCustomMilestoneForm((p) => ({ ...p, notes: e.target.value }))}
-                  />
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
-                  <button className="btn btn-secondary btn-sm" onClick={() => setShowAddMilestoneModal(false)}>
-                    Batal
-                  </button>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    disabled={!customMilestoneForm.title.trim()}
-                    onClick={() => handleAddMilestone(customMilestoneForm)}
-                  >
-                    Simpan Milestone ke Semester {addMilestoneSemester}
-                  </button>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          </div>
+            )}
+</div>
         </div>
       )}
 
@@ -1725,6 +2794,7 @@ function SemesterCardItem({
   onUpdateTarget,
   onOpenAddCourse,
   onOpenAddMilestone,
+  onOpenAddItem,
   onOpenTemplate,
 }: {
   plan: SemesterPlan;
@@ -1741,6 +2811,7 @@ function SemesterCardItem({
   onUpdateTarget: (semesterNum: number, targetCredits: number) => void;
   onOpenAddCourse: () => void;
   onOpenAddMilestone: () => void;
+  onOpenAddItem?: (tab?: "COURSE" | "ACTIVITY" | "MILESTONE") => void;
   onOpenTemplate: () => void;
 }) {
   const [targetCreditsInput, setTargetCreditsInput] = useState<number>(plan.targetCredits || 20);
@@ -1757,7 +2828,7 @@ function SemesterCardItem({
     (profile ? semesterLabel(plan.semesterNum, profile.entryYear) : `Semester ${plan.semesterNum}`);
   const label = rawLabel.replace(/—/g, "•");
 
-  // Kemampuan B: Validasi Beban Kuliah per Semester
+  // Validasi Beban Kuliah per Semester
   const maxLimit = 24;
   const minNormalLimit = 12;
   const isOverMax = academicCredits > maxLimit;
@@ -1769,11 +2840,18 @@ function SemesterCardItem({
     <div
       className={`semester-card ${plan.isCurrentSemester ? "current" : ""}`}
       style={{
+        background: "#FFFFFF",
+        borderRadius: "16px",
         border: isOverMax
-          ? "1px solid var(--coral)"
+          ? "1.5px solid #EF4444"
           : plan.isCurrentSemester
-          ? "1px solid rgba(245, 205, 71, 0.4)"
-          : undefined,
+          ? "1.5px solid #E5D5BA"
+          : "1px solid #E2E8F0",
+        boxShadow: plan.isCurrentSemester
+          ? "0 4px 18px rgba(245, 205, 71, 0.16), 0 1px 3px rgba(0,0,0,0.03)"
+          : "0 1px 3px rgba(0,0,0,0.03)",
+        overflow: "hidden",
+        transition: "all 0.15s ease",
       }}
     >
       {/* Semester Header */}
@@ -1784,53 +2862,61 @@ function SemesterCardItem({
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && onToggle()}
         aria-expanded={isExpanded}
+        style={{
+          padding: "16px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: "pointer",
+          userSelect: "none",
+        }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: "#0F172A" }}>
                 {label}
               </span>
               {plan.isCurrentSemester && (
                 <span
                   style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: "#92400E",
-                    background: "rgba(245, 205, 71, 0.22)",
-                    border: "1px solid rgba(217, 119, 6, 0.3)",
-                    padding: "2px 8px",
-                    borderRadius: "var(--radius-sm)",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#18181B",
+                    background: "#F4EFE6",
+                    border: "1px solid #E7DFD3",
+                    padding: "2px 9px",
+                    borderRadius: "20px",
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 4,
+                    gap: 5,
                   }}
                 >
-                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#D97706" }} />
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#D97706" }} />
                   Semester Berjalan
                 </span>
               )}
               {academicCredits === 0 && (
-                <span className="badge badge-gray" style={{ fontSize: 10 }}>Belum ada matkul</span>
+                <span className="badge badge-gray" style={{ fontSize: 10, padding: "2px 7px" }}>Belum ada matkul</span>
               )}
             </div>
 
             {/* Load summary & milestones summary */}
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <span style={{ color: isOverMax ? "var(--coral)" : "var(--text-secondary)", fontWeight: 600 }}>
+            <div style={{ fontSize: 12.5, color: "#64748B", marginTop: 5, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ color: isOverMax ? "#DC2626" : "#0F172A", fontWeight: 700 }}>
                 {academicCredits} SKS Akademik
               </span>
-              <span style={{ color: "rgba(255, 255, 255, 0.15)" }}>•</span>
+              <span style={{ color: "#CBD5E1" }}>•</span>
               <span>Target: {plan.targetCredits || 20} SKS</span>
               {milestoneTasks.length > 0 && (
                 <>
-                  <span style={{ color: "rgba(255, 255, 255, 0.15)" }}>•</span>
-                  <span style={{ color: "var(--teal)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    <Target size={11} /> {milestoneTasks.length} Milestone Non-SKS
+                  <span style={{ color: "#CBD5E1" }}>•</span>
+                  <span style={{ color: "#475569", fontWeight: 600, background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "1px 7px", borderRadius: "10px", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <Target size={11} color="#64748B" /> {milestoneTasks.length} Milestone
                   </span>
                 </>
               )}
-              <span style={{ color: "rgba(255, 255, 255, 0.15)" }}>•</span>
+              <span style={{ color: "#CBD5E1" }}>•</span>
               <span>{doneCount}/{plan.tasks.length} Selesai</span>
             </div>
           </div>
@@ -1838,91 +2924,93 @@ function SemesterCardItem({
 
         {/* Right side status indicator & Chevron */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Load Warning Badges (Kemampuan B) */}
+          {/* Load Badges */}
           {isOverMax && (
             <span
               style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "var(--coral)",
-                background: "rgba(255, 126, 138, 0.08)",
-                border: "1px solid rgba(255, 126, 138, 0.25)",
-                padding: "3px 8px",
-                borderRadius: "var(--radius-sm)",
+                fontSize: 11.5,
+                fontWeight: 700,
+                color: "#991B1B",
+                background: "#FEE2E2",
+                border: "1px solid #FCA5A5",
+                padding: "4px 10px",
+                borderRadius: "20px",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 4,
+                gap: 5,
               }}
             >
-              <AlertTriangle size={12} /> Beban Tinggi (&gt;24 SKS)
+              <AlertTriangle size={12} /> Beban Tinggi • &gt; 24 SKS
             </span>
           )}
           {!isOverMax && isTooLight && (
             <span
               style={{
-                fontSize: 11,
+                fontSize: 11.5,
                 fontWeight: 600,
-                color: "var(--orange)",
-                background: "rgba(255, 158, 102, 0.08)",
-                border: "1px solid rgba(255, 158, 102, 0.25)",
-                padding: "3px 8px",
-                borderRadius: "var(--radius-sm)",
+                color: "#64748B",
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                padding: "3px 9px",
+                borderRadius: "20px",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 4,
+                gap: 5,
               }}
+              title="Total beban semester saat ini di bawah 12 SKS"
             >
-              <AlertCircle size={12} /> Beban Ringan (&lt;12 SKS)
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#94A3B8" }} />
+              Beban Ringan • {academicCredits} SKS
             </span>
           )}
           {!isOverMax && !isTooLight && isOptimal && (
             <span
               style={{
-                fontSize: 11,
+                fontSize: 11.5,
                 fontWeight: 700,
                 color: "#15803D",
-                background: "rgba(22, 163, 74, 0.12)",
-                border: "1px solid rgba(22, 163, 74, 0.25)",
-                padding: "3px 8px",
-                borderRadius: "var(--radius-sm)",
+                background: "#DCFCE7",
+                border: "1px solid #86EFAC",
+                padding: "4px 10px",
+                borderRadius: "20px",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 4,
+                gap: 5,
               }}
             >
-              <Check size={12} /> Beban Ideal
+              <Check size={12} strokeWidth={2.5} /> Beban Ideal
             </span>
           )}
 
-          <div style={{ color: "var(--text-muted)", display: "flex", alignItems: "center", padding: 2 }}>
-            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          <div style={{ color: "#64748B", display: "flex", alignItems: "center", padding: 2 }}>
+            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
         </div>
       </div>
 
       {/* Semester Body (Accordion Content) */}
       {isExpanded && (
-        <div className="semester-card-body">
-          {/* Kemampuan B: Alert Box if Overloaded or Too Light */}
+        <div className="semester-card-body" style={{ padding: "16px 20px 20px", borderTop: "1px solid #E2E8F0" }}>
+          {/* Alert Box if Overloaded or Too Light */}
           {isOverMax && (
             <div
               style={{
-                background: "rgba(255, 126, 138, 0.06)",
-                border: "1px solid rgba(255, 126, 138, 0.22)",
-                borderRadius: "var(--radius-md)",
-                padding: "10px 14px",
-                margin: "4px 0 14px",
-                fontSize: 12,
-                color: "#FFA8B2",
+                background: "#FEE2E2",
+                border: "1px solid #FCA5A5",
+                borderRadius: "10px",
+                padding: "11px 15px",
+                marginBottom: 14,
+                fontSize: 12.5,
+                color: "#991B1B",
                 lineHeight: 1.5,
                 display: "flex",
                 alignItems: "flex-start",
                 gap: 10,
               }}
             >
-              <AlertTriangle size={15} color="var(--coral)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <AlertTriangle size={16} color="#DC2626" style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
-                <strong>Peringatan Beban Kuliah:</strong> Semester ini memiliki beban <strong>{academicCredits} SKS</strong> yang melebihi batas reguler nasional (24 SKS). Beban di atas 24 SKS hanya diperbolehkan dengan IPK minimal 3.00 dan persetujuan khusus Dosen Pembimbing Akademik.
+                <strong style={{ color: "#991B1B" }}>Peringatan Beban Kuliah:</strong> Semester ini memiliki beban <strong>{academicCredits} SKS</strong> yang melebihi batas reguler nasional (24 SKS).
               </div>
             </div>
           )}
@@ -1930,19 +3018,19 @@ function SemesterCardItem({
           {!isOverMax && isOverTarget && (
             <div
               style={{
-                background: "rgba(255, 158, 102, 0.06)",
-                border: "1px solid rgba(255, 158, 102, 0.22)",
-                borderRadius: "var(--radius-md)",
-                padding: "8px 12px",
-                margin: "4px 0 14px",
-                fontSize: 12,
-                color: "#FFAC7A",
+                background: "#FFEDD5",
+                border: "1px solid #FDBA74",
+                borderRadius: "10px",
+                padding: "9px 13px",
+                marginBottom: 14,
+                fontSize: 12.5,
+                color: "#9A3412",
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
               }}
             >
-              <AlertCircle size={14} color="var(--orange)" />
+              <AlertCircle size={15} color="#EA580C" />
               <div>
                 <strong>Perhatian:</strong> Beban saat ini ({academicCredits} SKS) melebihi target semester yang kamu tetapkan ({plan.targetCredits} SKS).
               </div>
@@ -1952,35 +3040,35 @@ function SemesterCardItem({
           {!isOverMax && isTooLight && (
             <div
               style={{
-                background: "rgba(245, 205, 71, 0.05)",
-                border: "1px solid rgba(245, 205, 71, 0.18)",
-                borderRadius: "var(--radius-md)",
-                padding: "10px 14px",
-                margin: "4px 0 14px",
-                fontSize: 12,
-                color: "#E8D992",
+                background: "#FEF9C3",
+                border: "1px solid #FDE047",
+                borderRadius: "10px",
+                padding: "11px 15px",
+                marginBottom: 14,
+                fontSize: 12.5,
+                color: "#78350F",
                 lineHeight: 1.5,
                 display: "flex",
                 alignItems: "flex-start",
                 gap: 10,
               }}
             >
-              <AlertCircle size={15} color="var(--lime)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <AlertCircle size={16} color="#B45309" style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
-                <strong>Catatan Beban Semester:</strong> Beban semester ini ({academicCredits} SKS) tergolong ringan (&lt; 12 SKS). Pertimbangkan mengambil mata kuliah pilihan lebih awal agar masa studi tetap seimbang dan selesai tepat waktu.
+                <strong style={{ color: "#78350F" }}>Catatan Beban Semester:</strong> Beban semester ini ({academicCredits} SKS) tergolong ringan (&lt; 12 SKS). Pertimbangkan mengambil mata kuliah pilihan lebih awal agar masa studi tetap seimbang dan selesai tepat waktu.
               </div>
             </div>
           )}
 
-          {/* Kemampuan B Control: Set Target Beban SKS Semester (in Mode 2) */}
+          {/* Target SKS Semester Control (in Mode 2 Edit) */}
           {mode === "edit" && (
             <div
               style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid var(--border-subtle)",
-                borderRadius: "var(--radius-md)",
-                padding: "10px 14px",
-                marginBottom: 14,
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                borderRadius: "10px",
+                padding: "8px 14px",
+                marginBottom: 12,
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -1989,13 +3077,13 @@ function SemesterCardItem({
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <SlidersHorizontal size={14} color="var(--lime)" />
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)" }}>
+                <SlidersHorizontal size={14} color="#475569" />
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: "#1E293B" }}>
                   Target Beban SKS Semester:
                 </span>
                 <select
                   className="form-input"
-                  style={{ width: "auto", fontSize: 12, padding: "3px 8px" }}
+                  style={{ width: "auto", fontSize: 12, padding: "4px 10px", borderRadius: "6px", background: "#FFFFFF", border: "1px solid #CBD5E1", fontWeight: 600, color: "#0F172A" }}
                   value={targetCreditsInput}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 20;
@@ -2011,30 +3099,36 @@ function SemesterCardItem({
                 </select>
               </div>
 
-              <div style={{ display: "flex", gap: 6 }}>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={onOpenAddCourse}
-                  style={{ fontSize: 11.5, gap: 4 }}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                <span style={{ color: "#64748B", fontWeight: 500 }}>Beban Semester:</span>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    color: isOverMax ? "#DC2626" : isOptimal ? "#15803D" : "#0F172A",
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    padding: "2px 8px",
+                    borderRadius: "6px",
+                  }}
                 >
-                  <Plus size={12} /> Tambah Matkul
-                </button>
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={onOpenAddMilestone}
-                  style={{ fontSize: 11.5, gap: 4 }}
-                >
-                  <Target size={12} color="var(--teal)" /> + Milestone Non-SKS
-                </button>
+                  {academicCredits} / {targetCreditsInput} SKS
+                </span>
               </div>
             </div>
           )}
 
-          {/* List of Tasks (Courses & Milestones) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {/* List of Tasks (Courses, Activities, Milestones) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {displayTasks.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "20px 12px", color: "var(--text-muted)", fontSize: 13 }}>
-                Belum ada rencana mata kuliah atau milestone di semester ini.
+              <div style={{ textAlign: "center", padding: "24px 16px", color: "#64748B", fontSize: 13, background: "#F8FAFC", border: "1px dashed #CBD5E1", borderRadius: "10px" }}>
+                <p style={{ margin: "0 0 10px" }}>Belum ada rencana mata kuliah, kegiatan, atau milestone di semester ini.</p>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => (onOpenAddItem ? onOpenAddItem("COURSE") : onOpenAddCourse())}
+                  style={{ fontSize: 12, gap: 5, padding: "5px 12px" }}
+                >
+                  <Plus size={13} /> Tambah Item
+                </button>
               </div>
             ) : (
               displayTasks.map((task) => {
@@ -2059,13 +3153,21 @@ function SemesterCardItem({
                       <div
                         className="task-item"
                         style={{
-                          background: isCompleted
-                            ? "rgba(255, 255, 255, 0.015)"
+                          background: "#FFFFFF",
+                          border: isCompleted
+                            ? "1px solid #E2E8F0"
                             : isNeedsRepeat
-                            ? "rgba(255, 126, 138, 0.03)"
+                            ? "1px solid #FECDD3"
                             : isMilestone
-                            ? "rgba(117, 189, 165, 0.03)"
-                            : "rgba(255, 255, 255, 0.02)",
+                            ? "1px solid #CCFBF1"
+                            : "1px solid #E2E8F0",
+                          borderRadius: "10px",
+                          padding: "12px 16px",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          transition: "all 0.15s ease",
                           cursor: mode === "edit" ? "pointer" : "default",
                         }}
                         onClick={() => {
@@ -2077,15 +3179,15 @@ function SemesterCardItem({
                           <TaskStatusBadge status={task.status} />
                         </div>
 
-                        {/* Title, Code, & Notes */}
+                        {/* Title, Code, & Badges */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                             <span
                               style={{
-                                fontSize: 13,
+                                fontSize: 13.5,
                                 fontWeight: 600,
-                                color: isCompleted ? "var(--text-muted)" : "var(--text-primary)",
-                                textDecoration: isCompleted ? "line-through" : "none",
+                                color: isCompleted ? "#64748B" : "#0F172A",
+                                // no strike-through for completed courses
                               }}
                             >
                               {task.title}
@@ -2094,12 +3196,12 @@ function SemesterCardItem({
                             {task.courseCode && (
                               <span
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: 10.5,
                                   fontWeight: 700,
                                   fontFamily: "monospace",
-                                  color: "var(--text-secondary)",
-                                  background: "rgba(255, 255, 255, 0.05)",
-                                  border: "1px solid var(--border-subtle)",
+                                  color: "#334155",
+                                  background: "#F1F5F9",
+                                  border: "1px solid #E2E8F0",
                                   padding: "1px 6px",
                                   borderRadius: "4px",
                                 }}
@@ -2108,17 +3210,39 @@ function SemesterCardItem({
                               </span>
                             )}
 
-                            {/* Milestone Non-SKS badge */}
-                            {isMilestone && (
+                            {/* Item Type: ACTIVITY Badge */}
+                            {task.itemType === "ACTIVITY" && (
                               <span
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: 10.5,
                                   fontWeight: 600,
-                                  background: "rgba(117, 189, 165, 0.08)",
-                                  border: "1px solid rgba(117, 189, 165, 0.2)",
-                                  color: "var(--teal)",
+                                  background: "#EEF2FF",
+                                  border: "1px solid #C7D2FE",
+                                  color: "#4338CA",
                                   padding: "1px 6px",
-                                  borderRadius: "var(--radius-sm)",
+                                  borderRadius: "4px",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                }}
+                              >
+                                <Briefcase size={10} />
+                                <span>Kegiatan: {task.category}</span>
+                                {task.weeklyHours ? <span>• {task.weeklyHours} jam/mgg</span> : null}
+                              </span>
+                            )}
+
+                            {/* Item Type: MILESTONE Badge */}
+                            {(task.itemType === "MILESTONE" || isMilestone) && (
+                              <span
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: 600,
+                                  background: "#CCFBF1",
+                                  border: "1px solid #99F6E4",
+                                  color: "#0F766E",
+                                  padding: "1px 6px",
+                                  borderRadius: "4px",
                                   display: "inline-flex",
                                   alignItems: "center",
                                   gap: 4,
@@ -2128,17 +3252,17 @@ function SemesterCardItem({
                               </span>
                             )}
 
-                            {/* Completed Course Locked Badge (CRITICAL RULE A) */}
+                            {/* Completed Course Locked Badge */}
                             {isCompleted && (
                               <span
                                 style={{
-                                  fontSize: 10,
+                                  fontSize: 10.5,
                                   fontWeight: 700,
-                                  background: "rgba(22, 163, 74, 0.12)",
-                                  border: "1px solid rgba(22, 163, 74, 0.25)",
+                                  background: "#DCFCE7",
+                                  border: "1px solid #86EFAC",
                                   color: "#15803D",
                                   padding: "1px 6px",
-                                  borderRadius: "var(--radius-sm)",
+                                  borderRadius: "4px",
                                   display: "inline-flex",
                                   alignItems: "center",
                                   gap: 3,
@@ -2153,13 +3277,13 @@ function SemesterCardItem({
                             {isNeedsRepeat && (
                               <span
                                 style={{
-                                  fontSize: 10,
-                                  fontWeight: 600,
-                                  background: "rgba(255, 126, 138, 0.08)",
-                                  border: "1px solid rgba(255, 126, 138, 0.2)",
-                                  color: "var(--coral)",
+                                  fontSize: 10.5,
+                                  fontWeight: 700,
+                                  background: "#FEE2E2",
+                                  border: "1px solid #FCA5A5",
+                                  color: "#991B1B",
                                   padding: "1px 6px",
-                                  borderRadius: "var(--radius-sm)",
+                                  borderRadius: "4px",
                                   display: "inline-flex",
                                   alignItems: "center",
                                   gap: 3,
@@ -2171,32 +3295,53 @@ function SemesterCardItem({
                           </div>
 
                           {task.notes && (
-                            <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: "3px 0 0" }}>
+                            <p style={{ fontSize: 11.5, color: "#64748B", margin: "3px 0 0" }}>
                               {task.notes}
                             </p>
                           )}
                         </div>
 
-                        {/* Credits & Category */}
+                        {/* Credits & Action */}
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                          {task.credits > 0 ? (
-                            <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--text-primary)" }}>
-                              {task.credits} SKS
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>0 SKS</span>
-                          )}
+                          <span
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: isMilestone ? "#0F766E" : "#0F172A",
+                              background: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                            }}
+                          >
+                            {task.credits > 0 ? `${task.credits} SKS` : "0 SKS"}
+                          </span>
 
                           {mode === "edit" && (
                             <button
                               className="btn btn-ghost btn-sm"
-                              style={{ padding: "3px 8px", fontSize: 11, color: "var(--blue)" }}
+                              style={{
+                                width: 28,
+                                height: 28,
+                                padding: 0,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderRadius: "6px",
+                                color: "#475569",
+                                background: "#F8FAFC",
+                                border: "1px solid #E2E8F0",
+                                transition: "all 0.15s ease",
+                                flexShrink: 0,
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onEditTaskId(task.id);
                               }}
+                              title="Edit item"
+                              aria-label="Edit item"
                             >
-                              Sesuaikan
+                              <Edit3 size={13} />
                             </button>
                           )}
                         </div>
@@ -2212,8 +3357,8 @@ function SemesterCardItem({
           <div
             style={{
               marginTop: 14,
-              paddingTop: 10,
-              borderTop: "1px solid var(--border-subtle)",
+              paddingTop: 12,
+              borderTop: "1px solid #E2E8F0",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -2221,30 +3366,58 @@ function SemesterCardItem({
               gap: 8,
             }}
           >
-            {/* Kemampuan D: Direct Scenario What-If Link for this semester */}
             <Link
               href={`/app/simulator?semester=${plan.semesterNum}`}
               style={{
-                fontSize: 11.5,
-                color: "var(--amber-deep)",
+                fontSize: 12,
+                color: "#92400E",
+                background: "#FEF3C7",
+                border: "1px solid #FDE68A",
+                padding: "5px 12px",
+                borderRadius: "8px",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 5,
+                gap: 6,
                 textDecoration: "none",
                 fontWeight: 700,
+                transition: "all 0.15s ease",
               }}
             >
-              <Compass size={13} color="var(--amber)" />
-              Uji Alternatif Semester Ini di Simulator
+              <Compass size={14} color="#D97706" />
+              Uji di Simulator
             </Link>
 
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={onOpenTemplate}
-              style={{ fontSize: 11.5, color: "var(--blue)", gap: 4 }}
-            >
-              <Plus size={13} /> Tambah dari Template
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={onOpenTemplate}
+                style={{
+                  fontSize: 12,
+                  color: "#334155",
+                  fontWeight: 600,
+                  border: "1px solid #CBD5E1",
+                  borderRadius: "8px",
+                  padding: "5px 12px",
+                  background: "#FFFFFF",
+                  gap: 5,
+                }}
+              >
+                <Plus size={12} /> Dari Template
+              </button>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => (onOpenAddItem ? onOpenAddItem("COURSE") : onOpenAddCourse())}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: "5px 14px",
+                  borderRadius: "8px",
+                  gap: 5,
+                }}
+              >
+                <Plus size={12} /> Tambah Item
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2264,6 +3437,7 @@ function InteractiveVisualRoadmap({
   onUpdateTask,
   onMoveTask,
   onDeleteTask,
+  onOpenAddItem,
   onOpenAddCourse,
   onOpenAddMilestone,
   onUpdateTarget,
@@ -2276,6 +3450,7 @@ function InteractiveVisualRoadmap({
   onUpdateTask: (id: string, updates: Record<string, unknown>) => void;
   onMoveTask: (id: string, targetSemesterNum: number) => void;
   onDeleteTask: (id: string) => void;
+  onOpenAddItem?: (semNum: number, tab?: "COURSE" | "ACTIVITY" | "MILESTONE") => void;
   onOpenAddCourse: (semNum: number) => void;
   onOpenAddMilestone: (semNum: number) => void;
   onUpdateTarget: (semesterNum: number, targetCredits: number) => void;
@@ -2922,8 +4097,8 @@ function InteractiveVisualRoadmap({
 
                             <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
                               {isCompleted && <Lock size={10} color="#15803D" />}
-                              <span style={{ fontSize: 10, fontWeight: 700, color: isMilestone ? "#0D9488" : isCompleted ? "#15803D" : "var(--text-secondary)" }}>
-                                {isMilestone ? "0 SKS" : `${task.credits} SKS`}
+                              <span style={{ fontSize: 10, fontWeight: 700, color: task.itemType === "ACTIVITY" ? "#3B82F6" : isMilestone ? "#0D9488" : isCompleted ? "#15803D" : "var(--text-secondary)" }}>
+                                {task.itemType === "ACTIVITY" ? (task.credits > 0 ? `${task.credits} SKS` : "Kegiatan") : isMilestone ? "0 SKS" : `${task.credits} SKS`}
                               </span>
                             </div>
                           </div>
@@ -2957,30 +4132,21 @@ function InteractiveVisualRoadmap({
                       </button>
 
                       {mode === "edit" && (
-                        <>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            style={{ fontSize: 11, padding: "5px 8px" }}
-                            onClick={(e) => {
-                              e.stopPropagation();
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          style={{ fontSize: 11, padding: "5px 8px" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onOpenAddItem) {
+                              onOpenAddItem(pt.plan.semesterNum, "COURSE");
+                            } else {
                               onOpenAddCourse(pt.plan.semesterNum);
-                            }}
-                            title="Tambah Mata Kuliah"
-                          >
-                            <Plus size={12} />
-                          </button>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            style={{ fontSize: 11, padding: "5px 8px", color: "var(--teal)" }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onOpenAddMilestone(pt.plan.semesterNum);
-                            }}
-                            title="Tambah Milestone Non-SKS"
-                          >
-                            <Target size={12} />
-                          </button>
-                        </>
+                            }
+                          }}
+                          title="Tambah Item (Mata Kuliah, Kegiatan, Milestone)"
+                        >
+                          <Plus size={12} />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -3002,6 +4168,13 @@ function InteractiveVisualRoadmap({
           onUpdateTask={onUpdateTask}
           onMoveTask={onMoveTask}
           onDeleteTask={onDeleteTask}
+          onOpenAddItem={(tab) => {
+            if (onOpenAddItem) {
+              onOpenAddItem(selectedSemesterModal, tab);
+            } else {
+              onOpenAddCourse(selectedSemesterModal);
+            }
+          }}
           onOpenAddCourse={() => onOpenAddCourse(selectedSemesterModal)}
           onOpenAddMilestone={() => onOpenAddMilestone(selectedSemesterModal)}
           onUpdateTarget={onUpdateTarget}
@@ -3026,6 +4199,7 @@ function SemesterInspectorModal({
   onDeleteTask,
   onOpenAddCourse,
   onOpenAddMilestone,
+  onOpenAddItem,
   onUpdateTarget,
   onClose,
 }: {
@@ -3039,6 +4213,7 @@ function SemesterInspectorModal({
   onDeleteTask: (id: string) => void;
   onOpenAddCourse: () => void;
   onOpenAddMilestone: () => void;
+  onOpenAddItem?: (tab?: "COURSE" | "ACTIVITY" | "MILESTONE") => void;
   onUpdateTarget: (semesterNum: number, targetCredits: number) => void;
   onClose: () => void;
 }) {
@@ -3175,17 +4350,17 @@ function SemesterInspectorModal({
           </div>
         )}
 
-        {/* Mode 2 Add Buttons */}
-        {mode === "edit" && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-            <button className="btn btn-primary btn-sm" onClick={onOpenAddCourse} style={{ flex: 1, gap: 5 }}>
-              <Plus size={13} /> Tambah Mata Kuliah
-            </button>
-            <button className="btn btn-secondary btn-sm" onClick={onOpenAddMilestone} style={{ flex: 1, gap: 5 }}>
-              <Target size={13} color="var(--teal)" /> + Milestone Non-SKS
-            </button>
-          </div>
-        )}
+        {/* Tambah Item Button */}
+        <div style={{ marginBottom: 14 }}>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => (onOpenAddItem ? onOpenAddItem("COURSE") : onOpenAddCourse())}
+            style={{ width: "100%", gap: 6, justifyContent: "center", padding: "8px 14px", fontWeight: 700 }}
+            id="btn-inspector-add-item"
+          >
+            <Plus size={14} /> Tambah Item (Mata Kuliah, Kegiatan, Milestone)
+          </button>
+        </div>
 
         {/* Courses & Milestones List */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
@@ -3268,24 +4443,69 @@ function SemesterInspectorModal({
                             </span>
                           )}
 
-                          {isMilestone && (
-                            <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 600,
-                                background: "rgba(117, 189, 165, 0.08)",
-                                border: "1px solid rgba(117, 189, 165, 0.2)",
-                                color: "var(--teal)",
-                                padding: "1px 6px",
-                                borderRadius: "var(--radius-sm)",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 4,
-                              }}
-                            >
-                              <Target size={10} /> Milestone Non-SKS
-                            </span>
-                          )}
+                            {/* Item Type: ACTIVITY Badge */}
+                            {task.itemType === "ACTIVITY" && (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  background: "rgba(133, 136, 255, 0.1)",
+                                  border: "1px solid rgba(133, 136, 255, 0.25)",
+                                  color: "var(--blue)",
+                                  padding: "1px 6px",
+                                  borderRadius: "var(--radius-sm)",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                }}
+                              >
+                                <Briefcase size={10} />
+                                <span>Kegiatan: {task.category}</span>
+                                {task.weeklyHours ? <span>• {task.weeklyHours} jam/mgg</span> : null}
+                              </span>
+                            )}
+
+                            {/* Item Type: MILESTONE Badge */}
+                            {task.itemType === "MILESTONE" && (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  background: "rgba(117, 189, 165, 0.08)",
+                                  border: "1px solid rgba(117, 189, 165, 0.2)",
+                                  color: "var(--teal)",
+                                  padding: "1px 6px",
+                                  borderRadius: "var(--radius-sm)",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                }}
+                              >
+                                <Target size={10} />
+                                <span>Milestone Non-SKS</span>
+                                {task.targetDate ? <span>• {task.targetDate}</span> : null}
+                              </span>
+                            )}
+
+                            {/* Legacy Milestone Non-SKS badge */}
+                            {(!task.itemType || task.itemType === "COURSE") && isMilestone && (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 600,
+                                  background: "rgba(117, 189, 165, 0.08)",
+                                  border: "1px solid rgba(117, 189, 165, 0.2)",
+                                  color: "var(--teal)",
+                                  padding: "1px 6px",
+                                  borderRadius: "var(--radius-sm)",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                }}
+                              >
+                                <Target size={10} /> Milestone Non-SKS
+                              </span>
+                            )}
 
                           {isCompleted && (
                             <span
@@ -3341,10 +4561,25 @@ function SemesterInspectorModal({
                         {mode === "edit" && (
                           <button
                             className="btn btn-ghost btn-sm"
-                            style={{ padding: "4px 8px", fontSize: 11, color: "var(--blue)" }}
+                            style={{
+                              width: 28,
+                              height: 28,
+                              padding: 0,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              borderRadius: "6px",
+                              color: "#475569",
+                              background: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
+                              transition: "all 0.15s ease",
+                              flexShrink: 0,
+                            }}
                             onClick={() => onEditTaskId(task.id)}
+                            title="Edit item"
+                            aria-label="Edit item"
                           >
-                            Sesuaikan
+                            <Edit3 size={13} />
                           </button>
                         )}
                       </div>
@@ -3401,12 +4636,18 @@ function TaskRowEditForm({
   onDelete: () => void;
   onCancel: () => void;
 }) {
+  const [title, setTitle] = useState(task.title);
   const [status, setStatus] = useState(task.status);
   const [notes, setNotes] = useState(task.notes ?? "");
   const [targetSem, setTargetSem] = useState<number>(currentSemesterNum);
+  const [courseCode, setCourseCode] = useState(task.courseCode ?? "");
+  const [credits, setCredits] = useState<number>(task.credits ?? 0);
+  const [activityPeriod, setActivityPeriod] = useState(task.activityPeriod ?? "");
+  const [weeklyHours, setWeeklyHours] = useState<number | undefined>(task.weeklyHours);
+  const [targetDate, setTargetDate] = useState(task.targetDate ?? "");
 
   const isCompleted = task.status === "done";
-  const isMilestone = task.credits === 0;
+  const itemType = task.itemType ?? (task.credits === 0 ? "MILESTONE" : "COURSE");
 
   return (
     <div
@@ -3420,12 +4661,19 @@ function TaskRowEditForm({
       role="form"
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>
-            {task.title} {task.courseCode ? `(${task.courseCode})` : ""}
-          </div>
-          <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>
-            {isMilestone ? "Milestone Pribadi (0 SKS)" : `${task.credits} SKS Akademik`} • Semester {currentSemesterNum}
+        <div style={{ flex: 1, marginRight: 12 }}>
+          <label className="form-label" style={{ fontSize: 11, marginBottom: 4 }}>
+            Judul Item
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            style={{ fontSize: 13, fontWeight: 700 }}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
+            Tipe: <strong>{itemType}</strong> • Semester {currentSemesterNum}
           </div>
         </div>
 
@@ -3434,8 +4682,8 @@ function TaskRowEditForm({
           <button
             className="btn btn-ghost btn-sm"
             onClick={onDelete}
-            title="Hapus mata kuliah/milestone ini"
-            style={{ color: "var(--coral)", padding: 4 }}
+            title="Hapus item ini"
+            style={{ color: "var(--coral)", padding: 6 }}
           >
             <Trash2 size={15} />
           </button>
@@ -3462,10 +4710,10 @@ function TaskRowEditForm({
           </select>
         </div>
 
-        {/* Kemampuan A: Ubah Semester Rencana (Locked if completed) */}
+        {/* Pindahkan ke Semester (Locked if completed) */}
         <div className="form-group">
           <label className="form-label" style={{ fontSize: 11 }}>
-            Pindahkan ke Semester
+            Pindahkan ke Semester (1–14)
           </label>
           {isCompleted ? (
             <div
@@ -3482,7 +4730,7 @@ function TaskRowEditForm({
               }}
             >
               <Lock size={12} color="var(--lime)" />
-              <span>Terkunci di Sem {currentSemesterNum} (Mata kuliah yang sudah selesai tidak boleh berpindah semester)</span>
+              <span>Terkunci di Sem {currentSemesterNum} (Mata kuliah lulus tidak dapat dipindah)</span>
             </div>
           ) : (
             <div style={{ display: "flex", gap: 6 }}>
@@ -3492,7 +4740,7 @@ function TaskRowEditForm({
                 value={targetSem}
                 onChange={(e) => setTargetSem(parseInt(e.target.value) || currentSemesterNum)}
               >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((s) => (
                   <option key={s} value={s}>
                     Semester {s} {s === currentSemesterNum ? "(Saat Ini)" : ""}
                   </option>
@@ -3513,10 +4761,93 @@ function TaskRowEditForm({
         </div>
       </div>
 
+      {/* Item-specific fields */}
+      {itemType === "COURSE" && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div className="form-group">
+            <label className="form-label" style={{ fontSize: 11 }}>
+              Kode Mata Kuliah
+            </label>
+            <input
+              type="text"
+              className="form-input"
+              style={{ fontSize: 12 }}
+              value={courseCode}
+              onChange={(e) => setCourseCode(e.target.value)}
+              placeholder="Misal: IF2101"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ fontSize: 11 }}>
+              Beban SKS (1–6)
+            </label>
+            <select
+              className="form-input"
+              style={{ fontSize: 12 }}
+              value={credits}
+              onChange={(e) => setCredits(parseInt(e.target.value) || 1)}
+            >
+              {[1, 2, 3, 4, 5, 6].map((s) => (
+                <option key={s} value={s}>
+                  {s} SKS
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
+
+      {itemType === "ACTIVITY" && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <div className="form-group">
+            <label className="form-label" style={{ fontSize: 11 }}>
+              Periode / Durasi
+            </label>
+            <input
+              type="text"
+              className="form-input"
+              style={{ fontSize: 12 }}
+              value={activityPeriod}
+              onChange={(e) => setActivityPeriod(e.target.value)}
+              placeholder="Misal: Semester Ganjil 2026"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ fontSize: 11 }}>
+              Beban Waktu (Jam / Minggu)
+            </label>
+            <input
+              type="number"
+              className="form-input"
+              style={{ fontSize: 12 }}
+              value={weeklyHours ?? ""}
+              onChange={(e) => setWeeklyHours(e.target.value ? parseInt(e.target.value) : undefined)}
+              placeholder="Misal: 20"
+            />
+          </div>
+        </div>
+      )}
+
+      {itemType === "MILESTONE" && (
+        <div className="form-group" style={{ marginBottom: 12 }}>
+          <label className="form-label" style={{ fontSize: 11 }}>
+            Target Waktu / Tanggal
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            style={{ fontSize: 12 }}
+            value={targetDate}
+            onChange={(e) => setTargetDate(e.target.value)}
+            placeholder="Misal: November 2026"
+          />
+        </div>
+      )}
+
       {/* Notes */}
       <div className="form-group" style={{ marginBottom: 14 }}>
         <label className="form-label" style={{ fontSize: 11 }}>
-          Catatan Pribadi / Target
+          Catatan / Rencana
         </label>
         <input
           type="text"
@@ -3524,7 +4855,7 @@ function TaskRowEditForm({
           style={{ fontSize: 12 }}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Misal: Ambil kelas praktikum sesi pagi..."
+          placeholder="Catatan persiapan atau target capaian..."
         />
       </div>
 
@@ -3532,7 +4863,18 @@ function TaskRowEditForm({
       <div style={{ display: "flex", gap: 8 }}>
         <button
           className="btn btn-primary btn-sm"
-          onClick={() => onSave({ status, notes })}
+          onClick={() =>
+            onSave({
+              title,
+              status,
+              notes,
+              courseCode: itemType === "COURSE" ? courseCode : undefined,
+              credits: itemType === "COURSE" ? credits : (task.credits ?? 0),
+              activityPeriod: itemType === "ACTIVITY" ? activityPeriod : undefined,
+              weeklyHours: itemType === "ACTIVITY" ? weeklyHours : undefined,
+              targetDate: itemType === "MILESTONE" ? targetDate : undefined,
+            })
+          }
         >
           Simpan Perubahan
         </button>
@@ -3548,9 +4890,86 @@ function TaskRowEditForm({
 // Task Status Icon Helper
 // ─────────────────────────────────────────────────────────────────────────────
 function TaskStatusBadge({ status }: { status: string }) {
-  if (status === "done") return <CheckCircle2 size={15} color="#15803D" />;
-  if (status === "in_progress") return <Clock size={15} color="#0D9488" />;
-  if (status === "delayed") return <AlertCircle size={15} color="#E11D48" />;
-  if (status === "cancelled") return <Circle size={15} color="#71717A" />;
-  return <Circle size={15} color="#4F46E5" />;
+  if (status === "done") {
+    return (
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: "50%",
+          background: "#DCFCE7",
+          border: "1px solid #86EFAC",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#15803D",
+          flexShrink: 0,
+        }}
+        title="Status: Selesai (Lulus)"
+      >
+        <Check size={12} strokeWidth={2.8} />
+      </span>
+    );
+  }
+  if (status === "in_progress") {
+    return (
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: "50%",
+          background: "#CCFBF1",
+          border: "1px solid #99F6E4",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#0F766E",
+          flexShrink: 0,
+        }}
+        title="Status: Sedang Berjalan"
+      >
+        <Clock size={12} strokeWidth={2.5} />
+      </span>
+    );
+  }
+  if (status === "delayed") {
+    return (
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: "50%",
+          background: "#FEE2E2",
+          border: "1px solid #FCA5A5",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#991B1B",
+          flexShrink: 0,
+        }}
+        title="Status: Perlu Diulang"
+      >
+        <AlertCircle size={12} strokeWidth={2.5} />
+      </span>
+    );
+  }
+  return (
+    <span
+      style={{
+        width: 22,
+        height: 22,
+        borderRadius: "50%",
+        background: "#F8FAFC",
+        border: "1px solid #CBD5E1",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#64748B",
+        flexShrink: 0,
+      }}
+      title="Status: Direncanakan"
+    >
+      <Circle size={7} fill="#94A3B8" stroke="none" />
+    </span>
+  );
 }

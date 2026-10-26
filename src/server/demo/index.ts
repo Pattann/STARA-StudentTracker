@@ -177,47 +177,6 @@ async function seedDemoData(guestSessionId: string) {
     await prisma.reminder.create({ data: { guestSessionId, ...r } });
   }
 
-  // Achievements
-  const achievementData = [
-    {
-      title: "Juara 2 Hackathon InnovaTech 2023",
-      category: "lomba",
-      role: "Lead Developer",
-      description: "Membangun aplikasi manajemen sampah berbasis IoT dalam 36 jam.",
-      startDate: "2023-11-10",
-      endDate: "2023-11-12",
-      impact: "Memenangkan hadiah Rp 5.000.000 dan mendapat liputan media kampus.",
-      skills: JSON.stringify(["React Native", "IoT", "Node.js", "Teamwork"]),
-      includeInCv: true,
-    },
-    {
-      title: "Asisten Laboratorium Algoritma",
-      category: "akademik",
-      role: "Asisten Lab",
-      description: "Membantu mahasiswa semester 2 dalam memahami konsep algoritma dasar dan struktur data.",
-      startDate: "2023-02-01",
-      endDate: "2023-06-30",
-      impact: "Meningkatkan rata-rata nilai praktikum kelas sebesar 12%.",
-      skills: JSON.stringify(["Teaching", "Algoritma", "Python", "Communication"]),
-      includeInCv: true,
-    },
-    {
-      title: "Magang Software Engineer — PT Teknologi Nusantara",
-      category: "magang",
-      role: "Software Engineer Intern",
-      description: "Mengembangkan fitur notifikasi real-time untuk aplikasi e-commerce internal.",
-      startDate: "2023-07-01",
-      endDate: "2023-09-30",
-      impact: "Fitur berhasil diluncurkan dan mengurangi waktu respons notifikasi sebesar 40%.",
-      skills: JSON.stringify(["React", "Node.js", "Redis", "Agile", "Git"]),
-      includeInCv: true,
-    },
-  ];
-
-  for (const a of achievementData) {
-    await prisma.achievement.create({ data: { guestSessionId, ...a } });
-  }
-
   // Check-ins
   await prisma.checkIn.create({
     data: {

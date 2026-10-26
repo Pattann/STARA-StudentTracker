@@ -9,18 +9,14 @@ import {
   Zap,
   BookMarked,
   BookOpen,
-  Compass,
-  Award,
   Bell,
   User,
   HelpCircle,
-  Star,
-  RefreshCw,
   LogOut,
-  ChevronRight,
+  History,
   X,
   Menu,
-  Sparkles,
+  LifeBuoy,
 } from "lucide-react";
 import { useSession } from "@/features/session/context";
 
@@ -30,18 +26,19 @@ const navItems = [
   { href: "/app/simulator", label: "Simulasi Skenario", icon: Zap },
   { href: "/app/templates", label: "Jelajahi Template", icon: BookMarked },
   { href: "/app/thesis", label: "Panduan Skripsi", icon: BookOpen },
-  { href: "/app/achievements", label: "Prestasi & CV", icon: Award },
-  { href: "/app/reminders", label: "Pengingat", icon: Bell },
 ];
 
 export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const { token, user, clearSession } = useSession();
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const isActive = (href: string) => {
     if (href === "/app") return pathname === "/app";
     return pathname.startsWith(href);
   };
+
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : "M";
 
   return (
     <>
@@ -62,181 +59,351 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
       <nav
         className={`sidebar ${isOpen ? "open" : ""}`}
         aria-label="Navigasi utama"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          height: "100vh",
+          overflow: "hidden",
+        }}
       >
-        {/* Logo */}
-        <div className="sidebar-logo" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img
-            src="/blackstara.svg"
-            alt="Logo STARA"
-            width={26}
-            height={26}
-            style={{ width: 26, height: 26, objectFit: "contain", display: "block" }}
-          />
-          <span
+        {/* ── BAGIAN ATAS: Logo & Navigasi Utama ── */}
+        <div>
+          {/* Logo Brand */}
+          <div
+            className="sidebar-logo"
             style={{
-              fontWeight: 800,
-              fontSize: 17,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.02em",
+              padding: "18px 18px 16px",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              borderBottom: "1px solid var(--border-subtle)",
             }}
           >
-            STARA
-          </span>
-          <button
-            onClick={onClose}
-            style={{
-              marginLeft: "auto",
-              display: "none",
-              background: "none",
-              border: "none",
-              color: "var(--text-muted)",
-              cursor: "pointer",
-            }}
-            className="sidebar-close-btn"
-            aria-label="Tutup sidebar"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Nav Items */}
-        <div className="sidebar-content">
-          <div className="sidebar-nav" role="list">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`sidebar-nav-item ${isActive(item.href) ? "active" : ""}`}
-                role="listitem"
-                onClick={() => onClose()}
-              >
-                <item.icon
-                  size={17}
-                  className="nav-icon"
-                  aria-hidden="true"
-                />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            ))}
+            <img
+              src="/blackstara.svg"
+              alt="Logo STARA"
+              width={24}
+              height={24}
+              style={{ width: 24, height: 24, objectFit: "contain", display: "block" }}
+            />
+            <span
+              style={{
+                fontWeight: 800,
+                fontSize: 16,
+                color: "var(--text-primary)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              STARA
+            </span>
+            <button
+              onClick={onClose}
+              style={{
+                marginLeft: "auto",
+                display: "none",
+                background: "none",
+                border: "none",
+                color: "var(--text-muted)",
+                cursor: "pointer",
+              }}
+              className="sidebar-close-btn"
+              aria-label="Tutup sidebar"
+            >
+              <X size={18} />
+            </button>
           </div>
 
-          <div className="divider" style={{ margin: "8px 8px" }} />
+          {/* Nav Items Utama */}
+          <div
+            className="sidebar-nav"
+            role="list"
+            style={{
+              padding: "14px 10px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+            }}
+          >
+            {navItems.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`sidebar-nav-item ${active ? "active" : ""}`}
+                  role="listitem"
+                  onClick={() => onClose()}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    fontSize: 13.5,
+                    fontWeight: active ? 600 : 500,
+                    color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                    background: active ? "#FFFFFF" : "transparent",
+                    border: active ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
+                    boxShadow: active ? "0 1px 4px rgba(0, 0, 0, 0.04)" : "none",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <item.icon
+                    size={16}
+                    color={active ? "var(--amber)" : "var(--text-muted)"}
+                    aria-hidden="true"
+                    style={{ flexShrink: 0 }}
+                  />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
-          <div className="sidebar-nav" role="list">
-            <Link
-              href="/app/profile"
-              className={`sidebar-nav-item ${isActive("/app/profile") ? "active" : ""}`}
-              onClick={() => onClose()}
-            >
-              <User size={17} aria-hidden="true" />
-              <span>Profil & Pengaturan</span>
-            </Link>
-            <Link
-              href="/onboarding"
-              className="sidebar-nav-item"
-              onClick={() => onClose()}
-            >
-              <Sparkles size={17} aria-hidden="true" color="#D97706" />
-              <span style={{ color: "#92400E", fontWeight: 700 }}>Setup Onboarding</span>
-            </Link>
+        {/* ── BAGIAN BAWAH: Riwayat, Bantuan & Profil Minimalis ── */}
+        <div style={{ borderTop: "1px solid var(--border-subtle)" }}>
+          {/* Secondary Utilities */}
+          <div
+            style={{
+              padding: "8px 10px 6px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
             <Link
               href="/app/check-ins"
               className={`sidebar-nav-item ${isActive("/app/check-ins") ? "active" : ""}`}
               onClick={() => onClose()}
-            >
-              <ChevronRight size={17} aria-hidden="true" />
-              <span>Riwayat Check-in</span>
-            </Link>
-            <button
-              className="sidebar-nav-item"
-              style={{ width: "100%" }}
-              onClick={() => {/* help */}}
-            >
-              <HelpCircle size={17} aria-hidden="true" />
-              <span>Bantuan</span>
-            </button>
-          </div>
-        </div>
-
-        {/* User Session Info Card */}
-        {token && (
-          <div
-            style={{
-              margin: "8px",
-              background: "#FFFFFF",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-md)",
-              padding: "12px",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-            }}
-          >
-            <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
-                marginBottom: 6,
+                gap: 10,
+                padding: "7px 12px",
+                borderRadius: "8px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+                transition: "all 0.15s ease",
               }}
             >
-              <div
+              <History size={15} color="var(--text-muted)" aria-hidden="true" style={{ flexShrink: 0 }} />
+              <span>Riwayat Check-in</span>
+            </Link>
+
+            <button
+              className="sidebar-nav-item"
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "7px 12px",
+                borderRadius: "8px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.15s ease",
+              }}
+              onClick={() => setShowHelpModal(true)}
+            >
+              <HelpCircle size={15} color="var(--text-muted)" aria-hidden="true" style={{ flexShrink: 0 }} />
+              <span>Bantuan</span>
+            </button>
+          </div>
+
+          {/* User Profile & Logout Minimalist Footer */}
+          {token && (
+            <div
+              style={{
+                margin: "4px 10px 10px",
+                padding: "8px 10px",
+                background: "#FAF9F5",
+                border: "1px solid var(--border)",
+                borderRadius: "10px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0, flex: 1 }}>
+                {/* Avatar with Online Dot */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <div
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: "50%",
+                      background: "#FFFFFF",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    {userInitial}
+                  </div>
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      right: 0,
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: "#16A34A",
+                      border: "1.5px solid #FFFFFF",
+                    }}
+                    title="Akun Aktif"
+                  />
+                </div>
+
+                {/* Name & Email Truncated */}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      color: "var(--text-primary)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {user?.name || "Mahasiswa STARA"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-muted)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      marginTop: 2,
+                    }}
+                  >
+                    {user?.email || "Akun Terverifikasi"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Logout Button */}
+              <button
+                onClick={() => clearSession()}
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: "#16A34A",
-                  boxShadow: "0 0 6px rgba(22, 163, 74, 0.4)",
+                  background: "transparent",
+                  border: "none",
+                  padding: "5px",
+                  borderRadius: "6px",
+                  color: "#94A3B8",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.15s ease",
+                  flexShrink: 0,
                 }}
-              />
-              <span
-                style={{
-                  fontSize: 10.5,
-                  fontWeight: 800,
-                  color: "#15803D",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
+                title="Keluar dari akun"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--coral)";
+                  e.currentTarget.style.background = "#FEE2E2";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#94A3B8";
+                  e.currentTarget.style.background = "transparent";
                 }}
               >
-                Akun Aktif
-              </span>
+                <LogOut size={15} />
+              </button>
             </div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "var(--text-primary)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {user?.name || "Mahasiswa STARA"}
-            </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--text-secondary)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                marginTop: 2,
-              }}
-            >
-              {user?.email || "Akun Terverifikasi"}
-            </div>
-          </div>
-        )}
-
-        <div style={{ padding: "8px" }}>
-          <button
-            onClick={() => clearSession()}
-            className="sidebar-nav-item"
-            style={{ width: "100%", color: "var(--coral)" }}
-          >
-            <LogOut size={17} />
-            <span>Keluar</span>
-          </button>
+          )}
         </div>
       </nav>
+
+      {/* Modal Bantuan */}
+      {showHelpModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            backdropFilter: "blur(2px)",
+          }}
+          onClick={() => setShowHelpModal(false)}
+        >
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              padding: "24px",
+              maxWidth: 440,
+              width: "100%",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+              border: "1px solid var(--border)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center", color: "#B45309" }}>
+                  <LifeBuoy size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0F172A" }}>Pusat Bantuan STARA</h3>
+                  <p style={{ margin: 0, fontSize: 12, color: "#64748B" }}>Panduan & Konsultasi Akademik</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="btn btn-ghost btn-sm"
+                style={{ padding: 4, borderRadius: "50%" }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ fontSize: 13, color: "#334155", lineHeight: 1.6, display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px" }}>
+                <strong style={{ color: "#0F172A", display: "block", marginBottom: 4 }}>Simulasi & Penyesuaian Beban:</strong>
+                Gunakan menu <strong>Simulasi Skenario</strong> untuk menguji alternatif matkul atau magang tanpa mengubah rencana utama Anda.
+              </div>
+              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "12px" }}>
+                <strong style={{ color: "#0F172A", display: "block", marginBottom: 4 }}>Validasi Aturan Akademik:</strong>
+                STARA otomatis memeriksa batas 24 SKS nasional dan rantai prasyarat mata kuliah terdaftar.
+              </div>
+              <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>
+                Butuh bantuan teknis? Hubungi tim pengembang di <span style={{ color: "#0F172A", fontWeight: 600 }}>support@stara.ac.id</span>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 20, textAlign: "right" }}>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setShowHelpModal(false)}
+                style={{ padding: "6px 18px", borderRadius: "8px" }}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -266,7 +433,7 @@ export function Topbar({
         </h1>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {token && (
           <span
             style={{
@@ -283,11 +450,17 @@ export function Topbar({
             Demo Workspace
           </span>
         )}
-        <Link href="/app/profile" aria-label="Profil pengguna">
+
+        {/* Pengingat (Notifikasi) di samping icon profile */}
+        <Link
+          href="/app/reminders"
+          aria-label="Pengingat & Notifikasi"
+          title="Pengingat & Notifikasi"
+        >
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 34,
+              height: 34,
               borderRadius: "50%",
               background: "var(--bg-secondary)",
               border: "1px solid var(--border)",
@@ -295,9 +468,48 @@ export function Topbar({
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
+              color: "var(--text-secondary)",
+              position: "relative",
+              transition: "all 0.15s ease",
             }}
           >
-            <User size={16} color="var(--text-secondary)" />
+            <Bell size={16} />
+            <span
+              style={{
+                position: "absolute",
+                top: 7,
+                right: 7,
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#D97706",
+              }}
+            />
+          </div>
+        </Link>
+
+        {/* Profil & Pengaturan */}
+        <Link
+          href="/app/profile"
+          aria-label="Profil & Pengaturan"
+          title="Profil & Pengaturan"
+        >
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "var(--text-secondary)",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <User size={16} />
           </div>
         </Link>
       </div>

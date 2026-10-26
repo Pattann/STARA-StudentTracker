@@ -725,7 +725,8 @@ a {
   left: 0;
   height: 100vh;
   z-index: 50;
-  overflow-y: auto;
+  overflow: hidden;
+  justify-content: space-between;
 }
 
 .sidebar-content {
@@ -1293,25 +1294,6 @@ select.form-input {
   border-color: var(--teal);
   transform: translateY(-2px);
   box-shadow: var(--shadow-card);
-}
-
-/* ============================================================
-   Achievement Cards
-   ============================================================ */
-
-.achievement-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 18px 20px;
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  transition: border-color var(--transition);
-}
-
-.achievement-card:hover {
-  border-color: var(--purple);
 }
 
 /* ============================================================

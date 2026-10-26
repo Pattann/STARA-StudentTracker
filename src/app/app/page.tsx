@@ -10,7 +10,6 @@ import {
   Bell,
   ChevronRight,
   BookOpen,
-  Award,
   AlertCircle,
   CheckCircle2,
   Clock,
@@ -245,7 +244,6 @@ export default function DashboardPage() {
             { href: "/app/roadmap", icon: Map, label: "Lihat Roadmap", sub: "Timeline semester", color: "var(--teal)" },
             { href: "/app/templates", icon: BookOpen, label: "Jelajahi Template", sub: "Dari mahasiswa lain", color: "var(--blue)" },
             { href: "/app/reminders", icon: Bell, label: "Pengingat", sub: "Deadline penting", color: "var(--coral)" },
-            { href: "/app/achievements", icon: Award, label: "Catat Prestasi", sub: "Log & CV", color: "var(--purple)" },
             { href: "/app/thesis", icon: BookOpen, label: "Panduan Skripsi", sub: "Eksplorasi topik", color: "var(--orange)" },
           ].map((item) => (
             <Link key={item.href} href={item.href} style={{ textDecoration: "none" }}>

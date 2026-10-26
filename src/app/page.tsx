@@ -10,7 +10,7 @@ import {
   GitBranch,
   Zap,
   BookOpen,
-  Award,
+  BookMarked,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -1091,24 +1091,22 @@ export default function HomePage() {
             },
             {
               id: 3,
-              icon: <Award size={20} />,
-              tag: "Prestasi & TAK",
-              title: "Log Prestasi & Ekspor CV",
-              desc: "Catat poin TAK, kejuaraan, dan kepanitiaan. Hasilkan CV siap kirim berstandar perguruan tinggi Indonesia.",
-              accent: "#EA580C",
-              link: "/app/achievements",
+              icon: <BookMarked size={20} />,
+              tag: "Template Blueprint",
+              title: "Jelajahi & Adopsi Blueprint",
+              desc: "Eksplorasi strategi studi terstruktur dari mahasiswa berprestasi dan kurikulum resmi program studi.",
+              accent: "#2563EB",
+              link: "/app/templates",
               visual: (
                 <div style={{ margin: "16px 0 14px", background: "#F5F3ED", borderRadius: 14, padding: "14px 12px", border: "1px solid rgba(0,0,0,0.05)" }}>
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 20, fontWeight: 900, color: "#EA580C" }}>125 <span style={{ fontSize: 12, fontWeight: 600, color: "#71717A" }}>/ 100 TAK</span></span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "#15803D", background: "rgba(21,128,61,0.12)", padding: "2px 6px", borderRadius: 4 }}>Lulus Syarat ✓</span>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: "#2563EB" }}>Blueprint S1</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#15803D", background: "rgba(21,128,61,0.12)", padding: "2px 6px", borderRadius: 4 }}>Terverifikasi ✓</span>
                   </div>
-                  <div style={{ width: "100%", height: 6, background: "rgba(0,0,0,0.06)", borderRadius: 3, overflow: "hidden", marginBottom: 10 }}>
-                    <div style={{ width: "100%", height: "100%", background: "linear-gradient(90deg, #EA580C, #F97316)", borderRadius: 3, boxShadow: "0 0 10px rgba(249,115,22,0.4)" }} />
-                  </div>
+                  <div style={{ fontSize: 12, color: "#71717A", marginBottom: 8 }}>Fast Track & Jalur Magang Industri</div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#18181B", background: "#FAF9F5", padding: "2px 7px", borderRadius: 4, border: "1px solid rgba(0,0,0,0.05)" }}>Prestasi & Lomba</span>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#EA580C", background: "rgba(234,88,12,0.12)", padding: "2px 7px", borderRadius: 4 }}>Format CV ATS</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#18181B", background: "#FAF9F5", padding: "2px 7px", borderRadius: 4, border: "1px solid rgba(0,0,0,0.05)" }}>144 SKS</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, color: "#2563EB", background: "rgba(37,99,235,0.12)", padding: "2px 7px", borderRadius: 4 }}>Siap Diadopsi</span>
                   </div>
                 </div>
               ),

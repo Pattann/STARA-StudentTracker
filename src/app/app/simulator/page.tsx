@@ -313,9 +313,9 @@ export default function SimulatorPage() {
         }}
       >
         {[
-          { id: "select", num: 1, label: "1. Pilih Skenario" },
-          { id: "configure", num: 2, label: "2. Atur Parameter" },
-          { id: "result", num: 3, label: "3. Hasil & Rekomendasi" },
+          { id: "select", num: 1, label: "Pilih Skenario" },
+          { id: "configure", num: 2, label: "Atur Parameter" },
+          { id: "result", num: 3, label: "Hasil & Rekomendasi" },
         ].map((s, idx) => {
           const isCurrent = step === s.id;
           const isPast =

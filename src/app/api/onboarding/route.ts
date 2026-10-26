@@ -67,7 +67,6 @@ export async function POST(req: NextRequest) {
       await prisma.roadmap.deleteMany({ where: { guestSessionId: sessionId } });
       await prisma.academicProfile.deleteMany({ where: { guestSessionId: sessionId } });
       await prisma.reminder.deleteMany({ where: { guestSessionId: sessionId } });
-      await prisma.achievement.deleteMany({ where: { guestSessionId: sessionId } });
     }
 
     // 1. Create Academic Profile

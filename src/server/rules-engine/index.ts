@@ -16,7 +16,21 @@ export interface TaskInput {
   credits: number;
   status: string; // "planned" | "in_progress" | "done" | "delayed" | "cancelled"
   category: string;
+  itemType?: string; // "COURSE" | "ACTIVITY" | "MILESTONE"
+  courseCode?: string | null;
+  title?: string;
   prerequisites?: string[];
+  weeklyHours?: number | null;
+  activityPeriod?: string | null;
+}
+
+export interface ValidationIssue {
+  type: "error" | "warning" | "info";
+  code: "PREREQUISITE_CONFLICT" | "CREDIT_OVERLOAD" | "CREDIT_UNDERLOAD" | "DUPLICATE_COURSE" | "LOCKED_ITEM" | "STUDY_LIMIT" | "MISSING_DATA";
+  message: string;
+  semesterNum?: number;
+  taskId?: string;
+  courseCode?: string;
 }
 
 export interface RoadmapInput {
@@ -39,6 +53,7 @@ export interface RoadmapCalculation {
   creditsByCategory: Record<string, number>;
   validationStatus: "valid" | "warning" | "error";
   conflicts: string[];
+  issues: ValidationIssue[];
   isProvisional: boolean;
   semesterLoads: Array<{ semesterNum: number; credits: number; tasks: number }>;
 }
@@ -70,6 +85,154 @@ const DEFAULT_CREDITS_BY_GOAL: Record<string, number> = {
 
 const MAX_NORMAL_SEMESTER = 14;
 
+export function validateRoadmapRules(input: RoadmapInput): {
+  issues: ValidationIssue[];
+  conflicts: string[];
+  validationStatus: "valid" | "warning" | "error";
+} {
+  const issues: ValidationIssue[] = [];
+  const conflicts: string[] = [];
+
+  const taskMap = new Map<string, { task: TaskInput; semesterNum: number }>();
+  const courseCodeMap = new Map<string, Array<{ task: TaskInput; semesterNum: number }>>();
+
+  for (const sp of input.semesterPlans) {
+    for (const t of sp.tasks) {
+      if (t.status === "cancelled") continue;
+      taskMap.set(t.id, { task: t, semesterNum: sp.semesterNum });
+
+      if (t.courseCode && t.courseCode.trim() !== "") {
+        const code = t.courseCode.trim().toUpperCase();
+        const list = courseCodeMap.get(code) ?? [];
+        list.push({ task: t, semesterNum: sp.semesterNum });
+        courseCodeMap.set(code, list);
+      }
+    }
+  }
+
+  // 1. Detect Duplicate Courses
+  for (const [code, occurrences] of courseCodeMap.entries()) {
+    if (occurrences.length > 1) {
+      const nonDelayed = occurrences.filter((o) => o.task.status !== "delayed");
+      if (nonDelayed.length > 1) {
+        const semList = occurrences.map((o) => `Semester ${o.semesterNum}`).join(" dan ");
+        const msg = `Mata kuliah "${code}" terdaftar ganda di ${semList}.`;
+        conflicts.push(msg);
+        issues.push({
+          type: "warning",
+          code: "DUPLICATE_COURSE",
+          message: msg,
+          courseCode: code,
+        });
+      }
+    }
+  }
+
+  // 2. Validate Prerequisites
+  for (const sp of input.semesterPlans) {
+    for (const task of sp.tasks) {
+      if (task.status === "cancelled" || task.status === "done") continue;
+
+      const prereqs = task.prerequisites ?? [];
+      for (const p of prereqs) {
+        if (!p || p.trim() === "") continue;
+        const pKey = p.trim();
+
+        let prereqEntry = taskMap.get(pKey);
+        if (!prereqEntry) {
+          const listByCode = courseCodeMap.get(pKey.toUpperCase());
+          if (listByCode && listByCode.length > 0) {
+            prereqEntry = listByCode[0];
+          }
+        }
+
+        if (prereqEntry) {
+          if (prereqEntry.semesterNum >= sp.semesterNum) {
+            const prereqName = prereqEntry.task.courseCode || prereqEntry.task.title || pKey;
+            const taskName = task.courseCode || task.title || task.id;
+            const msg = `Prasyarat "${prereqName}" (Semester ${prereqEntry.semesterNum}) harus diselesaikan sebelum mengambil "${taskName}" (Semester ${sp.semesterNum}).`;
+            conflicts.push(msg);
+            issues.push({
+              type: "error",
+              code: "PREREQUISITE_CONFLICT",
+              message: msg,
+              semesterNum: sp.semesterNum,
+              taskId: task.id,
+              courseCode: task.courseCode ?? undefined,
+            });
+          } else if (prereqEntry.task.status === "delayed") {
+            const prereqName = prereqEntry.task.courseCode || prereqEntry.task.title || pKey;
+            const taskName = task.courseCode || task.title || task.id;
+            const msg = `Prasyarat "${prereqName}" untuk "${taskName}" berstatus 'Perlu Diulang' di Semester ${prereqEntry.semesterNum}.`;
+            conflicts.push(msg);
+            issues.push({
+              type: "warning",
+              code: "PREREQUISITE_CONFLICT",
+              message: msg,
+              semesterNum: sp.semesterNum,
+              taskId: task.id,
+            });
+          }
+        } else {
+          const taskName = task.courseCode || task.title || task.id;
+          issues.push({
+            type: "info",
+            code: "MISSING_DATA",
+            message: `Mata kuliah "${taskName}" memiliki prasyarat "${pKey}" yang belum terdata di roadmap. Pastikan prasyarat sudah diambil atau konfirmasi ke akademik prodi.`,
+            semesterNum: sp.semesterNum,
+            taskId: task.id,
+          });
+        }
+      }
+    }
+  }
+
+  // 3. Validate Semester Load Limits (National standard: 24 SKS max)
+  for (const sp of input.semesterPlans) {
+    const academicCredits = sp.tasks
+      .filter((t) => t.status !== "cancelled" && (t.itemType === "COURSE" || t.category === "akademik" || t.credits > 0))
+      .reduce((sum, t) => sum + (Number(t.credits) || 0), 0);
+
+    if (academicCredits > 24) {
+      const msg = `Semester ${sp.semesterNum}: beban ${academicCredits} SKS melebihi batas reguler nasional (24 SKS).`;
+      conflicts.push(msg);
+      issues.push({
+        type: "error",
+        code: "CREDIT_OVERLOAD",
+        message: msg,
+        semesterNum: sp.semesterNum,
+      });
+    } else if (sp.targetCredits && academicCredits > sp.targetCredits) {
+      const msg = `Semester ${sp.semesterNum}: beban ${academicCredits} SKS melebihi target semester (${sp.targetCredits} SKS).`;
+      issues.push({
+        type: "warning",
+        code: "CREDIT_OVERLOAD",
+        message: msg,
+        semesterNum: sp.semesterNum,
+      });
+    }
+
+    if (sp.semesterNum < 8 && academicCredits > 0 && academicCredits < 12 && sp.semesterNum >= input.currentSemester) {
+      const msg = `Semester ${sp.semesterNum}: beban ${academicCredits} SKS tergolong ringan (< 12 SKS). Rekomendasi beban normal adalah 18-20 SKS per semester.`;
+      issues.push({
+        type: "warning",
+        code: "CREDIT_UNDERLOAD",
+        message: msg,
+        semesterNum: sp.semesterNum,
+      });
+    }
+  }
+
+  let validationStatus: "valid" | "warning" | "error" = "valid";
+  if (issues.some((i) => i.type === "error")) {
+    validationStatus = "error";
+  } else if (issues.some((i) => i.type === "warning")) {
+    validationStatus = "warning";
+  }
+
+  return { issues, conflicts, validationStatus };
+}
+
 export function calculateFullRoadmap(input: RoadmapInput): RoadmapCalculation {
   const { totalCurriculumCredits, completedCredits, inProgressCredits, currentSemester, goals, semesterPlans } = input;
 
@@ -83,7 +246,6 @@ export function calculateFullRoadmap(input: RoadmapInput): RoadmapCalculation {
 
   const creditsByCategory: Record<string, number> = {};
   const semesterLoads: Array<{ semesterNum: number; credits: number; tasks: number }> = [];
-  const conflicts: string[] = [];
 
   for (const sp of semesterPlans) {
     let semCredits = 0;
@@ -91,29 +253,31 @@ export function calculateFullRoadmap(input: RoadmapInput): RoadmapCalculation {
 
     for (const task of sp.tasks) {
       if (task.status !== "cancelled") {
-        // Count credits from planned/in_progress tasks
-        if (task.status === "planned" || task.status === "delayed") {
-          creditsByStatus[task.status] = (creditsByStatus[task.status] ?? 0) + task.credits;
-        }
-        semCredits += task.credits;
+        // Only courses (or explicitly credited tasks) count toward academic SKS
+        const isAcademicCredited = task.itemType === "COURSE" || task.category === "akademik" || task.credits > 0;
+        const effectiveCredits = isAcademicCredited ? (Number(task.credits) || 0) : 0;
 
-        creditsByCategory[task.category] = (creditsByCategory[task.category] ?? 0) + task.credits;
+        if (task.status === "planned" || task.status === "delayed") {
+          creditsByStatus[task.status] = (creditsByStatus[task.status] ?? 0) + effectiveCredits;
+        }
+        semCredits += effectiveCredits;
+
+        creditsByCategory[task.category] = (creditsByCategory[task.category] ?? 0) + effectiveCredits;
       }
     }
 
     semesterLoads.push({ semesterNum: sp.semesterNum, credits: semCredits, tasks: semTasks });
-
-    // Validate load
-    const maxNormal = 24;
-    if (semCredits > maxNormal && sp.semesterNum >= currentSemester) {
-      conflicts.push(`Semester ${sp.semesterNum}: beban ${semCredits} SKS melebihi batas normal (${maxNormal} SKS).`);
-    }
   }
 
-  // Calculate remaining
+  // Run comprehensive rules validation
+  const ruleCheck = validateRoadmapRules(input);
+  const conflicts = [...ruleCheck.conflicts];
+  const issues = [...ruleCheck.issues];
+
+  // Calculate remaining credits
   const plannedFutureCredits = semesterPlans
     .filter((sp) => sp.semesterNum > currentSemester)
-    .reduce((sum, sp) => sum + sp.tasks.filter((t) => t.status !== "cancelled").reduce((s, t) => s + t.credits, 0), 0);
+    .reduce((sum, sp) => sum + sp.tasks.filter((t) => t.status !== "cancelled").reduce((s, t) => s + (Number(t.credits) || 0), 0), 0);
 
   const remainingCredits = Math.max(0, totalCurriculumCredits - completedCredits - inProgressCredits);
 
@@ -131,13 +295,17 @@ export function calculateFullRoadmap(input: RoadmapInput): RoadmapCalculation {
     estimatedGraduationSemester = currentSemester;
   }
 
-  // Provisional if plans don't fully cover remaining
   const isProvisional = plannedFutureCredits < remainingCredits;
 
-  let validationStatus: "valid" | "warning" | "error" = "valid";
-  if (conflicts.length > 0) validationStatus = "warning";
+  let validationStatus = ruleCheck.validationStatus;
   if (estimatedGraduationSemester && estimatedGraduationSemester > MAX_NORMAL_SEMESTER) {
-    conflicts.push(`Estimasi kelulusan di semester ${estimatedGraduationSemester} melebihi batas normal S1 (${MAX_NORMAL_SEMESTER} semester).`);
+    const studyLimitMsg = `Estimasi kelulusan di semester ${estimatedGraduationSemester} melebihi batas normal S1 (${MAX_NORMAL_SEMESTER} semester).`;
+    conflicts.push(studyLimitMsg);
+    issues.push({
+      type: "error",
+      code: "STUDY_LIMIT",
+      message: studyLimitMsg,
+    });
     validationStatus = "error";
   }
 
@@ -152,6 +320,7 @@ export function calculateFullRoadmap(input: RoadmapInput): RoadmapCalculation {
     creditsByCategory,
     validationStatus,
     conflicts,
+    issues,
     isProvisional,
     semesterLoads,
   };
