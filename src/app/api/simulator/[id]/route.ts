@@ -62,7 +62,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const nextVersionNum = (maxVersion?.versionNum ?? 0) + 1;
 
     const params = parseJsonSafe<Record<string, unknown>>(sim.parameters as string, {});
-    const label = `Skenario ${sim.scenarioType} diterapkan`;
+    const label = sim.scenarioType === "custom"
+      ? `Rencana Kustom diterapkan: ${sim.title || "Kegiatan Mahasiswa"}`
+      : `Skenario ${sim.scenarioType} diterapkan`;
+
+    let customTargetSemester = 5;
+    if (sim.scenarioType === "custom") {
+      const formData = (params.formData as Record<string, string>) || {};
+      const semStr = (formData.semester_periode || formData.semester || "").toLowerCase();
+      const numMatch = semStr.match(/(\d+)/);
+      if (numMatch) {
+        customTargetSemester = parseInt(numMatch[1]);
+      } else {
+        const profile = await prisma.academicProfile.findUnique({ where: { guestSessionId: session.id } });
+        customTargetSemester = (profile?.currentSemester ?? 4) + 1;
+      }
+    }
 
     const newVersion = await prisma.$transaction(async (tx) => {
       const nv = await tx.roadmapVersion.create({
@@ -92,7 +107,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           },
         });
 
+        const isAffectedSemester = sim.scenarioType === "custom"
+          ? sp.semesterNum === customTargetSemester
+          : sp.semesterNum >= (Number(params.startSemester) || 6) &&
+            sp.semesterNum < (Number(params.startSemester) || 6) + (Number(params.durationSemesters) || 1);
+
         for (const task of sp.tasks) {
+          const shouldCancel = isAffectedSemester && Boolean(params.conflictsWithRegular) && task.category === "akademik";
           await tx.roadmapTask.create({
             data: {
               semesterPlanId: newPlan.id,
@@ -102,16 +123,77 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
               category: task.category,
               credits: task.credits,
               priority: task.priority,
-              status: task.status,
+              status: shouldCancel ? "cancelled" : task.status,
               targetDate: task.targetDate,
               completedDate: task.completedDate,
               courseCode: task.courseCode,
-              notes: task.notes,
+              notes: shouldCancel ? "Dibatalkan karena berbenturan dengan skenario magang/MBKM" : task.notes,
               activityPeriod: task.activityPeriod,
               weeklyHours: task.weeklyHours,
               dataSource: task.dataSource,
               certaintyLevel: task.certaintyLevel,
               prerequisites: task.prerequisites,
+            },
+          });
+        }
+
+        if (isAffectedSemester && sim.scenarioType === "custom") {
+          const formData = (params.formData as Record<string, string>) || {};
+          const catBadge = (params.categoryBadge as string) || "Rencana Kustom";
+          let taskCat = "tak";
+          if (/karier|magang|kerja/i.test(catBadge)) taskCat = "karier";
+          else if (/akademik|studi/i.test(catBadge)) taskCat = "akademik";
+          else if (/skripsi/i.test(catBadge)) taskCat = "skripsi";
+          else if (/nonakademik|sosial|pengabdian|kompetisi|lomba/i.test(catBadge)) taskCat = "tak";
+
+          const taskTitle = sim.title || (params.userPrompt as string) || "Rencana Kustom AI";
+
+          let taskCredits = 0;
+          const konversiStr = formData.konversi_sks || "";
+          const credMatch = konversiStr.match(/(\d+)\s*sks/i);
+          if (credMatch) {
+            taskCredits = parseInt(credMatch[1]);
+          }
+
+          await tx.roadmapTask.create({
+            data: {
+              semesterPlanId: newPlan.id,
+              title: taskTitle,
+              category: taskCat,
+              credits: taskCredits,
+              status: "planned",
+              notes: `Diterapkan dari Rencana Kustom AI. Kategori: ${catBadge}. Durasi: ${formData.durasi || "-"}. Target: ${formData.target_kegiatan || formData.target || "-"}`,
+              certaintyLevel: "terkonfirmasi",
+            },
+          });
+        } else if (isAffectedSemester && sim.scenarioType !== "cuti") {
+          const creditsToConvert = Number(params.creditsToConvert) || 0;
+          const isConfirmed = params.conversionStatus === "dikonfirmasi";
+          const dur = Number(params.durationSemesters) || 1;
+          const convertedCredits = isConfirmed ? Math.floor(creditsToConvert / dur) : (creditsToConvert > 0 ? creditsToConvert : 20);
+
+          let taskTitle = "Program Magang Industri";
+          let taskCategory = "karier";
+          if (sim.scenarioType === "mbkm") {
+            taskTitle = "Program MBKM / Studi Independen";
+            taskCategory = "akademik";
+          } else if (sim.scenarioType === "exchange") {
+            taskTitle = "Pertukaran Mahasiswa (Credit Transfer)";
+            taskCategory = "akademik";
+          } else if (sim.scenarioType === "advanced_course") {
+            taskTitle = "Mata Kuliah Tingkat Atas (Akselerasi)";
+            taskCategory = "akademik";
+          }
+
+          await tx.roadmapTask.create({
+            data: {
+              semesterPlanId: newPlan.id,
+              title: taskTitle,
+              category: taskCategory,
+              credits: convertedCredits,
+              status: "planned",
+              notes: `Diterapkan dari ${sim.title} (Status konversi: ${params.conversionStatus ?? "belum_diketahui"})`,
+              certaintyLevel: isConfirmed ? "terkonfirmasi" : "estimasi",
             },
           });
         }

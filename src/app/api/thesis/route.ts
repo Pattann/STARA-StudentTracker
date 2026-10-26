@@ -21,6 +21,42 @@ async function resolveSession(req: NextRequest) {
   return session;
 }
 
+export async function GET(req: NextRequest) {
+  const session = await resolveSession(req);
+  if (!session) return NextResponse.json({ error: "Sesi tidak valid." }, { status: 401 });
+
+  try {
+    const profile = await prisma.academicProfile.findUnique({
+      where: { guestSessionId: session.id },
+    });
+
+    let interests: string[] = [];
+    if (profile?.interests) {
+      try {
+        interests = JSON.parse(profile.interests);
+      } catch {
+        interests = profile.interests.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+    }
+
+    return NextResponse.json({
+      profile: profile
+        ? {
+            programName: profile.programName,
+            institutionName: profile.institutionName,
+            educationLevel: profile.educationLevel,
+            currentSemester: profile.currentSemester,
+            gpa: profile.gpa,
+            interests,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error("[API /thesis GET]", error);
+    return NextResponse.json({ error: "Gagal memuat profil." }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   const session = await resolveSession(req);
   if (!session) return NextResponse.json({ error: "Sesi tidak valid." }, { status: 401 });

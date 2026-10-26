@@ -17,6 +17,7 @@ import {
   X,
   Menu,
   LifeBuoy,
+  ShieldCheck,
 } from "lucide-react";
 import { useSession } from "@/features/session/context";
 
@@ -162,7 +163,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           </div>
         </div>
 
-        {/* ── BAGIAN BAWAH: Riwayat, Bantuan & Profil Minimalis ── */}
+        {/* ── BAGIAN BAWAH: Riwayat, Admin, Bantuan & Profil Minimalis ── */}
         <div style={{ borderTop: "1px solid var(--border-subtle)" }}>
           {/* Secondary Utilities */}
           <div
@@ -191,6 +192,26 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             >
               <History size={15} color="var(--text-muted)" aria-hidden="true" style={{ flexShrink: 0 }} />
               <span>Riwayat Check-in</span>
+            </Link>
+
+            <Link
+              href="/admin"
+              className={`sidebar-nav-item ${isActive("/admin") ? "active" : ""}`}
+              onClick={() => onClose()}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "7px 12px",
+                borderRadius: "8px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <ShieldCheck size={15} color="var(--text-muted)" aria-hidden="true" style={{ flexShrink: 0 }} />
+              <span>Dashboard Admin</span>
             </Link>
 
             <button
@@ -450,6 +471,27 @@ export function Topbar({
             Demo Workspace
           </span>
         )}
+
+        {/* Mode Admin */}
+        <Link
+          href="/admin"
+          style={{
+            fontSize: 12,
+            color: "var(--text-primary)",
+            background: "rgba(245, 205, 71, 0.12)",
+            border: "1px solid rgba(245, 205, 71, 0.3)",
+            borderRadius: "var(--radius-pill)",
+            padding: "4px 12px",
+            fontWeight: 700,
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <ShieldCheck size={14} color="var(--lime)" />
+          <span>Mode Admin</span>
+        </Link>
 
         {/* Pengingat (Notifikasi) di samping icon profile */}
         <Link
