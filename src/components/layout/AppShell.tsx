@@ -465,7 +465,7 @@ export function Topbar({
   pageTitle: string;
   onMenuClick: () => void;
 }) {
-  const { token } = useSession();
+  const { token, user } = useSession();
 
   return (
     <header className="topbar">
@@ -500,7 +500,6 @@ export function Topbar({
             Demo Workspace
           </span>
         )}
-
 
         {/* Pengingat (Notifikasi) di samping icon profile */}
         <Link

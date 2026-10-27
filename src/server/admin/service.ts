@@ -1,6 +1,7 @@
 import { prisma } from "@/server/db/prisma";
 import { CURRICULUM_CATALOG, CatalogCourse } from "@/features/curriculum/catalog";
 import { MOCK_TEMPLATES } from "@/features/templates/data";
+import { hashPassword } from "@/lib/auth";
 
 export interface CampusItem {
   id: string;
@@ -124,6 +125,7 @@ export function recordAiRequestLog(log: Omit<AiRequestLog, "id" | "timestamp">) 
 export async function ensureAdminAndSeededData() {
   try {
     // 1. Ensure Admin User
+    const defaultAdminPassword = hashPassword("admin123");
     let adminUser = await prisma.user.findFirst({
       where: { role: "admin" },
     });
@@ -131,12 +133,18 @@ export async function ensureAdminAndSeededData() {
     if (!adminUser) {
       adminUser = await prisma.user.upsert({
         where: { email: "admin@stara.ac.id" },
-        update: { role: "admin" },
+        update: { role: "admin", password: defaultAdminPassword },
         create: {
           email: "admin@stara.ac.id",
           name: "Administrator STARA",
+          password: defaultAdminPassword,
           role: "admin",
         },
+      });
+    } else if (!adminUser.password) {
+      adminUser = await prisma.user.update({
+        where: { id: adminUser.id },
+        data: { password: defaultAdminPassword },
       });
     }
 

@@ -13,7 +13,7 @@ function WorkspaceGuard({ children, pageTitle }: { children: React.ReactNode; pa
 
   useEffect(() => {
     if (!isLoading && !token) {
-      router.push("/demo");
+      router.push("/login");
     }
   }, [isLoading, token, router]);
 

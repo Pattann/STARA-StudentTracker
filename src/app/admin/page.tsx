@@ -41,8 +41,8 @@ import {
   Sliders,
   Terminal,
   Key,
-  Flame,
   Info,
+  LogOut,
 } from "lucide-react";
 
 export type AdminTab = "overview" | "academics" | "templates" | "ai";
@@ -54,6 +54,9 @@ function AdminDashboardContent() {
 
   const [activeTab, setActiveTab] = useState<AdminTab>(currentTab);
   const [isPending, startTransition] = useTransition();
+
+  // Admin User Info
+  const [adminUser, setAdminUser] = useState<any>(null);
 
   // Overview Data
   const [overviewData, setOverviewData] = useState<any>(null);
@@ -185,12 +188,38 @@ function AdminDashboardContent() {
   };
 
   useEffect(() => {
+    // Only allow admin role to access admin dashboard
+    const storedUser = typeof window !== "undefined" ? localStorage.getItem("stara_user") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("stara_demo_token") : null;
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        if (u.role !== "admin") {
+          router.push("/login");
+          return;
+        }
+        setAdminUser(u);
+      } catch {
+        router.push("/login");
+        return;
+      }
+    } else {
+      router.push("/login");
+      return;
+    }
+
     fetchOverview();
     fetchAcademics();
     fetchTemplates();
     fetchReports();
     fetchAiMonitor();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     fetchTemplates();
@@ -361,7 +390,7 @@ function AdminDashboardContent() {
   });
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", background: "var(--bg-base)", color: "var(--text-primary)" }}>
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -397,15 +426,17 @@ function AdminDashboardContent() {
       <aside
         style={{
           width: 280,
+          height: "100vh",
           background: "#F7F5F0",
           borderRight: "1px solid rgba(0, 0, 0, 0.08)",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
+          zIndex: 30,
         }}
       >
         {/* Brand & Admin Badge */}
-        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid rgba(0, 0, 0, 0.08)", background: "rgba(245, 205, 71, 0.04)" }}>
+        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid rgba(0, 0, 0, 0.08)", background: "rgba(245, 205, 71, 0.04)", flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <img src="/blackstara.svg" alt="STARA" width={28} height={28} />
             <div>
@@ -434,7 +465,7 @@ function AdminDashboardContent() {
         </div>
 
         {/* Navigation Tabs (Strictly matching user spec) */}
-        <nav style={{ padding: "16px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+        <nav style={{ padding: "16px 12px", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
           {/* 1. Overview */}
           <button
             onClick={() => switchTab("overview")}
@@ -559,29 +590,36 @@ function AdminDashboardContent() {
           </button>
         </nav>
 
-        {/* Back to Student Portal & Profile */}
-        <div style={{ padding: "16px", borderTop: "1px solid var(--border)" }}>
-          <Link
-            href="/app"
+        {/* Logout Admin Button & Profile */}
+        <div style={{ padding: "16px", borderTop: "1px solid var(--border)", flexShrink: 0, marginTop: "auto", background: "var(--bg-elevated)" }}>
+          <button
+            onClick={() => {
+              localStorage.removeItem("stara_demo_token");
+              localStorage.removeItem("stara_user");
+              router.push("/login");
+            }}
+            id="btn-admin-logout"
             style={{
+              width: "100%",
               display: "flex",
               alignItems: "center",
-              gap: 10,
+              justifyContent: "center",
+              gap: 8,
               padding: "10px 12px",
               borderRadius: "var(--radius-md)",
-              background: "var(--bg-secondary)",
-              border: "1px solid var(--border)",
-              color: "var(--text-primary)",
+              background: "rgba(255, 122, 69, 0.1)",
+              border: "1px solid rgba(255, 122, 69, 0.25)",
+              color: "#FF9E66",
               fontSize: 12.5,
-              fontWeight: 600,
-              textDecoration: "none",
+              fontWeight: 700,
+              cursor: "pointer",
               marginBottom: 12,
               transition: "var(--transition)",
             }}
           >
-            <ArrowRight size={15} style={{ transform: "rotate(180deg)" }} />
-            <span>Kembali ke Portal Mahasiswa</span>
-          </Link>
+            <LogOut size={15} />
+            <span>Keluar / Logout Admin</span>
+          </button>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div
@@ -597,22 +635,25 @@ function AdminDashboardContent() {
                 color: "#92400E",
                 fontWeight: 800,
                 fontSize: 12,
+                flexShrink: 0,
               }}
             >
-              AD
+              {adminUser?.name ? adminUser.name.slice(0, 2).toUpperCase() : "AD"}
             </div>
             <div style={{ overflow: "hidden" }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap" }}>
-                Administrator STARA
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {adminUser?.name || "Administrator STARA"}
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap" }}>admin@stara.ac.id</div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {adminUser?.email || "admin@stara.ac.id"}
+              </div>
             </div>
           </div>
         </div>
       </aside>
 
       {/* ─── MAIN CONTENT AREA ──────────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflowY: "auto", minWidth: 0 }}>
+      <main style={{ flex: 1, height: "100vh", display: "flex", flexDirection: "column", overflowY: "auto", minWidth: 0 }}>
         {/* Topbar */}
         <header
           style={{

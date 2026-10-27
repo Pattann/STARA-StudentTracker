@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,20 +23,20 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         success?: boolean;
         token?: string;
-        user?: { id: string; name: string; email: string };
+        user?: { id: string; name: string; email: string; role?: string };
         hasCompletedOnboarding?: boolean;
         redirectUrl?: string;
         error?: string;
       };
 
       if (!res.ok || !data.token) {
-        throw new Error(data.error || "Gagal masuk. Periksa kembali email dan kata sandi.");
+        throw new Error(data.error || "Gagal masuk. Periksa kembali email/username dan kata sandi.");
       }
 
       localStorage.setItem("stara_demo_token", data.token);
@@ -43,14 +44,42 @@ export default function LoginPage() {
         localStorage.setItem("stara_user", JSON.stringify(data.user));
       }
 
-      if (data.hasCompletedOnboarding) {
-        router.push("/app/templates");
+      // Automatically routes to /admin if admin, or /app if student
+      if (data.redirectUrl) {
+        router.push(data.redirectUrl);
+      } else if (data.user?.role === "admin") {
+        router.push("/admin");
       } else {
-        router.push("/onboarding");
+        router.push(data.hasCompletedOnboarding ? "/app" : "/onboarding");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat masuk.");
       setLoading(false);
+    }
+  };
+
+  const handleQuickDemo = async () => {
+    setDemoLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/demo/start", { method: "POST" });
+      const data = (await res.json()) as { token: string };
+      if (!res.ok || !data.token) throw new Error("Gagal memulai sesi demo.");
+
+      localStorage.setItem("stara_demo_token", data.token);
+      localStorage.setItem(
+        "stara_user",
+        JSON.stringify({
+          id: "demo-student",
+          name: "Mahasiswa STARA",
+          email: "mahasiswa@student.stara.ac.id",
+          role: "student",
+        })
+      );
+      router.push("/app");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal memulai demo.");
+      setDemoLoading(false);
     }
   };
 
@@ -67,8 +96,17 @@ export default function LoginPage() {
     >
       <div style={{ width: "100%", maxWidth: 420 }}>
         {/* Brand Header */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none", marginBottom: 16 }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <Link
+            href="/"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              textDecoration: "none",
+              marginBottom: 14,
+            }}
+          >
             <img
               src="/whitestara.svg"
               alt="Logo STARA"
@@ -76,15 +114,22 @@ export default function LoginPage() {
               height={38}
               style={{ width: 38, height: 38, objectFit: "contain" }}
             />
-            <span style={{ fontSize: 24, fontWeight: 900, color: "#F5F5F0", letterSpacing: "-0.02em" }}>
+            <span
+              style={{
+                fontSize: 24,
+                fontWeight: 900,
+                color: "#F5F5F0",
+                letterSpacing: "-0.02em",
+              }}
+            >
               STARA
             </span>
           </Link>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: "#F5F5F0", margin: "0 0 6px" }}>
-            Masuk ke Akun
+            Masuk ke STARA
           </h1>
-          <p style={{ fontSize: 14, color: "#A4AAA5", margin: 0 }}>
-            Lanjutkan perencanaan akademikmu bersama STARA
+          <p style={{ fontSize: 13.5, color: "#A4AAA5", margin: 0 }}>
+            Akses portal akademik, asisten skripsi & sistem terintegrasi
           </p>
         </div>
 
@@ -121,14 +166,15 @@ export default function LoginPage() {
 
             <div>
               <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 6 }}>
-                Email Mahasiswa / Kampus
+                Email atau Username
               </label>
               <input
-                type="email"
+                type="text"
                 required
+                id="input-user-identifier"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@student.ac.id"
+                placeholder="nama@email.com atau username"
                 style={{
                   width: "100%",
                   padding: "12px 14px",
@@ -143,15 +189,14 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5" }}>
-                  Kata Sandi
-                </label>
-              </div>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 6 }}>
+                Kata Sandi
+              </label>
               <div style={{ position: "relative" }}>
                 <input
                   type={showPassword ? "text" : "password"}
                   required
+                  id="input-user-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -189,9 +234,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || demoLoading}
+              id="btn-login-submit"
               style={{
-                marginTop: 8,
+                marginTop: 6,
                 background: "var(--lime)",
                 color: "#0B0D0C",
                 fontWeight: 800,
@@ -224,17 +270,47 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  <span>Masuk ke Akun</span>
+                  <span>Masuk ke STARA</span>
                   <ArrowRight size={16} />
                 </>
               )}
             </button>
           </form>
 
+          {/* Quick Demo Button for Students */}
+          <div style={{ marginTop: 18 }}>
+            <button
+              type="button"
+              id="btn-quick-demo-student"
+              onClick={handleQuickDemo}
+              disabled={loading || demoLoading}
+              style={{
+                width: "100%",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                color: "#E6EAE7",
+                fontSize: 13,
+                fontWeight: 700,
+                padding: "10px",
+                borderRadius: "var(--radius-pill)",
+                cursor: demoLoading ? "wait" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                transition: "all 0.15s ease",
+              }}
+            >
+              <Sparkles size={14} color="var(--lime)" />
+              <span>{demoLoading ? "Memuat Sesi Demo..." : "Coba Mode Demo (Mahasiswa)"}</span>
+            </button>
+          </div>
+
+          {/* Signup link */}
           <div
             style={{
-              marginTop: 24,
-              paddingTop: 18,
+              marginTop: 20,
+              paddingTop: 16,
               borderTop: "1px solid rgba(255,255,255,0.07)",
               textAlign: "center",
             }}

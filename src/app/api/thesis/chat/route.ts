@@ -12,6 +12,18 @@ const ThesisChatSchema = z.object({
     .default([]),
   topicContext: z.string().max(300).optional(),
   programName: z.string().max(100).optional(),
+  thesisProgress: z
+    .object({
+      completedStagesCount: z.number(),
+      totalStages: z.number(),
+      currentActiveStageNumber: z.number(),
+      currentActiveStageTitle: z.string(),
+      nextStageTitle: z.string().optional(),
+      approvedTitle: z.string().optional(),
+      completedStageTitles: z.array(z.string()),
+      notesOrArtifacts: z.record(z.string()).optional(),
+    })
+    .optional(),
 });
 
 async function resolveSession(req: NextRequest) {
@@ -40,6 +52,7 @@ export async function POST(req: NextRequest) {
     const result = await aiProvider.chatAboutThesis({
       programName: parsed.data.programName || profile?.programName || "Teknik Informatika",
       topicContext: parsed.data.topicContext,
+      thesisProgress: parsed.data.thesisProgress,
       chatHistory: parsed.data.chatHistory,
       userMessage: parsed.data.message,
     });

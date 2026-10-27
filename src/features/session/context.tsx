@@ -13,6 +13,7 @@ export interface UserInfo {
   id: string;
   name: string;
   email: string;
+  role?: string;
 }
 
 interface SessionContextType {
@@ -54,7 +55,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("stara_user");
     setToken(null);
     setUser(null);
-    router.push("/login");
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    } else {
+      router.push("/login");
+    }
   }, [router]);
 
   return (

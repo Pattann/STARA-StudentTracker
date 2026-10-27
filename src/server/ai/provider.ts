@@ -66,9 +66,21 @@ export interface AIThesisOutput {
   fallbackReason?: string;
 }
 
+export interface ThesisStageProgressInfo {
+  completedStagesCount: number;
+  totalStages: number;
+  currentActiveStageNumber: number;
+  currentActiveStageTitle: string;
+  nextStageTitle?: string;
+  approvedTitle?: string;
+  completedStageTitles: string[];
+  notesOrArtifacts?: Record<string, string>;
+}
+
 export interface AIThesisChatRequest {
   programName?: string;
   topicContext?: string;
+  thesisProgress?: ThesisStageProgressInfo;
   chatHistory: { role: "user" | "assistant"; content: string }[];
   userMessage: string;
 }
@@ -491,6 +503,20 @@ Karakter Anda:
 - Ramah, empatik, suportif, berwawasan akademik kuat, dan berbahasa Indonesia yang santai tapi formal-akademis.
 - Mahasiswa: Program Studi ${req.programName || "Teknik Informatika / Umum"}.
 ${req.topicContext ? `- Konteks Topik / Judul yang sedang dibahas: "${req.topicContext}"` : ""}
+${
+  req.thesisProgress
+    ? `- PROGRES TAHAPAN SKRIPSI MAHASISWA SAAT INI (11 TAHAPAN):
+  * Tahapan Selesai (${req.thesisProgress.completedStagesCount} dari ${req.thesisProgress.totalStages} tahapan): ${
+        req.thesisProgress.completedStageTitles.length > 0
+          ? req.thesisProgress.completedStageTitles.join(", ")
+          : "Belum ada tahapan yang dicentang selesai"
+      }
+  * Tahap Aktif yang Sedang Dikerjakan: Tahap ${req.thesisProgress.currentActiveStageNumber} - ${req.thesisProgress.currentActiveStageTitle}
+  ${req.thesisProgress.nextStageTitle ? `* Target Tahap Berikutnya: ${req.thesisProgress.nextStageTitle}` : ""}
+  ${req.thesisProgress.approvedTitle ? `* Judul yang Sudah Di-ACC Dosen Pembimbing: "${req.thesisProgress.approvedTitle}"` : ""}
+  * INSTRUKSI KHUSUS: Hubungkan jawaban Anda secara kontekstual dengan posisi tahap pengerjaan mahasiswa saat ini. Beritahu mahasiswa apa fokus dan langkah berikutnya yang harus disiapkan untuk bimbingan dosen!`
+    : ""
+}
 
 Panduan Batasan Topik (Strict Guardrails):
 - FOKUS ANDA HANYA SEPUTAR:
@@ -1095,14 +1121,29 @@ function generateFallbackAlternatives(req: AIAlternativesRequest): AIAlternative
 
 function generateFallbackThesisChat(req: AIThesisChatRequest): AIThesisChatOutput {
   const lower = req.userMessage.toLowerCase();
-  let reply = "Halo! Sebagai panduan skripsi STARA: ";
+  let prefix = "";
+  if (req.thesisProgress) {
+    prefix = `Berdasarkan tracker 11 tahapan skripsimu, saat ini kamu sedang di **Tahap ${req.thesisProgress.currentActiveStageNumber}: ${req.thesisProgress.currentActiveStageTitle}**${
+      req.thesisProgress.approvedTitle ? ` (Judul: "${req.thesisProgress.approvedTitle}")` : ""
+    }.${
+      req.thesisProgress.nextStageTitle ? ` Target berikutnya: **${req.thesisProgress.nextStageTitle}**.` : ""
+    }\n\n`;
+  }
+
+  let reply = prefix + "Sebagai panduan skripsi STARA: ";
   if (lower.includes("judul") || lower.includes("topik")) {
     reply += "Untuk menentukan judul skripsi yang kuat, carilah irisan antara: 1) Masalah nyata di industri/masyarakat, 2) Minat & penguasaan metodologimu, dan 3) Ketersediaan data/akses riset. Pastikan judul memuat metode + objek/kasus + tujuan terukur.";
   } else if (lower.includes("bab 1") || lower.includes("latar belakang")) {
     reply += "Piramida terbalik adalah kunci BAB 1: Mulai dari fenomena umum, urgensi masalah spesifik, data/fakta pendukung, gap riset terdahulu, lalu tawarkan solusi/metode yang kamu ajukan beserta manfaatnya.";
-  } else if (lower.includes("dosen") || lower.includes("pembimbing")) {
+  } else if (lower.includes("bab 2") || lower.includes("tinjauan") || lower.includes("teori")) {
+    reply += "Untuk BAB 2: Fokuskan pada landasan teori yang langsung menopang metode penelitianmu dan pemetaan riset terdahulu (state-of-the-art). Hindari mengutip teori dasar yang tidak relevan dengan analisis skripsi.";
+  } else if (lower.includes("bab 3") || lower.includes("metode") || lower.includes("metodologi")) {
+    reply += "Untuk BAB 3: Jelaskan diagram alur penelitian, spesifikasi dataset/populasi, tahapan pemrosesan data, serta metrik pengujian keberhasilan sistem (akurasi, F1-score, respons time, dll.).";
+  } else if (lower.includes("bab 4") || lower.includes("hasil") || lower.includes("pembahasan")) {
+    reply += "BAB 4 adalah inti skripsi: Pembahasan tidak boleh sekadar menyajikan tabel/grafik angka, tetapi wajib menganalisis 'mengapa' hasilnya demikian dan apakah sudah menjawab rumusan masalah di BAB 1.";
+  } else if (lower.includes("dosen") || lower.includes("pembimbing") || lower.includes("acc")) {
     reply += "Tips bimbingan: Selalu bawa resume/catatan kemajuan (progres mingguan), siapkan 2-3 opsi solusi saat berkonsultasi bukan hanya keluhan, dan catat setiap masukan dosen ke log bimbingan.";
-  } else if (lower.includes("sidang") || lower.includes("sempro")) {
+  } else if (lower.includes("sidang") || lower.includes("sempro") || lower.includes("penguji")) {
     reply += "Kunci sidang sempro: Kuasai BAB 1-3 luar kepala, terutama alasan pemilihan metode (why this method?) dan cara validasi data/pengujian. Jangan defensif, tunjukkan keterbukaan terhadap masukan penguji.";
   } else {
     reply += "Silakan tanyakan hal spesifik seputar perumusan judul, latar belakang masalah, metodologi penelitian, atau persiapan sidang sempro/skripsi agar saya bisa memberi arahan yang lebih tajam.";
