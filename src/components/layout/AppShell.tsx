@@ -6,9 +6,9 @@ import { useState } from "react";
 import {
   LayoutDashboard,
   Map,
-  Zap,
+  SlidersHorizontal,
   BookMarked,
-  BookOpen,
+  GraduationCap,
   Bell,
   User,
   HelpCircle,
@@ -24,9 +24,9 @@ import { useSession } from "@/features/session/context";
 const navItems = [
   { href: "/app", label: "Beranda", icon: LayoutDashboard },
   { href: "/app/roadmap", label: "Roadmap Saya", icon: Map },
-  { href: "/app/simulator", label: "Simulasi Skenario", icon: Zap },
+  { href: "/app/simulator", label: "Simulasi Skenario", icon: SlidersHorizontal },
   { href: "/app/templates", label: "Jelajahi Template", icon: BookMarked },
-  { href: "/app/thesis", label: "Panduan Skripsi", icon: BookOpen },
+  { href: "/app/thesis", label: "Panduan Skripsi", icon: GraduationCap },
 ];
 
 export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
