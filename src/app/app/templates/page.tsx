@@ -317,8 +317,7 @@ export default function TemplatesPage() {
   );
 
   const komunitas = MOCK_TEMPLATES.filter((t) => t.sourceType === "komunitas");
-  const kampus = MOCK_TEMPLATES.filter((t) => t.sourceType === "kampus");
-  const base = sourceTab === "komunitas" ? komunitas : kampus;
+  const base = komunitas;
 
   const filtered = base.filter((t) => {
     const q = search.toLowerCase();
@@ -617,77 +616,42 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {/* ── Komunitas vs Kampus Segmented Switcher ── */}
+      {/* ── Komunitas Mahasiswa Focus Header ── */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 8,
-          background: "var(--bg-secondary)",
-          padding: 6,
-          borderRadius: "var(--radius-lg)",
-          border: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 12,
+          padding: "12px 18px",
+          background: "#FFFFFF",
+          borderRadius: "var(--radius-md)",
+          border: "1px solid rgba(0, 0, 0, 0.08)",
+          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.03)",
           marginBottom: 18,
         }}
       >
-        <button
-          onClick={() => {
-            setSourceTab("komunitas");
-            setFilterCategory("");
-          }}
-          id="tab-komunitas"
-          style={{
-            padding: "12px 16px",
-            borderRadius: "var(--radius-md)",
-            border:
-              sourceTab === "komunitas"
-                ? "1px solid rgba(0, 0, 0, 0.12)"
-                : "1px solid transparent",
-            background:
-              sourceTab === "komunitas"
-                ? "#FFFFFF"
-                : "transparent",
-            boxShadow:
-              sourceTab === "komunitas"
-                ? "0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)"
-                : "none",
-            cursor: "pointer",
-            textAlign: "left",
-            transition: "all var(--transition)",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: "var(--radius-sm)",
-              background:
-                sourceTab === "komunitas"
-                  ? "#EEF2FF"
-                  : "rgba(0, 0, 0, 0.04)",
+              width: 38,
+              height: 38,
+              borderRadius: "10px",
+              background: "#EEF2FF",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: sourceTab === "komunitas" ? "#3730A3" : "var(--text-muted)",
+              color: "#3730A3",
               flexShrink: 0,
             }}
           >
-            <Users size={18} />
+            <Users size={19} />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
-                style={{
-                  fontWeight: 800,
-                  fontSize: 14,
-                  color:
-                    sourceTab === "komunitas" ? "var(--text-primary)" : "var(--text-secondary)",
-                }}
-              >
-                Komunitas Mahasiswa
+              <span style={{ fontWeight: 800, fontSize: 14.5, color: "var(--text-primary)" }}>
+                Katalog Blueprint Komunitas Mahasiswa
               </span>
               <span
                 style={{
@@ -695,132 +659,19 @@ export default function TemplatesPage() {
                   fontWeight: 700,
                   padding: "1px 8px",
                   borderRadius: "var(--radius-pill)",
-                  background:
-                    sourceTab === "komunitas"
-                      ? "#EEF2FF"
-                      : "rgba(0, 0, 0, 0.06)",
-                  color:
-                    sourceTab === "komunitas" ? "#3730A3" : "var(--text-secondary)",
-                  border:
-                    sourceTab === "komunitas"
-                      ? "1px solid #C7D2FE"
-                      : "1px solid transparent",
+                  background: "#EEF2FF",
+                  color: "#3730A3",
+                  border: "1px solid #C7D2FE",
                 }}
               >
-                {komunitas.length}
+                {komunitas.length} Template
               </span>
             </div>
-            <p
-              style={{
-                fontSize: 11.5,
-                color: "var(--text-muted)",
-                marginTop: 2,
-                lineHeight: 1.3,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              Pengalaman nyata dan alur adaptif mahasiswa
+            <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2, margin: 0 }}>
+              Pengalaman nyata, strategi kelulusan, dan alur adaptif terpercaya dari rekan mahasiswa
             </p>
           </div>
-        </button>
-
-        <button
-          onClick={() => {
-            setSourceTab("kampus");
-            setFilterCategory("");
-          }}
-          id="tab-kampus"
-          style={{
-            padding: "12px 16px",
-            borderRadius: "var(--radius-md)",
-            border:
-              sourceTab === "kampus"
-                ? "1px solid rgba(0, 0, 0, 0.12)"
-                : "1px solid transparent",
-            background:
-              sourceTab === "kampus"
-                ? "#FFFFFF"
-                : "transparent",
-            boxShadow:
-              sourceTab === "kampus"
-                ? "0 4px 14px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)"
-                : "none",
-            cursor: "pointer",
-            textAlign: "left",
-            transition: "all var(--transition)",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "var(--radius-sm)",
-              background:
-                sourceTab === "kampus"
-                  ? "#F0FDF4"
-                  : "rgba(0, 0, 0, 0.04)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: sourceTab === "kampus" ? "#15803D" : "var(--text-muted)",
-              flexShrink: 0,
-            }}
-          >
-            <Building2 size={18} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
-                style={{
-                  fontWeight: 800,
-                  fontSize: 14,
-                  color:
-                    sourceTab === "kampus" ? "var(--text-primary)" : "var(--text-secondary)",
-                }}
-              >
-                Resmi Kampus &amp; MBKM
-              </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "1px 8px",
-                  borderRadius: "var(--radius-pill)",
-                  background:
-                    sourceTab === "kampus"
-                      ? "#F0FDF4"
-                      : "rgba(0, 0, 0, 0.06)",
-                  color:
-                    sourceTab === "kampus" ? "#15803D" : "var(--text-secondary)",
-                  border:
-                    sourceTab === "kampus"
-                      ? "1px solid #BBF7D0"
-                      : "1px solid transparent",
-                }}
-              >
-                {kampus.length}
-              </span>
-            </div>
-            <p
-              style={{
-                fontSize: 11.5,
-                color: "var(--text-muted)",
-                marginTop: 2,
-                lineHeight: 1.3,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              Pedoman kurikulum dan program institusi resmi
-            </p>
-          </div>
-        </button>
+        </div>
       </div>
 
       {/* ── Category Chips ── */}
@@ -971,7 +822,7 @@ export default function TemplatesPage() {
       <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 14 }}>
         Menampilkan{" "}
         <strong style={{ color: "var(--text-primary)" }}>{filtered.length}</strong>{" "}
-        template {sourceTab === "komunitas" ? "komunitas" : "resmi kampus"}
+        template komunitas
         {search && (
           <>
             {" "}untuk &ldquo;

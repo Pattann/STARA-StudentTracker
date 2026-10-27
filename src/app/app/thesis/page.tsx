@@ -215,8 +215,11 @@ export default function ThesisPage() {
     }
   };
 
-  const feasibilityColors = { tinggi: "var(--lime)", sedang: "var(--teal)", perlu_validasi: "var(--orange)" };
-  const feasibilityLabels = { tinggi: "Kelayakan Tinggi", sedang: "Kelayakan Sedang", perlu_validasi: "Perlu Validasi" };
+  const feasibilityStyles = {
+    tinggi: { bg: "#DCFCE7", text: "#15803D", border: "#86EFAC", label: "Kelayakan Tinggi" },
+    sedang: { bg: "#FEF3C7", text: "#92400E", border: "#FCD34D", label: "Kelayakan Sedang" },
+    perlu_validasi: { bg: "#FEE2E2", text: "#991B1B", border: "#FCA5A5", label: "Perlu Validasi" },
+  };
 
   return (
     <div>
@@ -226,8 +229,21 @@ export default function ThesisPage() {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em", margin: 0 }}>
             Panduan Skripsi & Tugas Akhir
           </h1>
-          <span className="badge badge-lime" style={{ fontSize: 10, display: "flex", alignItems: "center", gap: 4 }}>
-            <Sparkles size={11} /> AI Powered
+          <span
+            style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              background: "#FEF3C7",
+              color: "#92400E",
+              border: "1px solid #FCD34D",
+              padding: "2px 8px",
+              borderRadius: "var(--radius-pill)",
+            }}
+          >
+            <Sparkles size={11} color="#92400E" /> AI Powered
           </span>
         </div>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
@@ -242,82 +258,183 @@ export default function ThesisPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "rgba(133,136,255,0.06)",
-            border: "1px solid rgba(133,136,255,0.25)",
+            background: "#FFFFFF",
+            border: "1px solid var(--border)",
             borderRadius: "var(--radius-md)",
-            padding: "8px 14px",
-            marginBottom: 16,
+            padding: "10px 16px",
+            marginBottom: 18,
             fontSize: 12.5,
             color: "var(--text-secondary)",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.03)",
             flexWrap: "wrap",
             gap: 8,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Target size={14} color="var(--blue)" />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                background: "#FEF3C7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Target size={13} color="#92400E" />
+            </div>
             <span>
               Profil Terhubung: <strong style={{ color: "var(--text-primary)" }}>{profile.programName}</strong> ({profile.institutionName || "Kampus"}) • Semester {profile.currentSemester ?? 4}
             </span>
           </div>
           {profile.interests && profile.interests.length > 0 && (
-            <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-              <span style={{ color: "var(--text-muted)" }}>Fokus:</span>
+            <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+              <span style={{ color: "var(--text-muted)", fontSize: 11 }}>Fokus:</span>
               {profile.interests.slice(0, 3).map((item, idx) => (
-                <span key={idx} className="badge badge-gray" style={{ fontSize: 10.5 }}>{item}</span>
+                <span
+                  key={idx}
+                  style={{
+                    fontSize: 11,
+                    padding: "2px 8px",
+                    borderRadius: "var(--radius-pill)",
+                    background: "var(--bg-secondary)",
+                    color: "var(--text-primary)",
+                    border: "1px solid var(--border)",
+                    fontWeight: 500,
+                  }}
+                >
+                  {item}
+                </span>
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* ── Navigation Tabs ── */}
+      {/* ── Navigation Tabs (STARA Segmented Control) ── */}
       <div
         style={{
           display: "flex",
-          gap: 6,
-          borderBottom: "1px solid var(--border-subtle)",
+          alignItems: "center",
           marginBottom: 20,
           overflowX: "auto",
-          paddingBottom: 2,
+          paddingBottom: 4,
         }}
       >
-        <button
-          className={`btn btn-sm ${activeTab === "explore" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => setActiveTab("explore")}
-          style={{ gap: 6, fontSize: 12.5 }}
-          id="tab-thesis-explore"
+        <div
+          style={{
+            display: "inline-flex",
+            background: "#EAE6DF",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            borderRadius: "var(--radius-pill)",
+            padding: "4px",
+            gap: 4,
+          }}
         >
-          <Lightbulb size={14} />
-          Eksplorasi Topik AI
-        </button>
-        <button
-          className={`btn btn-sm ${activeTab === "chat" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => setActiveTab("chat")}
-          style={{ gap: 6, fontSize: 12.5 }}
-          id="tab-thesis-chat"
-        >
-          <MessageSquare size={14} />
-          Tanya Konsultan Skripsi AI
-          {topicContext && <span className="badge badge-blue" style={{ fontSize: 9 }}>Aktif</span>}
-        </button>
-        <button
-          className={`btn btn-sm ${activeTab === "review" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => setActiveTab("review")}
-          style={{ gap: 6, fontSize: 12.5 }}
-          id="tab-thesis-review"
-        >
-          <FileCheck size={14} />
-          Reviewer Judul & Topik
-        </button>
-        <button
-          className={`btn btn-sm ${activeTab === "timeline" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => setActiveTab("timeline")}
-          style={{ gap: 6, fontSize: 12.5 }}
-          id="tab-thesis-timeline"
-        >
-          <ListChecks size={14} />
-          Alur 6 Tahap Skripsi
-        </button>
+          <button
+            onClick={() => setActiveTab("explore")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 16px",
+              borderRadius: "var(--radius-pill)",
+              fontSize: 12.5,
+              fontWeight: activeTab === "explore" ? 700 : 500,
+              border: "none",
+              cursor: "pointer",
+              background: activeTab === "explore" ? "#FFFFFF" : "transparent",
+              color: activeTab === "explore" ? "#0F172A" : "#64748B",
+              boxShadow: activeTab === "explore" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+              transition: "all 0.15s ease",
+            }}
+            id="tab-thesis-explore"
+          >
+            <Lightbulb size={14} color={activeTab === "explore" ? "#D97706" : "#64748B"} />
+            <span>Eksplorasi Topik AI</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("chat")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 16px",
+              borderRadius: "var(--radius-pill)",
+              fontSize: 12.5,
+              fontWeight: activeTab === "chat" ? 700 : 500,
+              border: "none",
+              cursor: "pointer",
+              background: activeTab === "chat" ? "#FFFFFF" : "transparent",
+              color: activeTab === "chat" ? "#0F172A" : "#64748B",
+              boxShadow: activeTab === "chat" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+              transition: "all 0.15s ease",
+            }}
+            id="tab-thesis-chat"
+          >
+            <MessageSquare size={14} color={activeTab === "chat" ? "#D97706" : "#64748B"} />
+            <span>Tanya Konsultan Skripsi AI</span>
+            {topicContext && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: "#FEF3C7",
+                  color: "#92400E",
+                  padding: "1px 6px",
+                  borderRadius: "var(--radius-pill)",
+                }}
+              >
+                Aktif
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("review")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 16px",
+              borderRadius: "var(--radius-pill)",
+              fontSize: 12.5,
+              fontWeight: activeTab === "review" ? 700 : 500,
+              border: "none",
+              cursor: "pointer",
+              background: activeTab === "review" ? "#FFFFFF" : "transparent",
+              color: activeTab === "review" ? "#0F172A" : "#64748B",
+              boxShadow: activeTab === "review" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+              transition: "all 0.15s ease",
+            }}
+            id="tab-thesis-review"
+          >
+            <FileCheck size={14} color={activeTab === "review" ? "#D97706" : "#64748B"} />
+            <span>Reviewer Judul & Topik</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("timeline")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "7px 16px",
+              borderRadius: "var(--radius-pill)",
+              fontSize: 12.5,
+              fontWeight: activeTab === "timeline" ? 700 : 500,
+              border: "none",
+              cursor: "pointer",
+              background: activeTab === "timeline" ? "#FFFFFF" : "transparent",
+              color: activeTab === "timeline" ? "#0F172A" : "#64748B",
+              boxShadow: activeTab === "timeline" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
+              transition: "all 0.15s ease",
+            }}
+            id="tab-thesis-timeline"
+          >
+            <ListChecks size={14} color={activeTab === "timeline" ? "#D97706" : "#64748B"} />
+            <span>Alur 6 Tahap Skripsi</span>
+          </button>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════
@@ -330,7 +447,7 @@ export default function ThesisPage() {
             <div className="card" style={{ maxWidth: exploreResult ? "100%" : 680 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Sparkles size={16} color="var(--lime)" />
+                  <Sparkles size={16} color="#D97706" />
                   Kuesioner Minat & Kesiapan Riset
                 </h2>
                 {exploreResult && (
@@ -354,7 +471,7 @@ export default function ThesisPage() {
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="th-interests">
-                    Bidang Minat Riset * <span style={{ color: "var(--lime)", fontSize: 11 }}>(pisahkan koma)</span>
+                    Bidang Minat Riset * <span style={{ color: "#92400E", fontSize: 11 }}>(pisahkan koma)</span>
                   </label>
                   <input
                     id="th-interests"
@@ -380,8 +497,8 @@ export default function ThesisPage() {
                           fontSize: 10.5,
                           padding: "3px 8px",
                           borderRadius: 12,
-                          background: "var(--surface-hover)",
-                          border: "1px solid var(--border-subtle)",
+                          background: "#F4EFE6",
+                          border: "1px solid rgba(0, 0, 0, 0.08)",
                           color: "var(--text-secondary)",
                           cursor: "pointer",
                         }}
@@ -488,7 +605,7 @@ export default function ThesisPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                   <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                    <Lightbulb size={17} color="var(--lime)" />
+                    <Lightbulb size={17} color="#D97706" />
                     Rekomendasi Arah Penelitian untuk Anda
                   </h2>
                   <span className="badge badge-teal" style={{ fontSize: 11 }}>
@@ -497,18 +614,30 @@ export default function ThesisPage() {
                 </div>
 
                 {exploreResult.directions.map((d, i) => (
-                  <div key={i} className="card" style={{ border: "1px solid var(--border-subtle)" }}>
+                  <div key={i} className="card" style={{ border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(215,243,106,0.12)", border: "1px solid rgba(215,243,106,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: "var(--lime)" }}>{i + 1}</span>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: "#FEF3C7", border: "1px solid #FCD34D", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: "#92400E" }}>{i + 1}</span>
                         </div>
                         <div>
                           <div style={{ fontSize: 15.5, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
                             {d.topicArea}
                           </div>
-                          <span className="badge" style={{ background: `${feasibilityColors[d.feasibility]}18`, color: feasibilityColors[d.feasibility], fontSize: 10.5, marginTop: 4 }}>
-                            {feasibilityLabels[d.feasibility]}
+                          <span
+                            style={{
+                              background: feasibilityStyles[d.feasibility].bg,
+                              color: feasibilityStyles[d.feasibility].text,
+                              border: `1px solid ${feasibilityStyles[d.feasibility].border}`,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: "2px 8px",
+                              borderRadius: "var(--radius-pill)",
+                              marginTop: 4,
+                              display: "inline-block",
+                            }}
+                          >
+                            {feasibilityStyles[d.feasibility].label}
                           </span>
                         </div>
                       </div>
@@ -521,7 +650,7 @@ export default function ThesisPage() {
                           title="Salin judul ini"
                           style={{ fontSize: 11.5, gap: 4 }}
                         >
-                          {copiedTitle === d.topicArea ? <Check size={12} color="var(--lime)" /> : <Copy size={12} />}
+                          {copiedTitle === d.topicArea ? <Check size={12} color="#15803D" /> : <Copy size={12} />}
                           <span>{copiedTitle === d.topicArea ? "Tersalin" : "Salin"}</span>
                         </button>
                         <button
@@ -573,12 +702,12 @@ export default function ThesisPage() {
 
                     {d.firstSteps.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
-                        <div style={{ fontSize: 11, color: "var(--lime)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>
+                        <div style={{ fontSize: 11, color: "#92400E", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>
                           Langkah Awal yang Bisa Dilakukan:
                         </div>
                         {d.firstSteps.map((s, si) => (
                           <div key={si} style={{ fontSize: 12.5, color: "var(--text-secondary)", display: "flex", gap: 6, marginBottom: 3 }}>
-                            <CheckCircle2 size={13} color="var(--lime)" style={{ flexShrink: 0, marginTop: 2 }} />
+                            <CheckCircle2 size={13} color="#15803D" style={{ flexShrink: 0, marginTop: 2 }} />
                             <span>{s}</span>
                           </div>
                         ))}
@@ -611,8 +740,8 @@ export default function ThesisPage() {
         <div className="card" style={{ maxWidth: 840, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(215,243,106,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Bot size={17} color="var(--lime)" />
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#FEF3C7", border: "1px solid #FCD34D", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Bot size={17} color="#92400E" />
               </div>
               <div>
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
@@ -656,7 +785,7 @@ export default function ThesisPage() {
           >
             {chatMessages.length === 0 && (
               <div style={{ textAlign: "center", padding: "36px 16px", color: "var(--text-muted)" }}>
-                <Bot size={36} style={{ margin: "0 auto 10px", display: "block", opacity: 0.4 }} />
+                <Bot size={36} color="#92400E" style={{ margin: "0 auto 10px", display: "block", opacity: 0.6 }} />
                 <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 4 }}>
                   Ada yang ingin kamu diskusikan tentang skripsimu?
                 </div>
@@ -682,28 +811,29 @@ export default function ThesisPage() {
                     width: 28,
                     height: 28,
                     borderRadius: "50%",
-                    background: msg.role === "user" ? "var(--lime)" : "var(--surface-card)",
-                    border: "1px solid var(--border-subtle)",
+                    background: msg.role === "user" ? "#0F172A" : "#FEF3C7",
+                    border: msg.role === "user" ? "1px solid #0F172A" : "1px solid #FCD34D",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
                   }}
                 >
-                  {msg.role === "user" ? <User size={14} color="var(--bg-primary)" /> : <Bot size={14} color="var(--lime)" />}
+                  {msg.role === "user" ? <User size={14} color="#FFFFFF" /> : <Bot size={14} color="#92400E" />}
                 </div>
 
                 <div
                   style={{
-                    background: msg.role === "user" ? "rgba(124, 230, 168, 0.12)" : "var(--surface-card)",
-                    border: "1px solid var(--border-subtle)",
+                    background: msg.role === "user" ? "#0F172A" : "#FFFFFF",
+                    border: msg.role === "user" ? "none" : "1px solid var(--border)",
                     borderRadius: msg.role === "user" ? "12px 4px 12px 12px" : "4px 12px 12px 12px",
                     padding: "9px 13px",
                     fontSize: 13,
-                    color: "var(--text-primary)",
+                    color: msg.role === "user" ? "#FFFFFF" : "var(--text-primary)",
                     lineHeight: 1.6,
                     maxWidth: "82%",
                     whiteSpace: "pre-wrap",
+                    boxShadow: msg.role === "user" ? "0 2px 6px rgba(15,23,42,0.12)" : "0 1px 3px rgba(0,0,0,0.03)",
                   }}
                 >
                   {msg.isLoading ? (
@@ -740,19 +870,21 @@ export default function ThesisPage() {
                     fontSize: 11.5,
                     padding: "4px 10px",
                     borderRadius: 16,
-                    background: "var(--surface-hover)",
-                    border: "1px solid var(--border-subtle)",
+                    background: "#FFFFFF",
+                    border: "1px solid var(--border)",
                     color: "var(--text-secondary)",
                     cursor: "pointer",
                     transition: "all 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "var(--lime)";
-                    e.currentTarget.style.color = "var(--lime)";
+                    e.currentTarget.style.borderColor = "#FCD34D";
+                    e.currentTarget.style.color = "#92400E";
+                    e.currentTarget.style.background = "#FEF3C7";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "var(--border-subtle)";
+                    e.currentTarget.style.borderColor = "var(--border)";
                     e.currentTarget.style.color = "var(--text-secondary)";
+                    e.currentTarget.style.background = "#FFFFFF";
                   }}
                 >
                   {chip}
@@ -794,7 +926,7 @@ export default function ThesisPage() {
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <div className="card" style={{ marginBottom: 18 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-              <FileCheck size={18} color="var(--lime)" />
+              <FileCheck size={18} color="#D97706" />
               Uji Kelayakan Judul & Draf Topik Skripsi
             </h2>
             <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14 }}>
@@ -846,7 +978,7 @@ export default function ThesisPage() {
 
           {/* Review Results */}
           {reviewResult && (
-            <div className="card" style={{ border: "1px solid var(--border-subtle)" }}>
+            <div className="card" style={{ border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
                 <div>
                   <span style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Hasil Evaluasi Draf Judul:</span>
@@ -860,19 +992,19 @@ export default function ThesisPage() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 8,
-                    padding: "8px 14px",
+                    gap: 10,
+                    padding: "8px 16px",
                     borderRadius: "var(--radius-md)",
-                    background: reviewResult.score >= 80 ? "rgba(215,243,106,0.15)" : "rgba(255,184,77,0.15)",
-                    border: reviewResult.score >= 80 ? "1px solid var(--lime)" : "1px solid var(--orange)",
+                    background: reviewResult.score >= 80 ? "#DCFCE7" : "#FEF3C7",
+                    border: reviewResult.score >= 80 ? "1px solid #86EFAC" : "1px solid #FCD34D",
                   }}
                 >
-                  <span style={{ fontSize: 22, fontWeight: 800, color: reviewResult.score >= 80 ? "var(--lime)" : "var(--orange)" }}>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: reviewResult.score >= 80 ? "#15803D" : "#92400E" }}>
                     {reviewResult.score}
                   </span>
                   <div>
-                    <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>Skor Kelayakan</div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: reviewResult.score >= 80 ? "var(--lime)" : "var(--orange)" }}>
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>Skor Kelayakan</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: reviewResult.score >= 80 ? "#15803D" : "#92400E" }}>
                       {reviewResult.verdict === "sangat_baik" ? "Sangat Siap Diajukan" : reviewResult.verdict === "cukup_baik" ? "Cukup Baik" : "Perlu Disempurnakan"}
                     </div>
                   </div>
@@ -881,8 +1013,8 @@ export default function ThesisPage() {
 
               {/* Strengths & Weaknesses Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-                <div style={{ background: "rgba(124, 230, 168, 0.06)", border: "1px solid rgba(124, 230, 168, 0.25)", borderRadius: "var(--radius-sm)", padding: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--lime)", textTransform: "uppercase", marginBottom: 6 }}>
+                <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "var(--radius-sm)", padding: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#15803D", textTransform: "uppercase", marginBottom: 6 }}>
                     Kelebihan Judul:
                   </div>
                   {reviewResult.strengths.map((s, i) => (
@@ -890,8 +1022,8 @@ export default function ThesisPage() {
                   ))}
                 </div>
 
-                <div style={{ background: "rgba(255, 107, 107, 0.06)", border: "1px solid rgba(255, 107, 107, 0.25)", borderRadius: "var(--radius-sm)", padding: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--coral)", textTransform: "uppercase", marginBottom: 6 }}>
+                <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "var(--radius-sm)", padding: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#DC2626", textTransform: "uppercase", marginBottom: 6 }}>
                     Potensi Titik Lemah (Celah Sempro):
                   </div>
                   {reviewResult.weaknesses.map((w, i) => (
@@ -903,7 +1035,7 @@ export default function ThesisPage() {
               {/* Suggested Alternative Titles */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Sparkles size={14} color="var(--lime)" />
+                  <Sparkles size={14} color="#D97706" />
                   Rekomendasi Alternatif Redaksi Judul yang Lebih Tajam:
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -914,8 +1046,8 @@ export default function ThesisPage() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        background: "var(--surface-hover)",
-                        border: "1px solid var(--border-subtle)",
+                        background: "#F8FAFC",
+                        border: "1px solid var(--border)",
                         borderRadius: "var(--radius-sm)",
                         padding: "9px 12px",
                         gap: 10,
@@ -929,7 +1061,7 @@ export default function ThesisPage() {
                         onClick={() => copyToClipboard(alt)}
                         style={{ fontSize: 11, flexShrink: 0, gap: 4 }}
                       >
-                        {copiedTitle === alt ? <Check size={12} color="var(--lime)" /> : <Copy size={12} />}
+                        {copiedTitle === alt ? <Check size={12} color="#15803D" /> : <Copy size={12} />}
                         <span>{copiedTitle === alt ? "Tersalin" : "Salin"}</span>
                       </button>
                     </div>
@@ -1030,7 +1162,9 @@ export default function ThesisPage() {
                   display: "flex",
                   gap: 14,
                   alignItems: "flex-start",
-                  borderLeft: "3px solid var(--lime)",
+                  borderLeft: "4px solid #D97706",
+                  border: "1px solid var(--border)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
                 }}
               >
                 <div
@@ -1038,14 +1172,14 @@ export default function ThesisPage() {
                     width: 34,
                     height: 34,
                     borderRadius: "50%",
-                    background: "rgba(215,243,106,0.15)",
-                    border: "1px solid var(--lime)",
+                    background: "#FEF3C7",
+                    border: "1px solid #FCD34D",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontWeight: 800,
                     fontSize: 14,
-                    color: "var(--lime)",
+                    color: "#92400E",
                     flexShrink: 0,
                   }}
                 >
@@ -1068,7 +1202,7 @@ export default function ThesisPage() {
                     <strong style={{ color: "var(--text-primary)" }}>Output Wajib:</strong> {item.deliverables}
                   </div>
 
-                  <div style={{ fontSize: 12, color: "var(--lime)", background: "rgba(215,243,106,0.06)", padding: "6px 10px", borderRadius: "var(--radius-sm)", display: "flex", gap: 6 }}>
+                  <div style={{ fontSize: 12, color: "#92400E", background: "#FFFBEB", border: "1px solid #FDE68A", padding: "6px 10px", borderRadius: "var(--radius-sm)", display: "flex", gap: 6 }}>
                     <span>💡 <strong>Tips:</strong> {item.tip}</span>
                   </div>
                 </div>

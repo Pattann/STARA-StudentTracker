@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -47,7 +47,7 @@ import {
 
 export type AdminTab = "overview" | "academics" | "templates" | "ai";
 
-export default function AdminDashboardPage() {
+function AdminDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab = (searchParams.get("tab") as AdminTab) || "overview";
@@ -397,17 +397,17 @@ export default function AdminDashboardPage() {
       <aside
         style={{
           width: 280,
-          background: "var(--bg-elevated)",
-          borderRight: "1px solid var(--border)",
+          background: "#F7F5F0",
+          borderRight: "1px solid rgba(0, 0, 0, 0.08)",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
         }}
       >
         {/* Brand & Admin Badge */}
-        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid rgba(0, 0, 0, 0.08)", background: "rgba(245, 205, 71, 0.04)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src="/whitestara.svg" alt="STARA" width={28} height={28} />
+            <img src="/blackstara.svg" alt="STARA" width={28} height={28} />
             <div>
               <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.02em" }}>STARA ADMIN</div>
               <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>Pusat Kontrol Sistem</div>
@@ -420,14 +420,14 @@ export default function AdminDashboardPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              background: "rgba(245, 205, 71, 0.12)",
-              border: "1px solid rgba(245, 205, 71, 0.3)",
+              background: "#FEF3C7",
+              border: "1px solid #FCD34D",
               borderRadius: "var(--radius-pill)",
               padding: "4px 10px",
             }}
           >
-            <ShieldCheck size={13} color="var(--lime)" />
-            <span style={{ fontSize: 11, fontWeight: 800, color: "var(--lime)", letterSpacing: "0.04em" }}>
+            <ShieldCheck size={13} color="#92400E" />
+            <span style={{ fontSize: 11, fontWeight: 800, color: "#92400E", letterSpacing: "0.04em" }}>
               ROLE: ADMINISTRATOR
             </span>
           </div>
@@ -445,9 +445,10 @@ export default function AdminDashboardPage() {
               gap: 12,
               padding: "12px 14px",
               borderRadius: "var(--radius-md)",
-              border: "none",
-              background: activeTab === "overview" ? "rgba(245, 205, 71, 0.12)" : "transparent",
-              color: activeTab === "overview" ? "var(--lime)" : "var(--text-secondary)",
+              background: activeTab === "overview" ? "#FFFFFF" : "transparent",
+              border: activeTab === "overview" ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
+              boxShadow: activeTab === "overview" ? "0 1px 3px rgba(0, 0, 0, 0.04)" : "none",
+              color: activeTab === "overview" ? "#0F172A" : "var(--text-secondary)",
               fontWeight: activeTab === "overview" ? 700 : 500,
               fontSize: 13.5,
               cursor: "pointer",
@@ -469,9 +470,10 @@ export default function AdminDashboardPage() {
               gap: 12,
               padding: "12px 14px",
               borderRadius: "var(--radius-md)",
-              border: "none",
-              background: activeTab === "academics" ? "rgba(245, 205, 71, 0.12)" : "transparent",
-              color: activeTab === "academics" ? "var(--lime)" : "var(--text-secondary)",
+              background: activeTab === "academics" ? "#FFFFFF" : "transparent",
+              border: activeTab === "academics" ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
+              boxShadow: activeTab === "academics" ? "0 1px 3px rgba(0, 0, 0, 0.04)" : "none",
+              color: activeTab === "academics" ? "#0F172A" : "var(--text-secondary)",
               fontWeight: activeTab === "academics" ? 700 : 500,
               fontSize: 13.5,
               cursor: "pointer",
@@ -493,9 +495,10 @@ export default function AdminDashboardPage() {
               gap: 12,
               padding: "12px 14px",
               borderRadius: "var(--radius-md)",
-              border: "none",
-              background: activeTab === "templates" ? "rgba(245, 205, 71, 0.12)" : "transparent",
-              color: activeTab === "templates" ? "var(--lime)" : "var(--text-secondary)",
+              background: activeTab === "templates" ? "#FFFFFF" : "transparent",
+              border: activeTab === "templates" ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
+              boxShadow: activeTab === "templates" ? "0 1px 3px rgba(0, 0, 0, 0.04)" : "none",
+              color: activeTab === "templates" ? "#0F172A" : "var(--text-secondary)",
               fontWeight: activeTab === "templates" ? 700 : 500,
               fontSize: 13.5,
               cursor: "pointer",
@@ -531,9 +534,10 @@ export default function AdminDashboardPage() {
               gap: 12,
               padding: "12px 14px",
               borderRadius: "var(--radius-md)",
-              border: "none",
-              background: activeTab === "ai" ? "rgba(245, 205, 71, 0.12)" : "transparent",
-              color: activeTab === "ai" ? "var(--lime)" : "var(--text-secondary)",
+              background: activeTab === "ai" ? "#FFFFFF" : "transparent",
+              border: activeTab === "ai" ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
+              boxShadow: activeTab === "ai" ? "0 1px 3px rgba(0, 0, 0, 0.04)" : "none",
+              color: activeTab === "ai" ? "#0F172A" : "var(--text-secondary)",
               fontWeight: activeTab === "ai" ? 700 : 500,
               fontSize: 13.5,
               cursor: "pointer",
@@ -585,12 +589,12 @@ export default function AdminDashboardPage() {
                 width: 32,
                 height: 32,
                 borderRadius: "50%",
-                background: "rgba(245, 205, 71, 0.15)",
-                border: "1px solid var(--lime)",
+                background: "#FEF3C7",
+                border: "1px solid #FCD34D",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "var(--lime)",
+                color: "#92400E",
                 fontWeight: 800,
                 fontSize: 12,
               }}
@@ -614,6 +618,7 @@ export default function AdminDashboardPage() {
           style={{
             height: 64,
             borderBottom: "1px solid var(--border)",
+            borderTop: "2.5px solid #F5CD47",
             background: "var(--bg-elevated)",
             padding: "0 28px",
             display: "flex",
@@ -623,12 +628,32 @@ export default function AdminDashboardPage() {
           }}
         >
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-              {activeTab === "overview" && "📊 Ringkasan / Overview Sistem"}
-              {activeTab === "academics" && "📚 Manajemen Data Akademik & Kurikulum"}
-              {activeTab === "templates" && "📑 Moderasi Template & Laporan Mahasiswa"}
-              {activeTab === "ai" && "🤖 Pengaturan & Monitor Sistem AI"}
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  color: "#92400E",
+                  background: "#FEF3C7",
+                  border: "1px solid #FCD34D",
+                  borderRadius: "var(--radius-pill)",
+                  padding: "1.5px 7px",
+                  letterSpacing: "0.04em",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <ShieldCheck size={11} color="#92400E" />
+                DASHBOARD ADMIN
+              </span>
+              <h1 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.01em", margin: 0 }}>
+                {activeTab === "overview" && "📊 Ringkasan Sistem"}
+                {activeTab === "academics" && "📚 Manajemen Akademik"}
+                {activeTab === "templates" && "📑 Moderasi Template"}
+                {activeTab === "ai" && "🤖 Monitor Sistem AI"}
+              </h1>
+            </div>
             <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
               {activeTab === "overview" && "Statistik mahasiswa, aktivasi roadmap akademik, dan status kesehatan AI"}
               {activeTab === "academics" && "Kelola perguruan tinggi mitra, program studi, kurikulum, dan katalog mata kuliah"}
@@ -715,8 +740,8 @@ export default function AdminDashboardPage() {
                       style={{
                         padding: 8,
                         borderRadius: "var(--radius-md)",
-                        background: "rgba(245, 205, 71, 0.1)",
-                        color: "var(--lime)",
+                        background: "#FEF3C7",
+                        color: "#92400E",
                       }}
                     >
                       <Users size={18} />
@@ -725,7 +750,7 @@ export default function AdminDashboardPage() {
                   <div style={{ fontSize: 32, fontWeight: 800, color: "var(--text-primary)", marginTop: 8 }}>
                     {overviewData?.metrics?.totalStudents || 142}
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--lime)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                  <div style={{ fontSize: 12, color: "#92400E", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
                     <Sparkles size={12} />
                     <span>Terdaftar & Sesi Demo Aktif</span>
                   </div>
@@ -812,8 +837,8 @@ export default function AdminDashboardPage() {
                       style={{
                         padding: 8,
                         borderRadius: "var(--radius-md)",
-                        background: "rgba(245, 205, 71, 0.1)",
-                        color: "var(--lime)",
+                        background: "#FEF3C7",
+                        color: "#92400E",
                       }}
                     >
                       <Cpu size={18} />
@@ -848,7 +873,7 @@ export default function AdminDashboardPage() {
                         Pilihan skenario yang paling sering dieksplorasi mahasiswa
                       </p>
                     </div>
-                    <span style={{ fontSize: 12, color: "var(--lime)", fontWeight: 700 }}>
+                    <span style={{ fontSize: 12, color: "#92400E", fontWeight: 700 }}>
                       Total {overviewData?.metrics?.totalSimulations || 115} Skenario
                     </span>
                   </div>
@@ -924,10 +949,10 @@ export default function AdminDashboardPage() {
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <Building2 size={16} color="var(--lime)" />
+                          <Building2 size={16} color="#D97706" />
                           <span style={{ fontSize: 13, fontWeight: 600 }}>{camp.name}</span>
                         </div>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#92400E" }}>
                           {camp.count} Mahasiswa ({camp.percentage}%)
                         </span>
                       </div>
@@ -997,9 +1022,9 @@ export default function AdminDashboardPage() {
                     key={st.id}
                     onClick={() => setAcademicSubTab(st.id as any)}
                     style={{
-                      background: academicSubTab === st.id ? "rgba(245, 205, 71, 0.15)" : "var(--bg-secondary)",
-                      border: academicSubTab === st.id ? "1px solid var(--lime)" : "1px solid var(--border)",
-                      color: academicSubTab === st.id ? "var(--lime)" : "var(--text-secondary)",
+                      background: academicSubTab === st.id ? "#FEF3C7" : "#FFFFFF",
+                      border: academicSubTab === st.id ? "1px solid #FCD34D" : "1px solid var(--border)",
+                      color: academicSubTab === st.id ? "#92400E" : "var(--text-secondary)",
                       padding: "8px 16px",
                       borderRadius: "var(--radius-pill)",
                       fontSize: 13,
@@ -1008,6 +1033,7 @@ export default function AdminDashboardPage() {
                       display: "flex",
                       alignItems: "center",
                       gap: 8,
+                      boxShadow: academicSubTab === st.id ? "0 1px 3px rgba(0,0,0,0.04)" : "none",
                       transition: "var(--transition)",
                     }}
                   >
@@ -1015,8 +1041,8 @@ export default function AdminDashboardPage() {
                     <span
                       style={{
                         fontSize: 11,
-                        background: academicSubTab === st.id ? "var(--lime)" : "var(--border)",
-                        color: academicSubTab === st.id ? "#000" : "var(--text-muted)",
+                        background: academicSubTab === st.id ? "#FCD34D" : "var(--border)",
+                        color: academicSubTab === st.id ? "#78350F" : "var(--text-muted)",
                         padding: "1px 6px",
                         borderRadius: "var(--radius-pill)",
                       }}
@@ -1054,8 +1080,9 @@ export default function AdminDashboardPage() {
                             padding: "3px 8px",
                             borderRadius: "var(--radius-pill)",
                             fontWeight: 700,
-                            background: campus.type === "PTN" ? "rgba(133, 136, 255, 0.15)" : "rgba(245, 205, 71, 0.15)",
-                            color: campus.type === "PTN" ? "var(--blue)" : "var(--lime)",
+                            background: campus.type === "PTN" ? "rgba(133, 136, 255, 0.15)" : "#FEF3C7",
+                            color: campus.type === "PTN" ? "var(--blue)" : "#92400E",
+                            border: campus.type === "PTN" ? "1px solid rgba(133, 136, 255, 0.3)" : "1px solid #FCD34D",
                           }}
                         >
                           {campus.type}
@@ -1074,7 +1101,7 @@ export default function AdminDashboardPage() {
                       >
                         <div>
                           <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Mahasiswa Terdata</div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--lime)" }}>{campus.totalStudents} mhs</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{campus.totalStudents} mhs</div>
                         </div>
                         <div>
                           <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Status Sinkronisasi</div>
@@ -1153,7 +1180,7 @@ export default function AdminDashboardPage() {
                         }}
                       >
                         <span style={{ color: "var(--text-muted)" }}>Total Beban Kelulusan:</span>
-                        <span style={{ fontWeight: 800, color: "var(--lime)" }}>{prog.totalCredits} SKS</span>
+                        <span style={{ fontWeight: 800, color: "#0F172A" }}>{prog.totalCredits} SKS</span>
                       </div>
 
                       <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
@@ -1169,8 +1196,8 @@ export default function AdminDashboardPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div
                     style={{
-                      background: "rgba(245, 205, 71, 0.08)",
-                      border: "1px solid rgba(245, 205, 71, 0.2)",
+                      background: "#FFFBEB",
+                      border: "1px solid #FDE68A",
                       borderRadius: "var(--radius-md)",
                       padding: "14px 18px",
                       display: "flex",
@@ -1178,7 +1205,7 @@ export default function AdminDashboardPage() {
                       gap: 12,
                     }}
                   >
-                    <Info size={18} color="var(--lime)" />
+                    <Info size={18} color="#D97706" />
                     <span style={{ fontSize: 13, color: "var(--text-primary)" }}>
                       Distribusi beban SKS nasional & Telkom University: Setiap semester reguler (Semester 1–7)
                       memiliki alokasi standar <strong>18–20 SKS</strong>, dan Semester 8 dialokasikan untuk <strong>8 SKS</strong> (Tugas Akhir & Publikasi).
@@ -1200,17 +1227,18 @@ export default function AdminDashboardPage() {
                         }}
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: "var(--lime)" }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
                             Semester {sem.semesterNum}
                           </span>
                           <span
                             style={{
                               fontSize: 12,
                               fontWeight: 800,
-                              background: "rgba(245, 205, 71, 0.15)",
-                              color: "var(--lime)",
+                              background: "#FEF3C7",
+                              color: "#92400E",
                               padding: "2px 8px",
                               borderRadius: "var(--radius-pill)",
+                              border: "1px solid #FCD34D",
                             }}
                           >
                             {sem.credits} SKS
@@ -1337,8 +1365,9 @@ export default function AdminDashboardPage() {
                                 style={{
                                   fontSize: 11,
                                   fontWeight: 800,
-                                  color: "var(--lime)",
-                                  background: "rgba(245, 205, 71, 0.1)",
+                                  color: "#92400E",
+                                  background: "#FEF3C7",
+                                  border: "1px solid #FCD34D",
                                   padding: "3px 8px",
                                   borderRadius: "4px",
                                 }}
@@ -1355,7 +1384,7 @@ export default function AdminDashboardPage() {
                             <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>
                               Semester {c.semesterNum}
                             </td>
-                            <td style={{ padding: "12px 16px", fontWeight: 700, color: "var(--lime)" }}>
+                            <td style={{ padding: "12px 16px", fontWeight: 700, color: "#0F172A" }}>
                               {c.credits} SKS
                             </td>
                             <td style={{ padding: "12px 16px" }}>
@@ -1390,7 +1419,7 @@ export default function AdminDashboardPage() {
                               <button
                                 onClick={() => showToast(`Mata kuliah ${c.code} aktif di kurikulum.`)}
                                 className="btn btn-ghost btn-sm"
-                                style={{ fontSize: 11, color: "var(--lime)" }}
+                                style={{ fontSize: 11, color: "#92400E" }}
                               >
                                 Detail
                               </button>
@@ -1415,9 +1444,9 @@ export default function AdminDashboardPage() {
                 <button
                   onClick={() => setTemplateSubTab("templates")}
                   style={{
-                    background: templateSubTab === "templates" ? "rgba(245, 205, 71, 0.15)" : "var(--bg-secondary)",
-                    border: templateSubTab === "templates" ? "1px solid var(--lime)" : "1px solid var(--border)",
-                    color: templateSubTab === "templates" ? "var(--lime)" : "var(--text-secondary)",
+                    background: templateSubTab === "templates" ? "#FEF3C7" : "#FFFFFF",
+                    border: templateSubTab === "templates" ? "1px solid #FCD34D" : "1px solid var(--border)",
+                    color: templateSubTab === "templates" ? "#92400E" : "var(--text-secondary)",
                     padding: "8px 18px",
                     borderRadius: "var(--radius-pill)",
                     fontSize: 13,
@@ -1426,6 +1455,7 @@ export default function AdminDashboardPage() {
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
+                    boxShadow: templateSubTab === "templates" ? "0 1px 3px rgba(0,0,0,0.04)" : "none",
                   }}
                 >
                   <FileCheck size={16} />
@@ -1433,8 +1463,8 @@ export default function AdminDashboardPage() {
                   <span
                     style={{
                       fontSize: 11,
-                      background: templateSubTab === "templates" ? "var(--lime)" : "var(--border)",
-                      color: templateSubTab === "templates" ? "#000" : "var(--text-muted)",
+                      background: templateSubTab === "templates" ? "#FCD34D" : "var(--border)",
+                      color: templateSubTab === "templates" ? "#78350F" : "var(--text-muted)",
                       padding: "1px 6px",
                       borderRadius: "var(--radius-pill)",
                     }}
@@ -1567,9 +1597,9 @@ export default function AdminDashboardPage() {
                                     style={{
                                       fontSize: 10,
                                       fontWeight: 800,
-                                      color: "var(--lime)",
-                                      background: "rgba(245, 205, 71, 0.15)",
-                                      border: "1px solid rgba(245, 205, 71, 0.3)",
+                                      color: "#15803D",
+                                      background: "#DCFCE7",
+                                      border: "1px solid #86EFAC",
                                       padding: "2px 8px",
                                       borderRadius: "var(--radius-pill)",
                                       display: "flex",
@@ -1577,7 +1607,7 @@ export default function AdminDashboardPage() {
                                       gap: 3,
                                     }}
                                   >
-                                    <Sparkles size={10} /> Terverifikasi Resmi
+                                    <Sparkles size={10} color="#15803D" /> Terverifikasi Resmi
                                   </span>
                                 )}
                                 {isHidden && (
@@ -1637,7 +1667,7 @@ export default function AdminDashboardPage() {
                               className="btn btn-secondary btn-sm"
                               style={{
                                 padding: "0 10px",
-                                color: isHidden ? "var(--lime)" : "var(--coral)",
+                                color: isHidden ? "#15803D" : "var(--coral)",
                               }}
                               title={isHidden ? "Tampilkan kembali" : "Sembunyikan template"}
                             >
@@ -1760,8 +1790,8 @@ export default function AdminDashboardPage() {
                           </div>
 
                           {rep.moderatorNote && (
-                            <div style={{ fontSize: 12, color: "var(--lime)", display: "flex", alignItems: "center", gap: 6 }}>
-                              <ShieldCheck size={14} />
+                            <div style={{ fontSize: 12, color: "#92400E", display: "flex", alignItems: "center", gap: 6 }}>
+                              <ShieldCheck size={14} color="#92400E" />
                               <span>Catatan Moderator: {rep.moderatorNote}</span>
                             </div>
                           )}
@@ -1860,7 +1890,7 @@ export default function AdminDashboardPage() {
                   >
                     <div>
                       <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Kunci API Server:</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, fontFamily: "monospace", color: "var(--lime)" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, fontFamily: "monospace", color: "#0F172A" }}>
                         {aiData?.config?.maskedKey || "AQ.Ab8RN6...5vRA"}
                       </div>
                     </div>
@@ -1912,13 +1942,13 @@ export default function AdminDashboardPage() {
                         margin: "12px 0",
                         padding: "12px",
                         borderRadius: "var(--radius-md)",
-                        background: pingResult.success ? "rgba(34, 197, 94, 0.08)" : "rgba(245, 205, 71, 0.08)",
-                        border: pingResult.success ? "1px solid rgba(34, 197, 94, 0.25)" : "1px solid rgba(245, 205, 71, 0.25)",
+                        background: pingResult.success ? "rgba(34, 197, 94, 0.08)" : "#FFFBEB",
+                        border: pingResult.success ? "1px solid rgba(34, 197, 94, 0.25)" : "1px solid #FDE68A",
                         fontSize: 12,
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, marginBottom: 4 }}>
-                        <span style={{ color: pingResult.success ? "#22C55E" : "var(--lime)" }}>
+                        <span style={{ color: pingResult.success ? "#22C55E" : "#92400E" }}>
                           {pingResult.success ? "Koneksi Cepat & Stabil" : "Fallback Siap Digunakan"}
                         </span>
                         <span style={{ color: "var(--text-primary)" }}>{pingResult.latencyMs} ms</span>
@@ -1978,8 +2008,8 @@ export default function AdminDashboardPage() {
                     <div
                       key={idx}
                       style={{
-                        background: idx === 0 ? "rgba(245, 205, 71, 0.1)" : "var(--bg-secondary)",
-                        border: idx === 0 ? "1px solid var(--lime)" : "1px solid var(--border)",
+                        background: idx === 0 ? "#FEF3C7" : "var(--bg-secondary)",
+                        border: idx === 0 ? "1px solid #FCD34D" : "1px solid var(--border)",
                         borderRadius: "var(--radius-md)",
                         padding: "14px",
                         display: "flex",
@@ -1992,12 +2022,12 @@ export default function AdminDashboardPage() {
                           style={{
                             fontSize: 10,
                             fontWeight: 800,
-                            color: idx === 0 ? "var(--lime)" : "var(--text-muted)",
+                            color: idx === 0 ? "#92400E" : "var(--text-muted)",
                           }}
                         >
                           {fb.tier}
                         </span>
-                        {idx === 0 && <span style={{ fontSize: 10, color: "var(--lime)", fontWeight: 800 }}>★ DEFAULT</span>}
+                        {idx === 0 && <span style={{ fontSize: 10, color: "#92400E", fontWeight: 800 }}>★ DEFAULT</span>}
                       </div>
 
                       <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{fb.model}</div>
@@ -2034,7 +2064,7 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
 
-                  <span style={{ fontSize: 12, color: "var(--lime)", fontWeight: 700 }}>
+                  <span style={{ fontSize: 12, color: "#92400E", fontWeight: 700 }}>
                     {aiData?.recentLogs?.length || 6} Request Tercatat
                   </span>
                 </div>
@@ -2059,7 +2089,7 @@ export default function AdminDashboardPage() {
                         <td style={{ padding: "12px 18px", fontWeight: 700, color: "var(--text-primary)" }}>
                           {log.feature}
                         </td>
-                        <td style={{ padding: "12px 18px", fontFamily: "monospace", fontSize: 12, color: "var(--lime)" }}>
+                        <td style={{ padding: "12px 18px", fontFamily: "monospace", fontSize: 12, color: "#0F172A" }}>
                           {log.modelUsed}
                         </td>
                         <td style={{ padding: "12px 18px", fontWeight: 700, color: "var(--text-primary)" }}>
@@ -2073,8 +2103,9 @@ export default function AdminDashboardPage() {
                             style={{
                               fontSize: 11,
                               fontWeight: 700,
-                              color: log.status.includes("OK") ? "#22C55E" : "var(--lime)",
-                              background: log.status.includes("OK") ? "rgba(34, 197, 94, 0.1)" : "rgba(245, 205, 71, 0.1)",
+                              color: log.status.includes("OK") ? "#22C55E" : "#92400E",
+                              background: log.status.includes("OK") ? "rgba(34, 197, 94, 0.1)" : "#FEF3C7",
+                              border: log.status.includes("OK") ? "1px solid rgba(34, 197, 94, 0.25)" : "1px solid #FCD34D",
                               padding: "2px 8px",
                               borderRadius: "var(--radius-pill)",
                             }}
@@ -2296,7 +2327,7 @@ export default function AdminDashboardPage() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
               <div>
-                <span style={{ fontSize: 11, fontWeight: 800, color: "var(--lime)", textTransform: "uppercase" }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#92400E", textTransform: "uppercase" }}>
                   {selectedTemplateForPreview.category} • {selectedTemplateForPreview.institutionName}
                 </span>
                 <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
@@ -2336,7 +2367,7 @@ export default function AdminDashboardPage() {
                             fontSize: 12,
                           }}
                         >
-                          <div style={{ fontWeight: 700, color: "var(--lime)", marginBottom: 2 }}>
+                          <div style={{ fontWeight: 700, color: "#92400E", marginBottom: 2 }}>
                             {st.title || `Semester ${st.semesterNum || i + 1}`}
                           </div>
                           <div style={{ color: "var(--text-secondary)" }}>{st.focus || st.strategyTip || "Strategi standar"}</div>
@@ -2435,7 +2466,7 @@ export default function AdminDashboardPage() {
                 disabled={isUpdatingModeration}
                 onClick={() => handleResolveReport("reviewed")}
                 className="btn btn-secondary btn-sm"
-                style={{ color: "var(--lime)" }}
+                style={{ color: "#92400E" }}
               >
                 Tandai Ditinjau
               </button>
@@ -2453,5 +2484,22 @@ export default function AdminDashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ minHeight: "100vh", backgroundColor: "#FAF9F5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto mb-3" />
+            <p style={{ color: "#78716C", fontSize: "14px" }}>Memuat Dashboard Admin...</p>
+          </div>
+        </div>
+      }
+    >
+      <AdminDashboardContent />
+    </Suspense>
   );
 }

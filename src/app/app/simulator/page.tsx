@@ -306,7 +306,7 @@ export default function SimulatorPage() {
               onKeyDown={(e) => e.key === "Enter" && (setCustomSelected(true), setSelectedType(null), setStep("custom"))}
             >
               <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
-                <Sparkles size={14} color="var(--lime)" />
+                <Sparkles size={14} color="#D97706" />
                 {CUSTOM_PLAN_TITLE}
               </div>
               <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
@@ -387,9 +387,9 @@ export default function SimulatorPage() {
 
           {/* AI Notice */}
           {result.explanation && (
-            <div className="assumption-notice" style={{ marginBottom: 20, background: result.explanation.isAiGenerated ? "rgba(124, 230, 168, 0.08)" : undefined, borderColor: result.explanation.isAiGenerated ? "rgba(124, 230, 168, 0.3)" : undefined }}>
-              {result.explanation.isAiGenerated ? <Sparkles size={16} style={{ flexShrink: 0, color: "var(--lime)" }} /> : <AlertCircle size={16} style={{ flexShrink: 0 }} />}
-              <span style={{ fontSize: 13, color: result.explanation.isAiGenerated ? "var(--lime)" : undefined }}>
+            <div className="assumption-notice" style={{ marginBottom: 20, background: result.explanation.isAiGenerated ? "#FFFBEB" : undefined, borderColor: result.explanation.isAiGenerated ? "#FDE68A" : undefined }}>
+              {result.explanation.isAiGenerated ? <Sparkles size={16} style={{ flexShrink: 0, color: "#D97706" }} /> : <AlertCircle size={16} style={{ flexShrink: 0 }} />}
+              <span style={{ fontSize: 13, color: result.explanation.isAiGenerated ? "#92400E" : undefined, fontWeight: 500 }}>
                 {result.explanation.isAiGenerated
                   ? "✨ Analisis mendalam ini dipersonalisasi oleh STARA AI (Google Gemini)."
                   : (result.explanation.fallbackReason ?? "Penjelasan otomatis berbasis aturan.")}
@@ -414,7 +414,7 @@ export default function SimulatorPage() {
               </div>
             </div>
             <div className="comparison-panel scenario">
-              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--lime)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "#D97706", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Skenario: {selectedType && SCENARIO_TYPES[selectedType]}
               </div>
               <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4 }}>
@@ -425,7 +425,7 @@ export default function SimulatorPage() {
               <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 12 }}>
                 Estimasi kelulusan
                 {result.diff.semesterDelta !== null && result.diff.semesterDelta !== 0 && (
-                  <span style={{ marginLeft: 8, color: result.diff.semesterDelta > 0 ? "var(--coral)" : "var(--lime)", fontWeight: 700 }}>
+                  <span style={{ marginLeft: 8, color: result.diff.semesterDelta > 0 ? "var(--coral)" : "#15803D", fontWeight: 700 }}>
                     {result.diff.semesterDelta > 0 ? `+${result.diff.semesterDelta} semester` : `${result.diff.semesterDelta} semester`}
                   </span>
                 )}
@@ -447,10 +447,10 @@ export default function SimulatorPage() {
 
             {result.explanation?.benefits?.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)", marginBottom: 6, textTransform: "uppercase" }}>Manfaat</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#15803D", marginBottom: 6, textTransform: "uppercase" }}>Manfaat</div>
                 {result.explanation.benefits.map((b, i) => (
                   <div key={i} style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 6, marginBottom: 4 }}>
-                    <CheckCircle2 size={14} color="var(--lime)" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <CheckCircle2 size={14} color="#15803D" style={{ flexShrink: 0, marginTop: 2 }} />
                     {b}
                   </div>
                 ))}
@@ -546,7 +546,7 @@ export default function SimulatorPage() {
           {applySuccess && (
             <div className="card">
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <CheckCircle2 size={24} color="var(--lime)" />
+                <CheckCircle2 size={24} color="#15803D" />
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
                     Skenario Berhasil Diterapkan!
@@ -653,7 +653,7 @@ function ScenarioForm({
                 type="checkbox"
                 checked={Boolean(params.conflictsWithRegular)}
                 onChange={(e) => update("conflictsWithRegular", e.target.checked)}
-                style={{ width: 16, height: 16, accentColor: "var(--lime)" }}
+                style={{ width: 16, height: 16, accentColor: "#D97706" }}
               />
               <span className="form-label" style={{ margin: 0 }}>
                 Berbenturan dengan kuliah reguler

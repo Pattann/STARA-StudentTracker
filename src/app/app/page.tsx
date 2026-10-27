@@ -13,6 +13,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  LayoutDashboard,
 } from "lucide-react";
 
 interface DashboardData {
@@ -95,6 +96,25 @@ export default function DashboardPage() {
     <div>
       {/* Page Title */}
       <div style={{ marginBottom: 28 }}>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "#FFFFFF",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+            borderRadius: "var(--radius-pill)",
+            padding: "3px 10px",
+            fontSize: 11.5,
+            fontWeight: 650,
+            color: "var(--text-secondary)",
+            marginBottom: 10,
+          }}
+        >
+          <LayoutDashboard size={13} color="var(--amber-deep)" />
+          <span>Dashboard Mahasiswa</span>
+        </div>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4 }}>
           Selamat datang di STARA 👋
         </h1>

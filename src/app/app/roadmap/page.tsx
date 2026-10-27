@@ -47,6 +47,7 @@ import {
   ShieldCheck,
   MoreHorizontal,
   Info,
+  LayoutDashboard,
 } from "lucide-react";
 import { TASK_CATEGORIES, TASK_STATUSES, TEMPLATE_CATEGORIES } from "@/lib/constants";
 import { semesterLabel } from "@/lib/utils";
@@ -1246,9 +1247,12 @@ export default function RoadmapPage() {
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              SKS Lulus
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <CheckCircle2 size={13} color="#15803D" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                SKS Lulus
+              </span>
+            </div>
             <span style={{ fontSize: 11, color: completedCredits > 0 ? "#15803D" : "var(--text-muted)", fontWeight: 700 }}>
               {Math.round((completedCredits / totalCurriculum) * 100)}%
             </span>
@@ -1276,8 +1280,11 @@ export default function RoadmapPage() {
             padding: "12px 14px",
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
-            Sedang Ditempuh
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Clock size={13} color="#B45309" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Sedang Ditempuh
+            </span>
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "#18181B", lineHeight: 1.2 }}>
             {inProgressCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>SKS</span>
@@ -1296,8 +1303,11 @@ export default function RoadmapPage() {
             padding: "12px 14px",
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
-            Direncanakan
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Calendar size={13} color="#2563EB" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Direncanakan
+            </span>
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "#18181B", lineHeight: 1.2 }}>
             {plannedCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>SKS</span>
@@ -1316,8 +1326,11 @@ export default function RoadmapPage() {
             padding: "12px 14px",
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
-            Sisa Beban
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <Target size={13} color="#7C3AED" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Sisa Beban
+            </span>
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.2 }}>
             {remainingCredits} <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>SKS</span>
@@ -2708,23 +2721,20 @@ export default function RoadmapPage() {
               </div>
             ) : (
               <div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                  <button
-                    className={`btn btn-sm ${pickerSourceTab === "komunitas" ? "btn-primary" : "btn-secondary"}`}
-                    onClick={() => setPickerSourceTab("komunitas")}
-                  >
-                    Komunitas ({MOCK_TEMPLATES.filter((t) => t.sourceType === "komunitas").length})
-                  </button>
-                  <button
-                    className={`btn btn-sm ${pickerSourceTab === "kampus" ? "btn-primary" : "btn-secondary"}`}
-                    onClick={() => setPickerSourceTab("kampus")}
-                  >
-                    Resmi Kampus ({MOCK_TEMPLATES.filter((t) => t.sourceType === "kampus").length})
-                  </button>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Users size={15} color="#3730A3" />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                      Template Komunitas ({MOCK_TEMPLATES.filter((t) => t.sourceType === "komunitas").length})
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                    Alur adaptif mahasiswa
+                  </span>
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 380, overflowY: "auto" }}>
-                  {MOCK_TEMPLATES.filter((t) => t.sourceType === pickerSourceTab).map((t) => (
+                  {MOCK_TEMPLATES.filter((t) => t.sourceType === "komunitas").map((t) => (
                     <div
                       key={t.id}
                       style={{

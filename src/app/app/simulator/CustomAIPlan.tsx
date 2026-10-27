@@ -320,17 +320,26 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
         <button className="btn btn-ghost btn-sm" onClick={onBack} style={{ gap: 6, fontSize: 13 }}>
           ← Kembali ke Pilih Skenario
         </button>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span className={`badge ${step === "input" ? "badge-lime" : "badge-gray"}`} style={{ fontSize: 11 }}>
-            1. Rencana
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFFFFF", padding: "6px 12px", borderRadius: "var(--radius-pill)", border: "1px solid var(--border)" }}>
+          <span style={{ fontSize: 12, fontWeight: step === "input" ? 700 : 500, color: step === "input" ? "#0F172A" : "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 18, height: 18, borderRadius: "50%", background: step === "input" ? "#F5CD47" : "#DCFCE7", color: step === "input" ? "#18181B" : "#15803D", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800 }}>
+              {step !== "input" ? <Check size={10} strokeWidth={3} /> : "1"}
+            </span>
+            <span>Rencana</span>
           </span>
-          <ChevronRight size={12} color="var(--text-muted)" />
-          <span className={`badge ${step === "form" ? "badge-lime" : "badge-gray"}`} style={{ fontSize: 11 }}>
-            2. Parameter
+          <span style={{ color: "#D4D4D8", fontSize: 12 }}>→</span>
+          <span style={{ fontSize: 12, fontWeight: step === "form" ? 700 : 500, color: step === "form" ? "#0F172A" : "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 18, height: 18, borderRadius: "50%", background: step === "form" ? "#F5CD47" : step === "result" ? "#DCFCE7" : "#F1F5F9", color: step === "form" ? "#18181B" : step === "result" ? "#15803D" : "#71717A", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800 }}>
+              {step === "result" ? <Check size={10} strokeWidth={3} /> : "2"}
+            </span>
+            <span>Parameter</span>
           </span>
-          <ChevronRight size={12} color="var(--text-muted)" />
-          <span className={`badge ${step === "result" ? "badge-lime" : "badge-gray"}`} style={{ fontSize: 11 }}>
-            3. Analisis & AI
+          <span style={{ color: "#D4D4D8", fontSize: 12 }}>→</span>
+          <span style={{ fontSize: 12, fontWeight: step === "result" ? 700 : 500, color: step === "result" ? "#0F172A" : "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 18, height: 18, borderRadius: "50%", background: step === "result" ? "#F5CD47" : "#F1F5F9", color: step === "result" ? "#18181B" : "#71717A", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800 }}>
+              3
+            </span>
+            <span>Analisis & AI</span>
           </span>
         </div>
       </div>
@@ -342,7 +351,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
         <div className="card" style={{ maxWidth: 680, margin: "0 auto", padding: "26px 30px" }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <Sparkles size={18} color="var(--lime)" />
+            <Sparkles size={18} color="#D97706" />
             <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", margin: 0, letterSpacing: "-0.01em" }}>
               Rencana Kustom dengan AI
             </h2>
@@ -399,12 +408,13 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                   onClick={() => setUserPrompt(p.fullText)}
                   disabled={formGenerating}
                   style={{
-                    background: userPrompt === p.fullText ? "rgba(124, 230, 168, 0.12)" : "var(--surface-hover)",
-                    border: `1px solid ${userPrompt === p.fullText ? "var(--lime)" : "var(--border-subtle)"}`,
+                    background: userPrompt === p.fullText ? "#FEF3C7" : "#F8FAFC",
+                    border: `1px solid ${userPrompt === p.fullText ? "#FCD34D" : "#E2E8F0"}`,
                     borderRadius: 20,
                     padding: "5px 12px",
                     fontSize: 11.5,
-                    color: userPrompt === p.fullText ? "var(--lime)" : "var(--text-secondary)",
+                    fontWeight: userPrompt === p.fullText ? 700 : 500,
+                    color: userPrompt === p.fullText ? "#92400E" : "#52525B",
                     cursor: "pointer",
                     transition: "all 0.15s ease",
                   }}
@@ -637,8 +647,8 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
           {applied && (
             <div
               style={{
-                background: "rgba(124, 230, 168, 0.08)",
-                border: "1px solid var(--lime)",
+                background: "#F0FDF4",
+                border: "1px solid #86EFAC",
                 borderRadius: "var(--radius-md)",
                 padding: "14px 18px",
                 marginBottom: 16,
@@ -650,7 +660,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <CheckCircle2 size={20} color="var(--lime)" />
+                <CheckCircle2 size={20} color="#15803D" />
                 <div>
                   <div style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: 13.5 }}>
                     Rencana Berhasil Diterapkan ke Roadmap!
@@ -697,10 +707,10 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
               marginBottom: 16,
               borderLeft: `4px solid ${
                 simulationResult.overallVerdict === "aman"
-                  ? "var(--lime)"
+                  ? "#16A34A"
                   : simulationResult.overallVerdict === "perlu_perhatian"
-                  ? "var(--orange)"
-                  : "var(--coral)"
+                  ? "#D97706"
+                  : "#DC2626"
               }`,
               padding: "20px 24px",
             }}
@@ -776,7 +786,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                   onClick={copyResultSummary}
                   style={{ gap: 4, fontSize: 11.5 }}
                 >
-                  {copiedSummary ? <Check size={12} color="var(--lime)" /> : <Copy size={12} />}
+                  {copiedSummary ? <Check size={12} color="#15803D" /> : <Copy size={12} />}
                   {copiedSummary ? "Tersalin" : "Salin"}
                 </button>
 
@@ -822,7 +832,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                 }}
               >
                 <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                  <Calendar size={13} color="var(--lime)" />
+                  <Calendar size={13} color="#D97706" />
                   Dampak ke Kelulusan
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
@@ -865,7 +875,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Lightbulb size={16} color="var(--lime)" />
+                <Lightbulb size={16} color="#D97706" />
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
                   Rekomendasi Alternatif AI
                 </h3>
@@ -915,7 +925,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                       </p>
                     </div>
                     {alt.benefit && (
-                      <div style={{ fontSize: 11.5, color: "var(--lime)", marginTop: 8, fontWeight: 600 }}>
+                      <div style={{ fontSize: 11.5, color: "#15803D", marginTop: 8, fontWeight: 600 }}>
                         → {alt.benefit}
                       </div>
                     )}
@@ -929,7 +939,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
           <div className="card" style={{ padding: "18px 22px", marginBottom: 20 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <MessageSquare size={16} color="var(--lime)" />
+                <MessageSquare size={16} color="#D97706" />
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
                   Tanya STARA AI
                 </h3>
@@ -966,7 +976,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                       width: 24,
                       height: 24,
                       borderRadius: "50%",
-                      background: msg.role === "user" ? "var(--lime)" : "var(--surface-card)",
+                      background: msg.role === "user" ? "#0F172A" : "#FEF3C7",
                       border: "1px solid var(--border-subtle)",
                       display: "flex",
                       alignItems: "center",
@@ -974,16 +984,16 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                       flexShrink: 0,
                     }}
                   >
-                    {msg.role === "user" ? <User size={12} color="var(--bg-primary)" /> : <Bot size={12} color="var(--lime)" />}
+                    {msg.role === "user" ? <User size={12} color="#FFFFFF" /> : <Bot size={12} color="#92400E" />}
                   </div>
                   <div
                     style={{
-                      background: msg.role === "user" ? "rgba(124, 230, 168, 0.12)" : "var(--surface-card)",
+                      background: msg.role === "user" ? "#0F172A" : "#FFFFFF",
                       border: "1px solid var(--border-subtle)",
                       borderRadius: msg.role === "user" ? "10px 4px 10px 10px" : "4px 10px 10px 10px",
                       padding: "8px 12px",
                       fontSize: 12.5,
-                      color: "var(--text-primary)",
+                      color: msg.role === "user" ? "#FFFFFF" : "var(--text-primary)",
                       lineHeight: 1.5,
                       maxWidth: "80%",
                       whiteSpace: "pre-wrap",
