@@ -1420,19 +1420,40 @@ select.form-input {
 }
 
 /* ============================================================
-   Dialog / Modal
+   Dialog / Modal & Background Scroll Lock
    ============================================================ */
+
+/* Prevent background and document scrolling whenever any modal / popup is active */
+html:has(.dialog-overlay),
+body:has(.dialog-overlay),
+html:has([role="dialog"]),
+body:has([role="dialog"]),
+html:has([data-modal-overlay="true"]),
+body:has([data-modal-overlay="true"]),
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
 
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
   animation: fadeIn 0.15s ease;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .dialog {
@@ -1444,6 +1465,8 @@ select.form-input {
   width: 100%;
   box-shadow: var(--shadow-elevated);
   animation: scaleIn 0.15s ease;
+  overscroll-behavior: contain;
+  touch-action: auto;
 }
 
 @keyframes fadeIn {

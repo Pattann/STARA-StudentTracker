@@ -384,6 +384,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
       {/* Modal Bantuan */}
       {showHelpModal && (
         <div
+          className="dialog-overlay"
           style={{
             position: "fixed",
             inset: 0,
@@ -396,6 +397,8 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             backdropFilter: "blur(2px)",
           }}
           onClick={() => setShowHelpModal(false)}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             style={{

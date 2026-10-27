@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
+import { ModalScrollLock } from "@/components/shared/ModalScrollLock";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({
           minHeight: "100vh",
         }}
       >
+        <ModalScrollLock />
         {children}
       </body>
     </html>

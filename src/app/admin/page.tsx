@@ -2167,6 +2167,7 @@ function AdminDashboardContent() {
       {/* ─── MODAL: TAMBAH MATA KULIAH ────────────────────────────────────────────── */}
       {isAddCourseModalOpen && (
         <div
+          className="dialog-overlay"
           style={{
             position: "fixed",
             inset: 0,
@@ -2179,6 +2180,8 @@ function AdminDashboardContent() {
             padding: 20,
           }}
           onClick={() => setIsAddCourseModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             style={{
@@ -2340,6 +2343,7 @@ function AdminDashboardContent() {
       {/* ─── MODAL: PREVIEW TEMPLATE ──────────────────────────────────────────────── */}
       {selectedTemplateForPreview && (
         <div
+          className="dialog-overlay"
           style={{
             position: "fixed",
             inset: 0,
@@ -2352,6 +2356,8 @@ function AdminDashboardContent() {
             padding: 20,
           }}
           onClick={() => setSelectedTemplateForPreview(null)}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             style={{
@@ -2434,6 +2440,7 @@ function AdminDashboardContent() {
       {/* ─── MODAL: TINDAK LANJUTI LAPORAN ────────────────────────────────────────── */}
       {selectedReportForAction && (
         <div
+          className="dialog-overlay"
           style={{
             position: "fixed",
             inset: 0,
@@ -2446,6 +2453,8 @@ function AdminDashboardContent() {
             padding: 20,
           }}
           onClick={() => setSelectedReportForAction(null)}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             style={{
