@@ -5,7 +5,9 @@ import { useSession } from "@/features/session/context";
 import {
   BookOpen, AlertCircle, Lightbulb, ChevronRight, CheckCircle2,
   Sparkles, MessageSquare, Send, Bot, User, Copy, Check, Target,
-  FileCheck, HelpCircle, ArrowRight, RotateCcw, ListChecks
+  FileCheck, HelpCircle, ArrowRight, RotateCcw, ListChecks,
+  Lock, Unlock, Save, ChevronDown, ChevronUp, ExternalLink,
+  GraduationCap, Award, FileText, CheckCheck, Clock, CheckCircle
 } from "lucide-react";
 
 type ThesisDirection = {
@@ -54,11 +56,269 @@ type StudentProfile = {
   interests?: string[];
 };
 
+type StageStatus = "belum_dimulai" | "proses_bimbingan" | "revisi_dospem" | "acc_dospem";
+
+type StageFieldConfig = {
+  key: string;
+  label: string;
+  type: "text" | "textarea" | "date" | "number" | "url";
+  placeholder?: string;
+  helper?: string;
+};
+
+type ThesisStage = {
+  id: number;
+  stageName: string;
+  title: string;
+  semesterTag: string;
+  shortDesc: string;
+  deliverables: string;
+  guideTip: string;
+  isCompleted: boolean;
+  status: StageStatus;
+  completedAt?: string | null;
+  fields: Record<string, string>;
+  fieldConfigs: StageFieldConfig[];
+};
+
+const DEFAULT_11_STAGES: ThesisStage[] = [
+  {
+    id: 1,
+    stageName: "Penentuan Topik & Pengajuan Judul",
+    title: "1. Penentuan Topik & Pengajuan Judul",
+    semesterTag: "Semester 6 / Awal 7",
+    shortDesc: "Eksplorasi ide riset, studi kelayakan, verifikasi orisinalitas, dan pengajuan ke program studi hingga diterbitkan SK Dosen Pembimbing resmi.",
+    deliverables: "Judul skripsi disetujui prodi, formulir pengajuan judul resmi, penetapan SK Dosen Pembimbing (Dospem 1 & 2).",
+    guideTip: "Pilih topik yang memiliki akses data realistis dan linear dengan minat keahlianmu. Manfaatkan tab Eksplorasi Topik AI di atas.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "approvedTitle", label: "Judul Skripsi yang Diajukan / Di-ACC", type: "text", placeholder: "Contoh: Penerapan Algoritma Graph Neural Network untuk Deteksi Penipuan Finansial" },
+      { key: "supervisor1", label: "Dosen Pembimbing 1 (Utama)", type: "text", placeholder: "Nama lengkap beserta gelar akademik pembimbing 1" },
+      { key: "supervisor2", label: "Dosen Pembimbing 2 (Pendamping)", type: "text", placeholder: "Nama lengkap beserta gelar akademik pembimbing 2 (jika ada)" },
+      { key: "notes", label: "Catatan & Syarat Calon Dosen Pembimbing", type: "textarea", placeholder: "Catatan perbaikan redaksi judul, arahan fokus, atau syarat awal dospem..." },
+    ],
+  },
+  {
+    id: 2,
+    stageName: "Rumusan Masalah & Research Gap",
+    title: "2. Rumusan Masalah & Research Gap",
+    semesterTag: "Semester 7 Awal",
+    shortDesc: "Menemukan celah penelitian (research gap) dari riset-riset terdahulu dan merumuskan pertanyaan penelitian (problem statements) yang tajam.",
+    deliverables: "Tabel telaah research gap, rumusan masalah berbentuk pertanyaan riset, batasan masalah, dan tujuan penelitian yang terukur.",
+    guideTip: "Pastikan masalah yang diangkat adalah problem nyata (empiris atau teoritis), bukan sekadar membuat aplikasi tanpa urgensi penelitian ilmiah.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "researchGap", label: "Celah Riset (Research Gap) yang Diisi", type: "textarea", placeholder: "Keterbatasan/kelemahan riset sebelumnya yang akan diselesaikan pada penelitian ini..." },
+      { key: "problemStatements", label: "Rumusan Masalah Utama (Pertanyaan Penelitian)", type: "textarea", placeholder: "1. Bagaimana rancangan arsitektur... \n2. Seberapa besar peningkatan performa..." },
+      { key: "researchScope", label: "Batasan Masalah & Asumsi Riset", type: "text", placeholder: "Contoh: Dataset terbatas pada transaksi perbankan ritel Indonesia tahun 2024" },
+      { key: "notes", label: "Catatan Dospem Terkait Rumusan Masalah", type: "textarea", placeholder: "Masukan dosen pembimbing terhadap ketajaman dan kelayakan masalah..." },
+    ],
+  },
+  {
+    id: 3,
+    stageName: "Studi Literatur & State-of-the-Art",
+    title: "3. Studi Literatur & State-of-the-Art",
+    semesterTag: "Semester 7 Awal",
+    shortDesc: "Mengumpulkan dan membedah jurnal acuan terkini (5 tahun terakhir bereputasi Sinta/Scopus/IEEE) serta menyusun matriks literatur.",
+    deliverables: "Daftar 5-10 paper acuan utama, ringkasan state-of-the-art, matriks komparasi metode terdahulu, dan akun reference manager (Mendeley/Zotero).",
+    guideTip: "Gunakan reference manager sejak hari pertama. Buat tabel perbandingan: Nama Peneliti, Metode, Dataset, Hasil, dan Kelemahan.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "primaryReferences", label: "Daftar 3-5 Paper Referensi Utama (Jurnal/Konferensi)", type: "textarea", placeholder: "1. Pratama et al. (2024) - GNN Fraud Detection (IEEE Access)\n2. ..." },
+      { key: "theoreticalFramework", label: "Teori / Model Konseptual Utama yang Digunakan", type: "text", placeholder: "Contoh: Graph Convolutional Network, Teori Kriminologi Finansial" },
+      { key: "notes", label: "Catatan Pembimbing Terkait Kelengkapan Pustaka", type: "textarea", placeholder: "Arahan dospem mengenai jurnal kunci yang wajib disitasi..." },
+    ],
+  },
+  {
+    id: 4,
+    stageName: "Penyusunan BAB 1 (Pendahuluan)",
+    title: "4. Penyusunan BAB 1 (Pendahuluan)",
+    semesterTag: "Semester 7 Pertengahan",
+    shortDesc: "Menulis Latar Belakang Masalah dengan struktur piramida terbalik, Rumusan Masalah, Tujuan Penelitian, Manfaat, dan Sistematika.",
+    deliverables: "Draf lengkap BAB 1 yang disetujui dospem, didukung data/statistik empiris pada paragraf pembuka.",
+    guideTip: "Paragraf 1-2: Fenomena umum & data statistik. Paragraf 3-4: Celah metode sebelumnya. Paragraf 5: Solusi yang kamu tawarkan.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 1 (Google Drive / Docs)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
+      { key: "bgSummary", label: "Intisari Latar Belakang (Mengapa Riset Ini Sangat Mendesak)", type: "textarea", placeholder: "Ringkasan urgensi masalah dan alasan pemilihan solusi metode..." },
+      { key: "supervisorNotes", label: "Catatan & Masukan Revisi Dospem BAB 1", type: "textarea", placeholder: "Catatan perbaikan paragraf latar belakang, tujuan riset, atau sistematika..." },
+    ],
+  },
+  {
+    id: 5,
+    stageName: "Penyusunan BAB 2 (Tinjauan Pustaka)",
+    title: "5. Penyusunan BAB 2 (Tinjauan Pustaka & Landasan Teori)",
+    semesterTag: "Semester 7 Pertengahan",
+    shortDesc: "Menulis telaah teori komprehensif, penelitian terdahulu, kerangka berpikir penelitian, dan hipotesis/model konseptual.",
+    deliverables: "Draf BAB 2 lengkap dengan format sitasi baku (IEEE/APA) dan bagan alur kerangka berpikir.",
+    guideTip: "Hindari menyalin buku definisi mentah-mentah. Hubungkan setiap teori dengan masalah spesifik yang kamu teliti.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 2 (Google Drive / Docs)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
+      { key: "keyTheories", label: "Teori Kunci & Bagan Kerangka Pemikiran", type: "textarea", placeholder: "Ringkasan teori pendukung dan alur logika kerangka berpikir penelitian..." },
+      { key: "supervisorNotes", label: "Catatan & Masukan Revisi Dospem BAB 2", type: "textarea", placeholder: "Revisi dospem terkait relevansi teori dan kelengkapan tinjauan pustaka..." },
+    ],
+  },
+  {
+    id: 6,
+    stageName: "Penyusunan BAB 3 (Metodologi Penelitian)",
+    title: "6. Penyusunan BAB 3 (Metodologi Penelitian & Desain)",
+    semesterTag: "Semester 7 Menjelang Sempro",
+    shortDesc: "Merancang metodologi ilmiah, flowchart alur penelitian, arsitektur sistem/algoritma, teknik pengumpulan & praproses data, serta metrik evaluasi.",
+    deliverables: "Draf BAB 3 lengkap, diagram alur penelitian, rancangan dataset, dan rumus metrik pengujian performa.",
+    guideTip: "BAB 3 harus ditulis sangat detail dan terstruktur agar peneliti lain dapat mereplikasi penelitianmu dengan hasil yang konsisten.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 3 (Google Drive / Docs)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
+      { key: "methodDetails", label: "Metode, Arsitektur & Metrik Pengujian yang Digunakan", type: "textarea", placeholder: "Metode: GCN + Attention. Metrik: Accuracy, Precision, Recall, F1-Score, AUC-ROC..." },
+      { key: "supervisorNotes", label: "Catatan & Masukan Revisi Dospem BAB 3", type: "textarea", placeholder: "Validasi dosen pembimbing atas rancangan instrumen/metode penelitian..." },
+    ],
+  },
+  {
+    id: 7,
+    stageName: "Seminar Proposal (Sempro) & Revisi",
+    title: "7. Seminar Proposal (Sempro) & Revisi Penguji",
+    semesterTag: "Semester 7 Akhir",
+    shortDesc: "Mempresentasikan kelayakan proposal riset (BAB 1–3) di hadapan dewan penguji dan menuntaskan revisi penguji hingga di-ACC.",
+    deliverables: "Berita Acara Sempro, slide presentasi (10-15 slide), lembar perbaikan revisi bertanda tangan dewan penguji, dan izin lanjut penelitian.",
+    guideTip: "Fokus presentasi sempro ada pada urgensi masalah dan ketepatan metode. Dengarkan kritik penguji dengan tenang dan catat semuanya.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "semproDate", label: "Tanggal Pelaksanaan Sempro", type: "date" },
+      { key: "examiners", label: "Nama Dewan Penguji Sempro", type: "text", placeholder: "Contoh: Dr. Budi, M.T. & Dr. Siti, M.Kom" },
+      { key: "revisionNotes", label: "Rangkuman Catatan & Revisi Dewan Penguji Sempro", type: "textarea", placeholder: "Poin revisi penguji: tambahkan baseline komparasi, perjelas teknik sampling..." },
+      { key: "semproDocLink", label: "Tautan Berita Acara / Lembar Pengesahan Sempro", type: "url", placeholder: "https://drive.google.com/file/d/..." },
+    ],
+  },
+  {
+    id: 8,
+    stageName: "Pengumpulan Data, Eksperimen & Implementasi",
+    title: "8. Pengumpulan Data, Eksperimen & Implementasi Sistem",
+    semesterTag: "Semester 7 Liburan / Semester 8 Awal",
+    shortDesc: "Eksekusi teknis penelitian: pengumpulan dataset, praproses data, implementasi koding sistem/model, dan pengujian eksperimental berulang.",
+    deliverables: "Dataset riset bersih, repositori kode (GitHub/GitLab), logbook bimbingan rutin (minimal 8-10 pertemuan resmi), dan log eksperimen.",
+    guideTip: "Bimbinganlah minimal 2 minggu sekali. Tunjukkan log hasil eksperimen atau demo software secara berkala kepada pembimbing.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "repoLink", label: "Tautan Repositori Kode / Dataset (GitHub / GitLab / Drive)", type: "url", placeholder: "https://github.com/username/thesis-research" },
+      { key: "progressNotes", label: "Ringkasan Hasil Eksperimen Sementara & Kendala Teknis", type: "textarea", placeholder: "Progres koding: model telah di-training 50 epoch, akurasi mencapai 91.4%..." },
+      { key: "supervisorNotes", label: "Catatan Bimbingan Rutin & Arahan Pembimbing", type: "textarea", placeholder: "Arahan pembimbing: coba lakukan tuning hyperparameter learning rate..." },
+    ],
+  },
+  {
+    id: 9,
+    stageName: "Penyusunan BAB 4 (Hasil & Pembahasan)",
+    title: "9. Penyusunan BAB 4 (Hasil Penelitian & Pembahasan)",
+    semesterTag: "Semester 8 Pertengahan",
+    shortDesc: "Menyajikan hasil analisis pengujian, grafik performa, komparasi dengan baseline, dan pembahasan mendalam menjawab rumusan masalah.",
+    deliverables: "Draf BAB 4 lengkap dengan grafik, tabel komparasi performa, analisis sebab-akibat, dan implikasi teoritis/praktis.",
+    guideTip: "BAB 4 adalah inti skripsi. Jangan cuma menyajikan angka grafik; jelaskan MENGAPA angka itu tercapai dan apa artinya bagi pemecahan masalah.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 4 (Google Drive / Docs)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
+      { key: "keyFindings", label: "Temuan Kunci yang Menjawab Rumusan Masalah BAB 1", type: "textarea", placeholder: "Model GNN berhasil meningkatkan F1-Score sebesar 7.2% dibanding baseline Random Forest..." },
+      { key: "supervisorNotes", label: "Catatan & Masukan Revisi Dospem BAB 4", type: "textarea", placeholder: "Revisi dospem: perdalam analisis perbandingan pada tabel 4.2..." },
+    ],
+  },
+  {
+    id: 10,
+    stageName: "Penyusunan BAB 5 & Uji Turnitin",
+    title: "10. Penyusunan BAB 5 (Kesimpulan & Saran) & Uji Turnitin",
+    semesterTag: "Semester 8 Menjelang Sidang",
+    shortDesc: "Menulis kesimpulan konkret, rekomendasi riset masa depan, draf artikel jurnal ilmiah, dan pengecekan bebas plagiarisme Turnitin.",
+    deliverables: "Naskah lengkap BAB 1–5 ACC Sidang, sertifikat lolos Turnitin (maks similarity 20-25%), dan draf artikel publikasi ilmiah.",
+    guideTip: "Kesimpulan harus menjawab butir rumusan masalah satu per satu secara presisi. Lakukan parafrase mandiri untuk menurunkan similarity.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "turnitinScore", label: "Skor Plagiarisme Turnitin (%)", type: "text", placeholder: "Contoh: 14% (Maksimal batas kampus: <= 20%)" },
+      { key: "documentLink", label: "Tautan Naskah Lengkap BAB 1–5 (ACC Dospem Maju Sidang)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
+      { key: "articleDraftLink", label: "Tautan Draf Artikel Jurnal / Publikasi Ilmiah", type: "url", placeholder: "https://docs.google.com/document/d/..." },
+      { key: "supervisorNotes", label: "Pernyataan ACC Pembimbing untuk Mendaftar Sidang Sarjana", type: "textarea", placeholder: "Pernyataan resmi dospem bahwa naskah telah memenuhi syarat kelayakan ujian sidang..." },
+    ],
+  },
+  {
+    id: 11,
+    stageName: "Sidang Sarjana (Tugas Akhir) & Yudisium",
+    title: "11. Sidang Sarjana (Sidang Meja Hijau) & Yudisium",
+    semesterTag: "Semester 8 Akhir",
+    shortDesc: "Ujian komprehensif penutup studi di hadapan dewan penguji skripsi, demo aplikasi, penuntasan revisi final, jilid akhir hardcover, dan yudisium kelulusan.",
+    deliverables: "Lembar pengesahan dewan penguji, naskah jilid final hardcover, upload repositori perpustakaan, bebas pustaka, dan surat keterangan lulus (SKL).",
+    guideTip: "Kuasai materi presentasi 15 menit dan demonstrasi sistem. Berpakaian rapi, hadir 1 jam sebelum jadwal, dan tetap percaya diri.",
+    isCompleted: false,
+    status: "belum_dimulai",
+    fields: {},
+    fieldConfigs: [
+      { key: "defenseDate", label: "Tanggal Pelaksanaan Sidang Sarjana", type: "date" },
+      { key: "defenseExaminers", label: "Dewan Penguji Sidang Sarjana", type: "text", placeholder: "Ketua Penguji: Dr. ..., Anggota Penguji: Dr. ..." },
+      { key: "defenseScore", label: "Nilai Akhir / Predikat Kelulusan", type: "text", placeholder: "Contoh: Nilai A (89.0) / Lulus dengan Pujian (Cumlaude)" },
+      { key: "finalRepoLink", label: "Tautan Naskah Final / Repositori Perpustakaan Kampus", type: "url", placeholder: "https://openlibrary.kampus.ac.id/..." },
+      { key: "notes", label: "Catatan Kelulusan & Rencana Pasca-Lulus", type: "textarea", placeholder: "Revisi penguji yang telah di-ACC, rencana karier atau studi lanjut..." },
+    ],
+  },
+];
+
+function mergeSavedStages(defaults: ThesisStage[], savedStages: any[]): ThesisStage[] {
+  if (!Array.isArray(savedStages) || savedStages.length === 0) return defaults;
+  return defaults.map((def) => {
+    const found = savedStages.find((s) => s.id === def.id);
+    if (!found) return def;
+    return {
+      ...def,
+      status: (found.status as StageStatus) || def.status,
+      isCompleted: Boolean(found.isCompleted ?? (found.status === "acc_dospem")),
+      completedAt: found.completedAt || def.completedAt,
+      fields: {
+        ...def.fields,
+        ...(found.fields || {}),
+      },
+    };
+  });
+}
+
 export default function ThesisPage() {
   const { token } = useSession();
 
   // Tab State
   const [activeTab, setActiveTab] = useState<"explore" | "chat" | "review" | "timeline">("explore");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam && ["explore", "chat", "review", "timeline"].includes(tabParam)) {
+        setActiveTab(tabParam as "explore" | "chat" | "review" | "timeline");
+      }
+    }
+  }, []);
+
+  const changeTab = (tab: "explore" | "chat" | "review" | "timeline") => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
 
   // Profile State
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -91,6 +351,14 @@ export default function ThesisPage() {
   const [reviewResult, setReviewResult] = useState<TitleReviewResult | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
+  // Tab 4: 11 Stages State
+  const [stages, setStages] = useState<ThesisStage[]>(DEFAULT_11_STAGES);
+  const [expandedStageId, setExpandedStageId] = useState<number | null>(1);
+  const [isSavingProgress, setIsSavingProgress] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+  const [dependencyAlert, setDependencyAlert] = useState<string | null>(null);
+
   // Fetch academic profile for auto-prefill
   useEffect(() => {
     if (!token) return;
@@ -111,11 +379,180 @@ export default function ThesisPage() {
       .catch((err) => console.warn("[Thesis Page] Failed to fetch profile:", err));
   }, [token]);
 
+  // Load saved 11 stages progress from localStorage and server
+  useEffect(() => {
+    try {
+      const local = localStorage.getItem("stara_thesis_11_stages");
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed.stages)) {
+          setStages((prev) => mergeSavedStages(prev, parsed.stages));
+          if (parsed.activeStageNumber) {
+            setExpandedStageId(parsed.activeStageNumber);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to read localStorage stages", e);
+    }
+
+    if (!token) return;
+    fetch("/api/thesis/progress", { headers: { "x-demo-token": token } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.progress?.stages && Array.isArray(data.progress.stages)) {
+          setStages((prev) => mergeSavedStages(prev, data.progress.stages));
+          if (data.progress.activeStageNumber) {
+            setExpandedStageId(data.progress.activeStageNumber);
+          }
+        }
+      })
+      .catch((err) => console.warn("Failed to fetch saved thesis progress from API:", err));
+  }, [token]);
+
   useEffect(() => {
     if (activeTab === "chat") {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatMessages, activeTab]);
+
+  // Sequential Stage Unlock Logic
+  const isStageUnlocked = (index: number, stagesList: ThesisStage[]): boolean => {
+    if (index === 0) return true;
+    return stagesList[index - 1].status === "acc_dospem";
+  };
+
+  // Helper to save stages progress
+  const saveStagesProgress = async (updatedStages?: ThesisStage[]) => {
+    const dataToSave = updatedStages || stages;
+    setIsSavingProgress(true);
+    setSaveSuccessMsg(null);
+
+    const completedStages = dataToSave.filter((s) => s.status === "acc_dospem");
+    const activeStage = dataToSave.find((s) => s.status !== "acc_dospem") || dataToSave[dataToSave.length - 1];
+    const approvedTitleVal = dataToSave[0]?.fields?.approvedTitle || "";
+    const sup1 = dataToSave[0]?.fields?.supervisor1 || "";
+    const sup2 = dataToSave[0]?.fields?.supervisor2 || "";
+
+    // 1. LocalStorage
+    try {
+      localStorage.setItem("stara_thesis_11_stages", JSON.stringify({
+        stages: dataToSave,
+        approvedTitle: approvedTitleVal,
+        supervisor1: sup1,
+        supervisor2: sup2,
+        completedCount: completedStages.length,
+        activeStageNumber: activeStage.id,
+        savedAt: new Date().toISOString(),
+      }));
+    } catch (err) {
+      console.warn("Failed to save to localStorage", err);
+    }
+
+    // 2. Server API
+    if (token) {
+      try {
+        const res = await fetch("/api/thesis/progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-demo-token": token },
+          body: JSON.stringify({
+            stages: dataToSave.map((s) => ({
+              id: s.id,
+              title: s.title,
+              isCompleted: s.isCompleted,
+              status: s.status,
+              completedAt: s.completedAt,
+              fields: s.fields,
+            })),
+            approvedTitle: approvedTitleVal,
+            supervisor1: sup1,
+            supervisor2: sup2,
+            completedCount: completedStages.length,
+            activeStageNumber: activeStage.id,
+          }),
+        });
+        if (res.ok) {
+          setLastSavedTime(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+          setSaveSuccessMsg("Progres 11 Tahapan tersimpan & disinkronkan ke STARA AI.");
+          setTimeout(() => setSaveSuccessMsg(null), 3500);
+        }
+      } catch (err) {
+        console.warn("Failed to sync progress to API", err);
+      }
+    }
+    setIsSavingProgress(false);
+  };
+
+  // Change status of a stage
+  const handleStageStatusChange = (stageId: number, newStatus: StageStatus) => {
+    const stageIndex = stages.findIndex((s) => s.id === stageId);
+    if (stageIndex === -1) return;
+
+    if (!isStageUnlocked(stageIndex, stages)) {
+      setDependencyAlert(`⚠️ Tahap ${stageId} masih terkunci! Selesaikan dan dapatkan ACC Dospem pada Tahap ${stageId - 1} (${stages[stageIndex - 1].stageName}) terlebih dahulu.`);
+      setTimeout(() => setDependencyAlert(null), 5000);
+      return;
+    }
+
+    const updated = [...stages];
+    const isAcc = newStatus === "acc_dospem";
+
+    // If reverting from ACC to an unapproved state, adjust subsequent stages
+    if (updated[stageIndex].status === "acc_dospem" && !isAcc) {
+      let affectedCount = 0;
+      for (let i = stageIndex + 1; i < updated.length; i++) {
+        if (updated[i].status === "acc_dospem" || updated[i].isCompleted) {
+          updated[i] = {
+            ...updated[i],
+            status: "proses_bimbingan",
+            isCompleted: false,
+            completedAt: null,
+          };
+          affectedCount++;
+        }
+      }
+      if (affectedCount > 0) {
+        setDependencyAlert(`ℹ️ Status ${affectedCount} tahapan berikutnya disesuaikan menjadi 'Sedang Bimbingan' demi menjaga konsistensi alur berurutan skripsi.`);
+        setTimeout(() => setDependencyAlert(null), 6000);
+      }
+    }
+
+    updated[stageIndex] = {
+      ...updated[stageIndex],
+      status: newStatus,
+      isCompleted: isAcc,
+      completedAt: isAcc ? (updated[stageIndex].completedAt || new Date().toISOString()) : null,
+    };
+
+    setStages(updated);
+    saveStagesProgress(updated);
+
+    // Auto expand next stage if this one just became ACC
+    if (isAcc && stageIndex + 1 < updated.length) {
+      setExpandedStageId(updated[stageIndex + 1].id);
+    }
+  };
+
+  // Toggle checkbox
+  const handleToggleStageCheckbox = (stageId: number, checked: boolean) => {
+    handleStageStatusChange(stageId, checked ? "acc_dospem" : "proses_bimbingan");
+  };
+
+  // Field change
+  const handleStageFieldChange = (stageId: number, fieldKey: string, value: string) => {
+    setStages((prev) =>
+      prev.map((s) => {
+        if (s.id !== stageId) return s;
+        return {
+          ...s,
+          fields: {
+            ...s.fields,
+            [fieldKey]: value,
+          },
+        };
+      })
+    );
+  };
 
   // Handle Explore Form Submit
   const handleExploreSubmit = async () => {
@@ -145,7 +582,7 @@ export default function ThesisPage() {
     setExploreLoading(false);
   };
 
-  // Handle Chat Message Send
+  // Handle Chat Message Send (Now enriched with 11-stage thesisProgress)
   const handleSendChat = async (overrideMessage?: string) => {
     const msg = (overrideMessage ?? chatInput).trim();
     if (!msg || chatLoading || !token) return;
@@ -154,6 +591,22 @@ export default function ThesisPage() {
     const newHistory: ChatMessage[] = [...chatMessages, { role: "user", content: msg }];
     setChatMessages([...newHistory, { role: "assistant", content: "", isLoading: true }]);
     setChatLoading(true);
+
+    const completedStagesList = stages.filter((s) => s.status === "acc_dospem");
+    const activeStage = stages.find((s) => s.status !== "acc_dospem") || stages[stages.length - 1];
+    const nextStage = stages.find((s, idx) => idx > stages.indexOf(activeStage));
+    const approvedTitleVal = stages[0]?.fields?.approvedTitle || (form.interests ? `Riset terkait ${form.interests}` : undefined);
+
+    const thesisProgressPayload = {
+      completedStagesCount: completedStagesList.length,
+      totalStages: 11,
+      currentActiveStageNumber: activeStage.id,
+      currentActiveStageTitle: activeStage.stageName,
+      nextStageTitle: nextStage?.stageName,
+      approvedTitle: approvedTitleVal,
+      completedStageTitles: completedStagesList.map((s) => s.stageName),
+      notesOrArtifacts: activeStage.fields,
+    };
 
     try {
       const res = await fetch("/api/thesis/chat", {
@@ -164,6 +617,7 @@ export default function ThesisPage() {
           chatHistory: newHistory.slice(-10).map((m) => ({ role: m.role, content: m.content })),
           topicContext: topicContext || undefined,
           programName: form.programName,
+          thesisProgress: thesisProgressPayload,
         }),
       });
       const data = (await res.json()) as { reply?: string; error?: string };
@@ -173,6 +627,52 @@ export default function ThesisPage() {
       setChatMessages([...newHistory, { role: "assistant", content: "Terjadi gangguan jaringan. Silakan coba lagi." }]);
     }
     setChatLoading(false);
+  };
+
+  // Consult stage in chat
+  const consultStageInChat = (stage: ThesisStage) => {
+    const activeTitle = stages[0]?.fields?.approvedTitle || "penelitian saya";
+    let promptText = "";
+    switch (stage.id) {
+      case 1:
+        promptText = `Halo STARA AI, saya sedang di ${stage.title}. Judul yang saya ajukan: "${stages[0]?.fields?.approvedTitle || '(belum ditentukan)'}". Bagaimana tips mematangkan ide judul ini dan cara komunikasi yang baik ke calon dosen pembimbing?`;
+        break;
+      case 2:
+        promptText = `Halo STARA AI, saya sedang merumuskan masalah dan mencari research gap untuk judul "${activeTitle}". Tolong pandu saya menyusun batasan masalah dan pertanyaan penelitian yang berbobot ilmiah.`;
+        break;
+      case 3:
+        promptText = `Halo STARA AI, saya sedang menyusun studi literatur & state-of-the-art untuk judul "${activeTitle}". Bagaimana kriteria jurnal bereputasi yang baik (Sinta/Scopus) dan cara menyusun matriks telaah pustaka?`;
+        break;
+      case 4:
+        promptText = `Halo STARA AI, saya sedang menyusun naskah BAB 1 Pendahuluan untuk judul "${activeTitle}". Tolong berikan kerangka paragraf latar belakang dengan struktur piramida terbalik dan checklist kelayakannya.`;
+        break;
+      case 5:
+        promptText = `Halo STARA AI, saya sedang menulis BAB 2 Landasan Teori & Tinjauan Pustaka untuk judul "${activeTitle}". Bagaimana cara mengaitkan teori dengan variabel riset tanpa terkesan sekadar copy-paste definisi?`;
+        break;
+      case 6:
+        promptText = `Halo STARA AI, saya sedang menyusun BAB 3 Metodologi Penelitian untuk judul "${activeTitle}". Tolong jelaskan bagaimana menyusun diagram alur penelitian dan metrik evaluasi yang dapat dipertanggungjawabkan di hadapan penguji.`;
+        break;
+      case 7:
+        promptText = `Halo STARA AI, saya sedang mempersiapkan diri untuk Seminar Proposal (Sempro). Pertanyaan kritis apa saja yang paling sering diajukan dewan penguji sempro dan bagaimana strategi menjawabnya dengan percaya diri?`;
+        break;
+      case 8:
+        promptText = `Halo STARA AI, saya sedang di tahap eksperimen, koding, dan pengumpulan data untuk judul "${activeTitle}". Bagaimana tips mengelola logbook bimbingan dan mendokumentasikan hasil pengujian secara sistematis?`;
+        break;
+      case 9:
+        promptText = `Halo STARA AI, saya sedang menyusun BAB 4 Hasil & Pembahasan untuk judul "${activeTitle}". Bagaimana cara menganalisis temuan data agar benar-benar menjawab rumusan masalah di BAB 1 dan bukan hanya menampilkan grafik?`;
+        break;
+      case 10:
+        promptText = `Halo STARA AI, saya sedang menyelesaikan BAB 5 dan uji Turnitin untuk skripsi "${activeTitle}". Bagaimana tips parafrase ilmiah untuk menurunkan similarity index tanpa merusak substansi akademik?`;
+        break;
+      case 11:
+        promptText = `Halo STARA AI, saya akan menghadapi Sidang Sarjana (Sidang Meja Hijau) untuk skripsi "${activeTitle}". Tolong berikan simulasi tanya-jawab komprehensif dan tips presentasi 15 menit di hadapan dewan penguji.`;
+        break;
+      default:
+        promptText = `Halo STARA AI, saya butuh panduan untuk ${stage.title} pada skripsi saya dengan judul "${activeTitle}".`;
+    }
+
+    changeTab("chat");
+    handleSendChat(promptText);
   };
 
   // Handle Title Review
@@ -209,14 +709,27 @@ export default function ThesisPage() {
   // Switch to chat with prefilled topic
   const consultTopicInChat = (topic: string) => {
     setTopicContext(topic);
-    setActiveTab("chat");
+    changeTab("chat");
     if (chatMessages.length === 0) {
       handleSendChat(`Halo STARA AI, saya tertarik dengan topik penelitian "${topic}". Tolong bantu saya merumuskan batasan masalah dan langkah awal pengerjaannya.`);
     }
   };
 
+  // Reset 11 stages confirmation
+  const handleResetTracker = () => {
+    if (confirm("Apakah Anda yakin ingin mengatur ulang tracker 11 tahapan skripsi ke kondisi awal? Seluruh checklist dan catatan akan dikosongkan.")) {
+      setStages(DEFAULT_11_STAGES);
+      setExpandedStageId(1);
+      saveStagesProgress(DEFAULT_11_STAGES);
+    }
+  };
+
   const feasibilityColors = { tinggi: "var(--lime)", sedang: "var(--teal)", perlu_validasi: "var(--orange)" };
   const feasibilityLabels = { tinggi: "Kelayakan Tinggi", sedang: "Kelayakan Sedang", perlu_validasi: "Perlu Validasi" };
+
+  const completedStagesCount = stages.filter((s) => s.status === "acc_dospem").length;
+  const currentActiveStage = stages.find((s) => s.status !== "acc_dospem") || stages[stages.length - 1];
+  const progressPercentage = Math.round((completedStagesCount / 11) * 100);
 
   return (
     <div>
@@ -231,7 +744,7 @@ export default function ThesisPage() {
           </span>
         </div>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
-          Eksplorasi ide penelitian, bimbingan AI interaktif, dan evaluasi judul berbasis kurikulum akademik.
+          Eksplorasi ide penelitian, pelacakan alur 11 tahapan skripsi terstruktur, dan konsultasi AI yang adaptif dengan progresmu.
         </p>
       </div>
 
@@ -283,7 +796,7 @@ export default function ThesisPage() {
       >
         <button
           className={`btn btn-sm ${activeTab === "explore" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => setActiveTab("explore")}
+          onClick={() => changeTab("explore")}
           style={{ gap: 6, fontSize: 12.5 }}
           id="tab-thesis-explore"
         >
@@ -292,7 +805,7 @@ export default function ThesisPage() {
         </button>
         <button
           className={`btn btn-sm ${activeTab === "chat" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => setActiveTab("chat")}
+          onClick={() => changeTab("chat")}
           style={{ gap: 6, fontSize: 12.5 }}
           id="tab-thesis-chat"
         >
@@ -302,7 +815,7 @@ export default function ThesisPage() {
         </button>
         <button
           className={`btn btn-sm ${activeTab === "review" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => setActiveTab("review")}
+          onClick={() => changeTab("review")}
           style={{ gap: 6, fontSize: 12.5 }}
           id="tab-thesis-review"
         >
@@ -311,12 +824,15 @@ export default function ThesisPage() {
         </button>
         <button
           className={`btn btn-sm ${activeTab === "timeline" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => setActiveTab("timeline")}
+          onClick={() => changeTab("timeline")}
           style={{ gap: 6, fontSize: 12.5 }}
           id="tab-thesis-timeline"
         >
           <ListChecks size={14} />
-          Alur 6 Tahap Skripsi
+          11 Tahapan & Tracker Skripsi
+          <span className="badge badge-lime" style={{ fontSize: 9.5, marginLeft: 2 }}>
+            {completedStagesCount}/11
+          </span>
         </button>
       </div>
 
@@ -371,7 +887,7 @@ export default function ThesisPage() {
                         key={item}
                         type="button"
                         onClick={() => {
-                          const current = form.interests ? form.interests.split(",").map(s => s.trim()).filter(Boolean) : [];
+                          const current = form.interests ? form.interests.split(",").map((s) => s.trim()).filter(Boolean) : [];
                           if (!current.includes(item)) {
                             setForm({ ...form, interests: [...current, item].join(", ") });
                           }
@@ -605,10 +1121,11 @@ export default function ThesisPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════
-          TAB 2: TANYA KONSULTAN SKRIPSI AI
+          TAB 2: TANYA KONSULTAN SKRIPSI AI (Stage-Aware)
       ══════════════════════════════════════════════════════ */}
       {activeTab === "chat" && (
         <div className="card" style={{ maxWidth: 840, margin: "0 auto" }}>
+          {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(215,243,106,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -619,7 +1136,7 @@ export default function ThesisPage() {
                   STARA Thesis AI Consultant
                 </h2>
                 <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
-                  Spesialis Metodologi, Rumusan Masalah, dan Strategi Bimbingan Skripsi
+                  Spesialis Metodologi, Rumusan Masalah, dan Strategi 11 Tahapan Bimbingan Skripsi
                 </span>
               </div>
             </div>
@@ -627,7 +1144,7 @@ export default function ThesisPage() {
             {topicContext && (
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span className="badge badge-blue" style={{ fontSize: 11 }}>
-                  Topik: {topicContext.length > 30 ? topicContext.slice(0, 30) + "..." : topicContext}
+                  Fokus: {topicContext.length > 25 ? topicContext.slice(0, 25) + "..." : topicContext}
                 </span>
                 <button
                   className="btn btn-ghost btn-sm"
@@ -639,6 +1156,64 @@ export default function ThesisPage() {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Live Thesis Progress Status Card in Chat */}
+          <div
+            style={{
+              background: "rgba(215,243,106,0.06)",
+              border: "1px solid rgba(215,243,106,0.3)",
+              borderRadius: "var(--radius-md)",
+              padding: "12px 16px",
+              marginBottom: 14,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--lime)", color: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12 }}>
+                  {currentActiveStage.id}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                    Posisi Tahapan Skripsi: <span style={{ color: "var(--lime)" }}>{currentActiveStage.stageName}</span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "var(--text-secondary)" }}>
+                    {stages[0]?.fields?.approvedTitle ? (
+                      <>Judul ACC: <em>&quot;{stages[0].fields.approvedTitle}&quot;</em></>
+                    ) : (
+                      <>Belum ada judul yang disimpan di Tahap 1</>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className={`badge ${currentActiveStage.status === "acc_dospem" ? "badge-lime" : currentActiveStage.status === "revisi_dospem" ? "badge-orange" : "badge-blue"}`} style={{ fontSize: 11 }}>
+                  {currentActiveStage.status === "acc_dospem" ? "✓ ACC Dospem" : currentActiveStage.status === "revisi_dospem" ? "⚠️ Revisi Dospem" : currentActiveStage.status === "proses_bimbingan" ? "🔄 Proses Bimbingan" : "⚪ Belum Dimulai"}
+                </span>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => changeTab("timeline")}
+                  style={{ fontSize: 11, padding: "3px 8px", gap: 4 }}
+                >
+                  <ListChecks size={12} />
+                  Buka Tracker Tahapan
+                </button>
+              </div>
+            </div>
+
+            {/* Progress Bar mini */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--surface-hover)", overflow: "hidden" }}>
+                <div style={{ width: `${progressPercentage}%`, height: "100%", background: "var(--lime)", transition: "width 0.3s ease" }} />
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                {completedStagesCount} dari 11 Tahapan Selesai ({progressPercentage}%)
+              </span>
+            </div>
           </div>
 
           {/* Chat Messages Container */}
@@ -660,8 +1235,8 @@ export default function ThesisPage() {
                 <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 4 }}>
                   Ada yang ingin kamu diskusikan tentang skripsimu?
                 </div>
-                <p style={{ fontSize: 12.5, maxWidth: 480, margin: "0 auto", lineHeight: 1.5 }}>
-                  Tanyakan apa saja seputar cara merumuskan judul, struktur BAB 1, pemilihan metode, tips bimbingan, atau persiapan sidang sempro.
+                <p style={{ fontSize: 12.5, maxWidth: 520, margin: "0 auto", lineHeight: 1.5 }}>
+                  STARA AI mengenali posisimu di <strong>{currentActiveStage.stageName}</strong>. Tanyakan strategi menyusun naskah, tips bimbingan dospem, atau checklist tahapan berikutnya.
                 </p>
               </div>
             )}
@@ -708,7 +1283,7 @@ export default function ThesisPage() {
                 >
                   {msg.isLoading ? (
                     <span style={{ opacity: 0.6, display: "flex", alignItems: "center", gap: 6 }}>
-                      <RotateCcw size={12} style={{ animation: "spin 1s linear infinite" }} /> STARA AI sedang menganalisis naskah...
+                      <RotateCcw size={12} style={{ animation: "spin 1s linear infinite" }} /> STARA AI sedang menganalisis naskah & tahapan skripsi...
                     </span>
                   ) : (
                     msg.content
@@ -719,19 +1294,78 @@ export default function ThesisPage() {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Quick Prompts */}
+          {/* Dynamic Quick Prompts based on active stage */}
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, fontWeight: 600 }}>
-              💡 Pertanyaan Cepat Populer:
+              💡 Rekomendasi Pertanyaan Sesuai Tahap Ini ({currentActiveStage.stageName}):
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {[
-                "Bantu buatkan 3 ide judul dari bidang minat saya",
-                "Bagaimana struktur latar belakang BAB 1 yang meyakinkan penguji?",
-                "Metode apa yang cocok jika data saya berupa dataset teks?",
-                "Pertanyaan apa saja yang sering diajukan saat Sidang Sempro?",
-                "Tips bimbingan pertama kali ke calon dosen pembimbing",
-              ].map((chip, idx) => (
+              {(currentActiveStage.id === 1
+                ? [
+                    "Bantu buatkan 3 ide judul dari bidang minat saya",
+                    "Cara menghubungi calon dosen pembimbing via WhatsApp yang sopan",
+                    "Bagaimana memastikan judul saya belum pernah diteliti sebelumnya?",
+                  ]
+                : currentActiveStage.id === 2
+                ? [
+                    "Bagaimana cara menemukan research gap yang tajam dari jurnal acuan?",
+                    "Bantu buatkan 3 butir rumusan masalah penelitian",
+                    "Batasan masalah apa saja yang wajar untuk level skripsi S1?",
+                  ]
+                : currentActiveStage.id === 3
+                ? [
+                    "Cara mencari paper Q1/Q2 di Scopus & IEEE yang relevan",
+                    "Contoh matriks telaah literatur perbandingan 5 jurnal terdahulu",
+                    "Bagaimana mengutip jurnal acuan dengan format IEEE/APA?",
+                  ]
+                : currentActiveStage.id === 4
+                ? [
+                    "Bagaimana struktur latar belakang BAB 1 piramida terbalik yang meyakinkan penguji?",
+                    "Checklist kelayakan draf BAB 1 sebelum dikirim ke dosen pembimbing",
+                    "Cara merumuskan manfaat teoritis dan praktis di BAB 1",
+                  ]
+                : currentActiveStage.id === 5
+                ? [
+                    "Cara menyusun BAB 2 tanpa sekadar menyalin definisi teori",
+                    "Bagaimana membuat bagan alur kerangka berpikir penelitian?",
+                    "Berapa jumlah sitasi minimal yang ideal untuk BAB 2?",
+                  ]
+                : currentActiveStage.id === 6
+                ? [
+                    "Cara merancang diagram alur metodologi penelitian yang sistematis",
+                    "Bagaimana menentukan metrik evaluasi pengujian (Akurasi, F1, Likert)?",
+                    "Rancangan dataset dan teknik sampling yang dapat dipertanggungjawabkan",
+                  ]
+                : currentActiveStage.id === 7
+                ? [
+                    "Pertanyaan apa saja yang paling sering dicecar penguji saat Sidang Sempro?",
+                    "Tips membuat slide presentasi Sempro 10-12 slide dalam 15 menit",
+                    "Bagaimana merespons masukan dan kritik tajam dosen penguji Sempro?",
+                  ]
+                : currentActiveStage.id === 8
+                ? [
+                    "Format logbook bimbingan rutin dosen pembimbing yang rapi",
+                    "Tips mendokumentasikan log eksperimen dan kode di repositori GitHub",
+                    "Bagaimana jika hasil akurasi model eksperimen tidak sesuai ekspektasi?",
+                  ]
+                : currentActiveStage.id === 9
+                ? [
+                    "Cara menyusun pembahasan BAB 4 yang benar-benar menjawab rumusan masalah BAB 1",
+                    "Bagaimana menyajikan grafik komparasi performa model vs baseline?",
+                    "Apa perbedaan mendasar antara bab Hasil dan bab Pembahasan?",
+                  ]
+                : currentActiveStage.id === 10
+                ? [
+                    "Tips parafrase ilmiah untuk menurunkan similarity Turnitin hingga di bawah 20%",
+                    "Bagaimana struktur kesimpulan BAB 5 yang baik dan padat?",
+                    "Format ringkasan draf artikel publikasi ilmiah untuk jurnal Sinta",
+                  ]
+                : [
+                    "Simulasi pertanyaan tersulit dewan penguji Sidang Sarjana Meja Hijau",
+                    "Checklist berkas yudisium, bebas pustaka, dan pendaftaran wisuda",
+                    "Tips demonstrasi software/produk riset dalam durasi 5 menit",
+                  ]
+              ).map((chip, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSendChat(chip)}
@@ -959,121 +1593,468 @@ export default function ThesisPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════
-          TAB 4: ALUR 6 TAHAP SKRIPSI
+          TAB 4: 11 TAHAPAN & TRACKER SKRIPSI INTERAKTIF
       ══════════════════════════════════════════════════════ */}
       {activeTab === "timeline" && (
-        <div style={{ maxWidth: 780, margin: "0 auto" }}>
-          <div style={{ marginBottom: 16 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-              Blueprint Roadmap 6 Tahapan Tugas Akhir / Skripsi
-            </h2>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>
-              Alur resmi pengerjaan skripsi dari eksplorasi awal hingga sidang sarjana dan yudisium.
-            </p>
-          </div>
+        <div style={{ maxWidth: 880, margin: "0 auto" }}>
+          {/* Tracker Overview Header Card */}
+          <div
+            className="card"
+            style={{
+              marginBottom: 18,
+              background: "linear-gradient(135deg, rgba(215,243,106,0.08) 0%, rgba(133,136,255,0.06) 100%)",
+              border: "1px solid var(--border-subtle)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <GraduationCap size={20} color="var(--lime)" />
+                  <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+                    Tracker 11 Tahapan Tugas Akhir / Skripsi
+                  </h2>
+                </div>
+                <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
+                  Kelola setiap milestone skripsi, catat masukan dosen pembimbing, simpan tautan dokumen, dan sinkronkan dengan AI Consultant.
+                </p>
+              </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[
-              {
-                step: 1,
-                title: "Pra-Tugas Akhir & Penggalian Masalah",
-                sem: "Semester 6",
-                focus: "Studi literatur awal, identifikasi masalah industri/lapangan, dan penentuan Kelompok Keahlian (KK).",
-                deliverables: "Draf 1 halaman ide riset, daftar 5 jurnal referensi utama (IEEE/Scopus/Sinta 2).",
-                tip: "Pilih topik yang linear dengan minat kariermu atau proyek magang agar data mudah didapat.",
-              },
-              {
-                step: 2,
-                title: "Penyusunan Proposal (BAB 1–3) & Persetujuan Pembimbing",
-                sem: "Semester 7 Awal",
-                focus: "Menyusun Latar Belakang Masalah yang tajam, Tinjauan Pustaka, Kerangka Berpikir, dan Desain Metodologi Penelitian.",
-                deliverables: "Draf Proposal Naskah BAB 1, 2, dan 3 yang ditandatangani Dosen Pembimbing.",
-                tip: "Pertegas kebaruan (novelty) dan metrik pengujian keberhasilan sejak awal.",
-              },
-              {
-                step: 3,
-                title: "Seminar Proposal (Sempro) & Kolokium",
-                sem: "Semester 7 Tengah",
-                focus: "Presentasi kelayakan penelitian di hadapan dewan dosen penguji proposal.",
-                deliverables: "Berita Acara Sempro, Lembar Revisi Penguji, dan Surat Tugas Pembimbingan Resmi.",
-                tip: "Jangan panik saat dikritik penguji; catat seluruh masukan dan tunjukkan komitmen perbaikan.",
-              },
-              {
-                step: 4,
-                title: "Pengumpulan Data, Eksperimen & Pengembangan Produk",
-                sem: "Semester 7 Akhir / Liburan",
-                focus: "Eksekusi penelitian: pembuatan program, pengujian algoritma, pengumpulan dataset, atau survei lapangan.",
-                deliverables: "Logbook aktivitas bimbingan rutin, dataset mentah, dan repositori kode riset (GitHub).",
-                tip: "Lakukan bimbingan minimal 2 minggu sekali agar dosen pembimbing selalu memantau progres.",
-              },
-              {
-                step: 5,
-                title: "Penyusunan Naskah Lengkap (BAB 4–5) & Uji Coba Sistem",
-                sem: "Semester 8 Awal",
-                focus: "Analisis hasil pengujian, pembahasan temuan, penyimpulan, serta penulisan artikel publikasi ilmiah.",
-                deliverables: "Naskah lengkap BAB 1 s/d 5, surat bebas plagiarisme Turnitin (maks. 20-25%), dan draf artikel jurnal.",
-                tip: "BAB 4 adalah jantung skripsi: pastikan analisis hasil menjawab langsung rumusan masalah di BAB 1.",
-              },
-              {
-                step: 6,
-                title: "Sidang Sarjana (Tugas Akhir) & Yudisium",
-                sem: "Semester 8 Akhir",
-                focus: "Ujian komprehensif penutup masa studi dan demonstrasi aplikasi/hasil karya di depan dewan penguji.",
-                deliverables: "Form nilai sidang, naskah jilid akhir bertanda tangan penguji, bebas pustaka, dan pendaftaran wisuda.",
-                tip: "Latihan simulasi presentasi slide 15 menit dan kuasai justifikasi parameter penelitianmu.",
-              },
-            ].map((item) => (
+              {/* Action Buttons */}
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => saveStagesProgress()}
+                  disabled={isSavingProgress}
+                  style={{ gap: 6, fontSize: 12 }}
+                  id="btn-save-thesis-progress"
+                >
+                  <Save size={13} />
+                  <span>{isSavingProgress ? "Menyimpan..." : "Simpan Progres"}</span>
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={handleResetTracker}
+                  style={{ fontSize: 11.5, color: "var(--text-muted)" }}
+                  title="Atur ulang tahapan"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            {/* Approved Title Banner */}
+            {stages[0]?.fields?.approvedTitle && (
               <div
-                key={item.step}
-                className="card"
                 style={{
+                  background: "var(--surface-card)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "9px 12px",
+                  marginBottom: 12,
                   display: "flex",
-                  gap: 14,
-                  alignItems: "flex-start",
-                  borderLeft: "3px solid var(--lime)",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  fontSize: 12.5,
                 }}
               >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Award size={15} color="var(--lime)" style={{ flexShrink: 0 }} />
+                  <div>
+                    <span style={{ color: "var(--text-muted)", fontSize: 11 }}>Judul Skripsi Disetujui (ACC):</span>
+                    <strong style={{ color: "var(--text-primary)", display: "block" }}>
+                      &quot;{stages[0].fields.approvedTitle}&quot;
+                    </strong>
+                  </div>
+                </div>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setExpandedStageId(1);
+                  }}
+                  style={{ fontSize: 11, flexShrink: 0 }}
+                >
+                  Ubah
+                </button>
+              </div>
+            )}
+
+            {/* Progress Bar & Badges */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
+                <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
+                  Progres Keseluruhan: <strong style={{ color: "var(--lime)" }}>{completedStagesCount} dari 11 Tahapan Selesai</strong>
+                </span>
+                <span style={{ fontWeight: 800, color: "var(--text-primary)" }}>{progressPercentage}% Selesai</span>
+              </div>
+              <div style={{ height: 8, borderRadius: 4, background: "var(--surface-hover)", overflow: "hidden" }}>
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: "50%",
-                    background: "rgba(215,243,106,0.15)",
-                    border: "1px solid var(--lime)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 800,
-                    fontSize: 14,
-                    color: "var(--lime)",
-                    flexShrink: 0,
+                    width: `${progressPercentage}%`,
+                    height: "100%",
+                    background: "linear-gradient(90deg, var(--teal) 0%, var(--lime) 100%)",
+                    transition: "width 0.4s ease",
+                  }}
+                />
+              </div>
+
+              {lastSavedTime && (
+                <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                  <Clock size={11} />
+                  <span>Terakhir disimpan: {lastSavedTime} WIB</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sequential Lock Guidance Alert */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              background: "rgba(133,136,255,0.06)",
+              border: "1px solid rgba(133,136,255,0.25)",
+              borderRadius: "var(--radius-md)",
+              padding: "10px 14px",
+              marginBottom: 16,
+              fontSize: 12.5,
+              color: "var(--text-secondary)",
+            }}
+          >
+            <Lock size={16} color="var(--blue)" style={{ flexShrink: 0 }} />
+            <div>
+              <strong style={{ color: "var(--text-primary)" }}>Aturan Dependensi Berurutan:</strong> Anda hanya dapat mencentang atau menandai tahapan berstatus <em>ACC Dospem</em> jika tahapan sebelumnya telah disetujui resmi oleh Dosen Pembimbing. Tahapan berikutnya akan terbuka secara otomatis!
+            </div>
+          </div>
+
+          {/* Dependency Notice Feedback */}
+          {dependencyAlert && (
+            <div
+              className="error-state"
+              style={{
+                marginBottom: 14,
+                padding: "10px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                animation: "fadeIn 0.2s ease",
+              }}
+            >
+              <AlertCircle size={16} color="var(--coral)" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 12.5 }}>{dependencyAlert}</span>
+            </div>
+          )}
+
+          {/* Save Success Notice */}
+          {saveSuccessMsg && (
+            <div
+              style={{
+                marginBottom: 14,
+                padding: "9px 14px",
+                background: "rgba(215,243,106,0.15)",
+                border: "1px solid var(--lime)",
+                borderRadius: "var(--radius-sm)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                color: "var(--text-primary)",
+                fontSize: 12.5,
+              }}
+            >
+              <CheckCircle size={15} color="var(--lime)" />
+              <span>{saveSuccessMsg}</span>
+            </div>
+          )}
+
+          {/* 11 Stages List Cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {stages.map((stage, idx) => {
+              const unlocked = isStageUnlocked(idx, stages);
+              const isAcc = stage.status === "acc_dospem";
+              const isExpanded = expandedStageId === stage.id;
+              const isCurrent = stage.id === currentActiveStage.id && !isAcc;
+
+              return (
+                <div
+                  key={stage.id}
+                  className="card"
+                  style={{
+                    border: isAcc
+                      ? "1px solid rgba(215,243,106,0.4)"
+                      : isCurrent
+                      ? "2px solid var(--lime)"
+                      : "1px solid var(--border-subtle)",
+                    background: isAcc
+                      ? "rgba(215,243,106,0.02)"
+                      : !unlocked
+                      ? "rgba(0,0,0,0.02)"
+                      : "var(--surface-card)",
+                    opacity: !unlocked ? 0.72 : 1,
+                    transition: "all 0.2s ease",
                   }}
                 >
-                  {item.step}
-                </div>
+                  {/* Top Bar of Stage */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {/* Left: Checkbox + Number + Title */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 260 }}>
+                      {/* Checkbox with lock prevention */}
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          cursor: unlocked ? "pointer" : "not-allowed",
+                          margin: 0,
+                        }}
+                        title={unlocked ? (isAcc ? "Batalkan status ACC" : "Tandai ACC Dospem") : "Selesaikan tahapan sebelumnya terlebih dahulu"}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isAcc}
+                          disabled={!unlocked}
+                          onChange={(e) => handleToggleStageCheckbox(stage.id, e.target.checked)}
+                          style={{
+                            width: 18,
+                            height: 18,
+                            cursor: unlocked ? "pointer" : "not-allowed",
+                            accentColor: "var(--lime)",
+                          }}
+                        />
+                      </label>
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
-                      {item.title}
+                      {/* Stage Number Badge */}
+                      <div
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: "50%",
+                          background: isAcc
+                            ? "var(--lime)"
+                            : isCurrent
+                            ? "rgba(215,243,106,0.2)"
+                            : !unlocked
+                            ? "var(--surface-hover)"
+                            : "rgba(133,136,255,0.15)",
+                          border: isAcc
+                            ? "1px solid var(--lime)"
+                            : isCurrent
+                            ? "2px solid var(--lime)"
+                            : "1px solid var(--border-subtle)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 800,
+                          fontSize: 12.5,
+                          color: isAcc
+                            ? "var(--bg-primary)"
+                            : isCurrent
+                            ? "var(--lime)"
+                            : !unlocked
+                            ? "var(--text-muted)"
+                            : "var(--blue)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isAcc ? <Check size={16} strokeWidth={3} /> : !unlocked ? <Lock size={13} /> : stage.id}
+                      </div>
+
+                      {/* Title & Tag */}
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span
+                            style={{
+                              fontSize: 14.5,
+                              fontWeight: 700,
+                              color: !unlocked ? "var(--text-secondary)" : "var(--text-primary)",
+                            }}
+                          >
+                            {stage.title}
+                          </span>
+                          <span className="badge badge-teal" style={{ fontSize: 9.5 }}>{stage.semesterTag}</span>
+                          {isCurrent && (
+                            <span className="badge badge-lime" style={{ fontSize: 9.5 }}>
+                              Tahap Aktif
+                            </span>
+                          )}
+                          {!unlocked && (
+                            <span className="badge badge-gray" style={{ fontSize: 9.5, display: "flex", alignItems: "center", gap: 3 }}>
+                              <Lock size={10} /> Terkunci
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <span className="badge badge-teal" style={{ fontSize: 10 }}>{item.sem}</span>
+
+                    {/* Right: Status Dropdown & Accordion Button */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      <select
+                        className="form-input"
+                        value={stage.status}
+                        disabled={!unlocked}
+                        onChange={(e) => handleStageStatusChange(stage.id, e.target.value as StageStatus)}
+                        style={{
+                          fontSize: 11.5,
+                          padding: "4px 8px",
+                          height: "auto",
+                          cursor: unlocked ? "pointer" : "not-allowed",
+                          borderColor: isAcc ? "var(--lime)" : "var(--border-subtle)",
+                          fontWeight: 600,
+                          minWidth: 155,
+                        }}
+                      >
+                        <option value="belum_dimulai">⚪ Belum Dimulai</option>
+                        <option value="proses_bimbingan">🔵 Proses Bimbingan</option>
+                        <option value="revisi_dospem">🟠 Revisi Dospem</option>
+                        <option value="acc_dospem">🟢 ACC Dospem / Selesai</option>
+                      </select>
+
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setExpandedStageId(isExpanded ? null : stage.id)}
+                        style={{ fontSize: 11, padding: "4px 8px", gap: 4 }}
+                        title="Buka / Tutup Form & Masukan Dospem"
+                      >
+                        <span>{isExpanded ? "Tutup" : "Detail & Dokumen"}</span>
+                        {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+                    </div>
                   </div>
 
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, margin: "4px 0 8px" }}>
-                    {item.focus}
+                  {/* Stage Summary Line */}
+                  <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: "8px 0 0", lineHeight: 1.5, paddingLeft: 38 }}>
+                    {stage.shortDesc}
                   </p>
 
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>
-                    <strong style={{ color: "var(--text-primary)" }}>Output Wajib:</strong> {item.deliverables}
-                  </div>
+                  {/* Accordion Content (Fields + Deliverables + Tips) */}
+                  {isExpanded && (
+                    <div
+                      style={{
+                        marginTop: 14,
+                        paddingTop: 14,
+                        borderTop: "1px solid var(--border-subtle)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
+                      {/* Deliverables & Tip Box */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        <div style={{ background: "var(--surface-hover)", padding: "10px 12px", borderRadius: "var(--radius-sm)" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: 3, display: "flex", alignItems: "center", gap: 5 }}>
+                            <FileText size={13} color="var(--blue)" /> Output Wajib:
+                          </div>
+                          <div style={{ fontSize: 12, color: "var(--text-primary)", lineHeight: 1.4 }}>
+                            {stage.deliverables}
+                          </div>
+                        </div>
 
-                  <div style={{ fontSize: 12, color: "var(--lime)", background: "rgba(215,243,106,0.06)", padding: "6px 10px", borderRadius: "var(--radius-sm)", display: "flex", gap: 6 }}>
-                    <span>💡 <strong>Tips:</strong> {item.tip}</span>
-                  </div>
+                        <div style={{ background: "rgba(215,243,106,0.06)", border: "1px solid rgba(215,243,106,0.2)", padding: "10px 12px", borderRadius: "var(--radius-sm)" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--lime)", textTransform: "uppercase", marginBottom: 3, display: "flex", alignItems: "center", gap: 5 }}>
+                            <Lightbulb size={13} color="var(--lime)" /> Tips Sukses:
+                          </div>
+                          <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
+                            {stage.guideTip}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Interactive Fields Form */}
+                      <div
+                        style={{
+                          background: "var(--surface-hover)",
+                          padding: 14,
+                          borderRadius: "var(--radius-sm)",
+                          border: "1px solid var(--border-subtle)",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
+                          <Sparkles size={13} color="var(--lime)" />
+                          Form Isian & Catatan Masukan Dosen Pembimbing ({stage.stageName}):
+                        </div>
+
+                        {stage.fieldConfigs.map((f) => {
+                          const val = stage.fields[f.key] || "";
+                          return (
+                            <div key={f.key} className="form-group" style={{ margin: 0 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                <label className="form-label" style={{ fontSize: 12, margin: 0 }}>
+                                  {f.label}
+                                </label>
+                                {f.type === "url" && val.startsWith("http") && (
+                                  <a
+                                    href={val}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{ fontSize: 11, color: "var(--blue)", display: "flex", alignItems: "center", gap: 3, textDecoration: "none" }}
+                                  >
+                                    <ExternalLink size={11} /> Buka Tautan
+                                  </a>
+                                )}
+                              </div>
+
+                              {f.type === "textarea" ? (
+                                <textarea
+                                  className="form-input"
+                                  rows={2}
+                                  value={val}
+                                  disabled={!unlocked}
+                                  placeholder={f.placeholder}
+                                  onChange={(e) => handleStageFieldChange(stage.id, f.key, e.target.value)}
+                                  style={{ fontSize: 12.5, resize: "vertical" }}
+                                />
+                              ) : (
+                                <input
+                                  type={f.type === "url" ? "url" : f.type === "date" ? "date" : "text"}
+                                  className="form-input"
+                                  value={val}
+                                  disabled={!unlocked}
+                                  placeholder={f.placeholder}
+                                  onChange={(e) => handleStageFieldChange(stage.id, f.key, e.target.value)}
+                                  style={{ fontSize: 12.5 }}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Action Buttons in Stage Footer */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, paddingTop: 4 }}>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => consultStageInChat(stage)}
+                          style={{ fontSize: 11.5, gap: 5 }}
+                        >
+                          <MessageSquare size={13} color="var(--lime)" />
+                          <span>💬 Bahas Tahap Ini dengan AI Konsultan</span>
+                        </button>
+
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => saveStagesProgress()}
+                          disabled={isSavingProgress}
+                          style={{ fontSize: 11.5, gap: 5 }}
+                        >
+                          <Save size={13} />
+                          <span>Simpan Isian Tahap Ini</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -132,18 +132,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               <User size={17} aria-hidden="true" />
               <span>Profil & Pengaturan</span>
             </Link>
-            <Link
-              href="/admin"
-              className="sidebar-nav-item"
-              style={{
-                background: "rgba(245, 205, 71, 0.08)",
-                border: "1px solid rgba(245, 205, 71, 0.2)",
-              }}
-              onClick={() => onClose()}
-            >
-              <ShieldCheck size={17} aria-hidden="true" color="var(--lime)" />
-              <span style={{ color: "var(--lime)", fontWeight: 700 }}>Dashboard Admin</span>
-            </Link>
+
             <Link
               href="/onboarding"
               className="sidebar-nav-item"
@@ -241,9 +230,10 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
 
         <div style={{ padding: "8px" }}>
           <button
+            id="btn-sidebar-logout"
             onClick={() => clearSession()}
             className="sidebar-nav-item"
-            style={{ width: "100%", color: "var(--coral)" }}
+            style={{ width: "100%", color: "var(--coral)", cursor: "pointer" }}
           >
             <LogOut size={17} />
             <span>Keluar</span>
@@ -261,7 +251,7 @@ export function Topbar({
   pageTitle: string;
   onMenuClick: () => void;
 }) {
-  const { token } = useSession();
+  const { token, user } = useSession();
 
   return (
     <header className="topbar">
@@ -296,25 +286,7 @@ export function Topbar({
             Demo Workspace
           </span>
         )}
-        <Link
-          href="/admin"
-          style={{
-            fontSize: 12,
-            color: "var(--text-primary)",
-            background: "rgba(245, 205, 71, 0.12)",
-            border: "1px solid rgba(245, 205, 71, 0.3)",
-            borderRadius: "var(--radius-pill)",
-            padding: "4px 12px",
-            fontWeight: 700,
-            textDecoration: "none",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <ShieldCheck size={14} color="var(--lime)" />
-          <span>Mode Admin</span>
-        </Link>
+
         <Link href="/app/profile" aria-label="Profil pengguna">
           <div
             style={{
