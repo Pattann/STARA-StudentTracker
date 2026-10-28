@@ -24,11 +24,11 @@ export const metadata: Metadata = {
   keywords: ["roadmap akademik", "perencanaan kuliah", "mahasiswa", "skripsi", "IPK"],
   icons: {
     icon: [
-      { url: "/blackstara.svg", type: "image/svg+xml" },
+      { url: "/whitestara.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png", sizes: "512x512" },
     ],
-    shortcut: "/blackstara.svg",
+    shortcut: "/whitestara.svg",
     apple: "/apple-icon.png",
   },
   openGraph: {
