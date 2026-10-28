@@ -22,6 +22,15 @@ export const metadata: Metadata = {
   description:
     "Roadmap akademik personal yang menyesuaikan rencana dan perubahan perjalanan kuliahmu.",
   keywords: ["roadmap akademik", "perencanaan kuliah", "mahasiswa", "skripsi", "IPK"],
+  icons: {
+    icon: [
+      { url: "/blackstara.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/blackstara.svg",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "STARA — Rencanakan Perjalanan Kuliahmu",
     description: "Asisten perencanaan akademik untuk mahasiswa Indonesia.",
