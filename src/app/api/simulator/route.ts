@@ -51,10 +51,16 @@ export async function POST(req: NextRequest) {
 
     const params = parsed.data;
 
-    // Get or auto-initialize profile
-    let profile = await prisma.academicProfile.findUnique({
-      where: { guestSessionId: session.id },
-    });
+    // Get or auto-initialize profile & roadmap in parallel
+    let [profile, roadmap] = await Promise.all([
+      prisma.academicProfile.findUnique({
+        where: { guestSessionId: session.id },
+      }),
+      prisma.roadmap.findFirst({
+        where: { guestSessionId: session.id },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
     if (!profile) {
       profile = await prisma.academicProfile.create({
@@ -74,12 +80,6 @@ export async function POST(req: NextRequest) {
         },
       });
     }
-
-    // Get or auto-initialize roadmap
-    let roadmap = await prisma.roadmap.findFirst({
-      where: { guestSessionId: session.id },
-      orderBy: { createdAt: "desc" },
-    });
 
     if (!roadmap) {
       roadmap = await prisma.roadmap.create({

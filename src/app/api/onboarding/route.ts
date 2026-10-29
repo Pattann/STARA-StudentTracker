@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
+import { seedInitialRoadmapForSession } from "@/server/admin/service";
 import { z } from "zod";
 
 const OnboardingSchema = z.object({
@@ -63,57 +64,65 @@ export async function POST(req: NextRequest) {
       });
       sessionId = newSession.id;
     } else {
-      // Clean up previous roadmaps & profiles for a fresh customized start
-      await prisma.roadmap.deleteMany({ where: { guestSessionId: sessionId } });
-      await prisma.academicProfile.deleteMany({ where: { guestSessionId: sessionId } });
-      await prisma.reminder.deleteMany({ where: { guestSessionId: sessionId } });
-      await prisma.achievement.deleteMany({ where: { guestSessionId: sessionId } });
+      // Clean up previous roadmaps & profiles in parallel
+      await Promise.all([
+        prisma.roadmap.deleteMany({ where: { guestSessionId: sessionId } }),
+        prisma.academicProfile.deleteMany({ where: { guestSessionId: sessionId } }),
+        prisma.reminder.deleteMany({ where: { guestSessionId: sessionId } }),
+        prisma.achievement.deleteMany({ where: { guestSessionId: sessionId } }),
+      ]);
     }
 
-    // 1. Create Academic Profile
-    await prisma.academicProfile.create({
-      data: {
-        guestSessionId: sessionId,
-        institutionName: data.institutionName,
-        facultyName: data.facultyName || "Fakultas Utama",
-        programName: data.programName,
-        educationLevel: data.educationLevel,
-        entryYear: data.entryYear,
-        currentSemester: data.currentSemester,
-        totalCurriculumCredits: data.totalCurriculumCredits,
-        completedCredits: data.completedCredits,
-        inProgressCredits: Math.min(20, Math.max(0, data.totalCurriculumCredits - data.completedCredits)),
-        gpa: data.gpa,
-        goals: data.goals,
-        interests: JSON.stringify(data.interests ? data.interests.split(",").map((s) => s.trim()) : []),
-        takEnabled: data.takEnabled,
-        takTarget: data.takTarget,
-        weeklyHours: data.weeklyHours,
-      },
-    });
-
-    // 2. Starter Reminders (Roadmap remains empty until user chooses a template or generates one)
     const currSem = data.currentSemester;
-    await prisma.reminder.createMany({
-      data: [
-        {
+
+    // Create Academic Profile, Starter Reminders, and Initial 8-Semester Roadmap in parallel
+    await Promise.all([
+      prisma.academicProfile.create({
+        data: {
           guestSessionId: sessionId,
-          title: `Pengisian KRS Semester ${currSem + 1}`,
-          category: "krs",
-          deadline: "2025-02-15",
-          isOfficial: false,
-          notes: "Pastikan syarat prasyarat mata kuliah terpenuhi sebelum finalisasi KRS.",
+          institutionName: data.institutionName,
+          facultyName: data.facultyName || "Fakultas Utama",
+          programName: data.programName,
+          educationLevel: data.educationLevel,
+          entryYear: data.entryYear,
+          currentSemester: data.currentSemester,
+          totalCurriculumCredits: data.totalCurriculumCredits,
+          completedCredits: data.completedCredits,
+          inProgressCredits: Math.min(20, Math.max(0, data.totalCurriculumCredits - data.completedCredits)),
+          gpa: data.gpa,
+          goals: data.goals,
+          interests: JSON.stringify(data.interests ? data.interests.split(",").map((s) => s.trim()) : []),
+          takEnabled: data.takEnabled,
+          takTarget: data.takTarget,
+          weeklyHours: data.weeklyHours,
         },
-        {
-          guestSessionId: sessionId,
-          title: "Evaluasi Nilai & Target IPK Tengah Semester",
-          category: "akademik",
-          deadline: "2025-04-10",
-          isOfficial: false,
-          notes: "Tinjau performa kuis dan tugas besar mata kuliah inti.",
-        },
-      ],
-    });
+      }),
+      seedInitialRoadmapForSession(sessionId, {
+        programName: data.programName,
+        currentSemester: data.currentSemester,
+        entryYear: data.entryYear,
+      }),
+      prisma.reminder.createMany({
+        data: [
+          {
+            guestSessionId: sessionId,
+            title: `Pengisian KRS Semester ${currSem + 1}`,
+            category: "krs",
+            deadline: "2025-02-15",
+            isOfficial: false,
+            notes: "Pastikan syarat prasyarat mata kuliah terpenuhi sebelum finalisasi KRS.",
+          },
+          {
+            guestSessionId: sessionId,
+            title: "Evaluasi Nilai & Target IPK Tengah Semester",
+            category: "akademik",
+            deadline: "2025-04-10",
+            isOfficial: false,
+            notes: "Tinjau performa kuis dan tugas besar mata kuliah inti.",
+          },
+        ],
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,

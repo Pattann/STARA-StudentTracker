@@ -14,7 +14,7 @@ const AddCourseSchema = z.object({
 
 export async function GET() {
   try {
-    const data = getAcademicsData();
+    const data = await getAcademicsData();
     return NextResponse.json({ success: true, ...data });
   } catch (error) {
     console.error("[API /admin/academics GET]", error);
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newCourse = addCourseToCatalog(parsed.data);
+    const newCourse = await addCourseToCatalog(parsed.data);
     return NextResponse.json({
       success: true,
       message: "Mata kuliah berhasil ditambahkan ke kurikulum.",

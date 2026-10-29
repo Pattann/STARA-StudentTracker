@@ -23,10 +23,9 @@ export async function POST(req: NextRequest) {
     const { email, password } = parsed.data;
     const lookup = email.toLowerCase().trim();
 
-    await ensureAdminAndSeededData();
-
     // 1. Check if user is logging in via admin shorthand or admin emails
     if (lookup === "admin" || lookup === "admin@stara.ac.id" || lookup === "adminrendy@mail.com" || lookup === "adminrendy") {
+      await ensureAdminAndSeededData();
       let adminUser = await prisma.user.findFirst({
         where: {
           OR: [
@@ -108,17 +107,18 @@ export async function POST(req: NextRequest) {
     const hasCompletedOnboarding = Boolean(user.academicProfile);
     const { token, session } = await createSessionForUser(user.id);
 
-    // Link profile to guestSession
+    // Link profile to guestSession in parallel
     if (user.academicProfile) {
-      await prisma.academicProfile.update({
-        where: { id: user.academicProfile.id },
-        data: { guestSessionId: session.id },
-      });
-
-      await prisma.roadmap.updateMany({
-        where: { userId: user.id },
-        data: { guestSessionId: session.id },
-      });
+      await Promise.all([
+        prisma.academicProfile.update({
+          where: { id: user.academicProfile.id },
+          data: { guestSessionId: session.id },
+        }),
+        prisma.roadmap.updateMany({
+          where: { userId: user.id },
+          data: { guestSessionId: session.id },
+        }),
+      ]);
     }
 
     // Redirect based on user's role

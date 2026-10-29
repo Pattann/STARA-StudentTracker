@@ -53,7 +53,9 @@ function WorkspaceGuard({ children, pageTitle }: { children: React.ReactNode; pa
           pageTitle={pageTitle ?? "STARA"}
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <div className="page-area">{children}</div>
+        <main className="main-scroll-area">
+          <div className="page-area">{children}</div>
+        </main>
       </div>
     </div>
   );

@@ -64,6 +64,7 @@ export default function AdminDashboardPage() {
 
   // Academics Data
   const [academicsData, setAcademicsData] = useState<any>(null);
+  const [isLoadingAcademics, setIsLoadingAcademics] = useState(true);
   const [academicSubTab, setAcademicSubTab] = useState<"kampus" | "prodi" | "kurikulum" | "matakuliah">("kampus");
   const [courseSearch, setCourseSearch] = useState("");
   const [courseSemesterFilter, setCourseSemesterFilter] = useState<string>("all");
@@ -138,6 +139,7 @@ export default function AdminDashboardPage() {
 
   const fetchAcademics = async () => {
     try {
+      setIsLoadingAcademics(true);
       const res = await fetch("/api/admin/academics");
       const data = await res.json();
       if (data.success) {
@@ -145,6 +147,8 @@ export default function AdminDashboardPage() {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsLoadingAcademics(false);
     }
   };
 
@@ -216,8 +220,6 @@ export default function AdminDashboardPage() {
 
     fetchOverview();
     fetchAcademics();
-    fetchTemplates();
-    fetchReports();
     fetchAiMonitor();
   }, [router]);
 
@@ -228,6 +230,25 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     fetchReports();
   }, [reportStatusFilter]);
+
+  const isAnyModalOpen = Boolean(
+    isAddCourseModalOpen || selectedTemplateForPreview || selectedReportForAction
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [isAnyModalOpen]);
 
   // Handle Add Course
   const handleAddCourseSubmit = async (e: React.FormEvent) => {
@@ -390,7 +411,19 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", background: "var(--bg-base)", color: "var(--text-primary)" }}>
+    <div
+      className="admin-root-container"
+      style={{
+        display: "flex",
+        height: "100vh",
+        width: "100%",
+        maxWidth: "100vw",
+        overflow: "hidden",
+        overscrollBehavior: "none",
+        background: "var(--bg-base)",
+        color: "var(--text-primary)",
+      }}
+    >
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -432,40 +465,52 @@ export default function AdminDashboardPage() {
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
+          overflow: "hidden",
+          overscrollBehavior: "contain",
           zIndex: 30,
         }}
       >
-        {/* Brand & Admin Badge */}
-        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
+        {/* Brand & Admin Badge (Aligned 64px height with Topbar) */}
+        <div
+          style={{
+            height: 64,
+            padding: "0 20px",
+            borderBottom: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexShrink: 0,
+            boxSizing: "border-box",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src="/whitestara.svg" alt="STARA" width={28} height={28} />
+            <img src="/blackstara.svg" alt="STARA" width={26} height={26} style={{ width: 26, height: 26, objectFit: "contain" }} />
             <div>
-              <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.02em" }}>STARA ADMIN</div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>Pusat Kontrol Sistem</div>
+              <div style={{ fontWeight: 800, fontSize: 15.5, lineHeight: 1.15, letterSpacing: "-0.02em" }}>STARA ADMIN</div>
+              <div style={{ fontSize: 10.5, color: "var(--text-muted)", fontWeight: 600 }}>Pusat Kontrol Sistem</div>
             </div>
           </div>
 
           <div
             style={{
-              marginTop: 14,
               display: "inline-flex",
               alignItems: "center",
-              gap: 6,
-              background: "rgba(245, 205, 71, 0.12)",
-              border: "1px solid rgba(245, 205, 71, 0.3)",
+              gap: 4,
+              background: "rgba(245, 205, 71, 0.16)",
+              border: "1px solid rgba(217, 119, 6, 0.3)",
               borderRadius: "var(--radius-pill)",
-              padding: "4px 10px",
+              padding: "3px 8px",
             }}
           >
-            <ShieldCheck size={13} color="var(--lime)" />
-            <span style={{ fontSize: 11, fontWeight: 800, color: "var(--lime)", letterSpacing: "0.04em" }}>
-              ROLE: ADMINISTRATOR
+            <ShieldCheck size={12} color="#92400E" />
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#92400E", letterSpacing: "0.04em" }}>
+              ADMIN
             </span>
           </div>
         </div>
 
         {/* Navigation Tabs (Strictly matching user spec) */}
-        <nav style={{ padding: "16px 12px", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+        <nav style={{ padding: "16px 12px", flex: 1, minHeight: 0, overflowY: isAnyModalOpen ? "hidden" : "auto", overflowX: "hidden", overscrollBehavior: "contain", display: "flex", flexDirection: "column", gap: 4 }}>
           {/* 1. Overview */}
           <button
             onClick={() => switchTab("overview")}
@@ -649,7 +694,7 @@ export default function AdminDashboardPage() {
       </aside>
 
       {/* ─── MAIN CONTENT AREA ──────────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, height: "100vh", display: "flex", flexDirection: "column", overflowY: "auto", minWidth: 0 }}>
+      <main style={{ flex: 1, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
         {/* Topbar */}
         <header
           style={{
@@ -661,6 +706,7 @@ export default function AdminDashboardPage() {
             alignItems: "center",
             justifyContent: "space-between",
             flexShrink: 0,
+            zIndex: 20,
           }}
         >
           <div>
@@ -725,7 +771,18 @@ export default function AdminDashboardPage() {
         </header>
 
         {/* Tab Body */}
-        <div style={{ padding: "28px", flex: 1 }}>
+        <div
+          className="admin-scroll-area"
+          style={{
+            padding: "28px",
+            flex: 1,
+            minHeight: 0,
+            minWidth: 0,
+            overflowY: isAnyModalOpen ? "hidden" : "auto",
+            overflowX: "hidden",
+            overscrollBehavior: "contain",
+          }}
+        >
           {/* ══════════════════════════════════════════════════════════════════════════════
               TAB 1: 📊 RINGKASAN / OVERVIEW
               ══════════════════════════════════════════════════════════════════════════════ */}
@@ -1068,8 +1125,28 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
 
+              {/* Loading Indicator */}
+              {isLoadingAcademics && (
+                <div style={{ padding: "48px 0", textAlign: "center", color: "var(--text-muted)" }}>
+                  <div
+                    style={{
+                      display: "inline-block",
+                      width: 28,
+                      height: 28,
+                      border: "3px solid var(--border)",
+                      borderTopColor: "var(--lime)",
+                      borderRadius: "50%",
+                      animation: "spin 0.8s linear infinite",
+                    }}
+                  />
+                  <p style={{ marginTop: 12, fontSize: 13, color: "var(--text-secondary)" }}>
+                    Memuat data kurikulum & kampus mitra...
+                  </p>
+                </div>
+              )}
+
               {/* Sub-Tab 1: Kampus Mitra */}
-              {academicSubTab === "kampus" && (
+              {!isLoadingAcademics && academicSubTab === "kampus" && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
                   {(academicsData?.campuses || []).map((campus: any) => (
                     <div
@@ -1133,7 +1210,7 @@ export default function AdminDashboardPage() {
               )}
 
               {/* Sub-Tab 2: Program Studi */}
-              {academicSubTab === "prodi" && (
+              {!isLoadingAcademics && academicSubTab === "prodi" && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
                   {(academicsData?.programs || []).map((prog: any) => (
                     <div
@@ -1206,7 +1283,7 @@ export default function AdminDashboardPage() {
               )}
 
               {/* Sub-Tab 3: Kurikulum Semester 1 - 8 */}
-              {academicSubTab === "kurikulum" && (
+              {!isLoadingAcademics && academicSubTab === "kurikulum" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div
                     style={{
@@ -1270,7 +1347,7 @@ export default function AdminDashboardPage() {
               )}
 
               {/* Sub-Tab 4: Manajemen Mata Kuliah */}
-              {academicSubTab === "matakuliah" && (
+              {!isLoadingAcademics && academicSubTab === "matakuliah" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {/* Filter & Action Toolbar */}
                   <div
@@ -1365,6 +1442,13 @@ export default function AdminDashboardPage() {
                         </tr>
                       </thead>
                       <tbody>
+                        {filteredCourses.length === 0 && (
+                          <tr>
+                            <td colSpan={7} style={{ padding: "36px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+                              Tidak ada mata kuliah yang cocok dengan filter atau pencarian.
+                            </td>
+                          </tr>
+                        )}
                         {filteredCourses.map((c: any, idx: number) => (
                           <tr
                             key={idx}
@@ -2136,6 +2220,9 @@ export default function AdminDashboardPage() {
       {/* ─── MODAL: TAMBAH MATA KULIAH ────────────────────────────────────────────── */}
       {isAddCourseModalOpen && (
         <div
+          className="dialog-overlay"
+          role="dialog"
+          aria-modal="true"
           style={{
             position: "fixed",
             inset: 0,
@@ -2146,8 +2233,10 @@ export default function AdminDashboardPage() {
             alignItems: "center",
             justifyContent: "center",
             padding: 20,
+            overscrollBehavior: "contain",
           }}
           onClick={() => setIsAddCourseModalOpen(false)}
+          onWheel={(e) => e.stopPropagation()}
         >
           <div
             style={{
@@ -2156,6 +2245,9 @@ export default function AdminDashboardPage() {
               borderRadius: "var(--radius-lg)",
               width: "100%",
               maxWidth: 520,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              overscrollBehavior: "contain",
               padding: 24,
               boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
             }}
@@ -2309,6 +2401,9 @@ export default function AdminDashboardPage() {
       {/* ─── MODAL: PREVIEW TEMPLATE ──────────────────────────────────────────────── */}
       {selectedTemplateForPreview && (
         <div
+          className="dialog-overlay"
+          role="dialog"
+          aria-modal="true"
           style={{
             position: "fixed",
             inset: 0,
@@ -2319,8 +2414,10 @@ export default function AdminDashboardPage() {
             alignItems: "center",
             justifyContent: "center",
             padding: 20,
+            overscrollBehavior: "contain",
           }}
           onClick={() => setSelectedTemplateForPreview(null)}
+          onWheel={(e) => e.stopPropagation()}
         >
           <div
             style={{
@@ -2331,6 +2428,7 @@ export default function AdminDashboardPage() {
               maxWidth: 600,
               maxHeight: "85vh",
               overflowY: "auto",
+              overscrollBehavior: "contain",
               padding: 24,
             }}
             onClick={(e) => e.stopPropagation()}
@@ -2403,6 +2501,9 @@ export default function AdminDashboardPage() {
       {/* ─── MODAL: TINDAK LANJUTI LAPORAN ────────────────────────────────────────── */}
       {selectedReportForAction && (
         <div
+          className="dialog-overlay"
+          role="dialog"
+          aria-modal="true"
           style={{
             position: "fixed",
             inset: 0,
@@ -2413,8 +2514,10 @@ export default function AdminDashboardPage() {
             alignItems: "center",
             justifyContent: "center",
             padding: 20,
+            overscrollBehavior: "contain",
           }}
           onClick={() => setSelectedReportForAction(null)}
+          onWheel={(e) => e.stopPropagation()}
         >
           <div
             style={{
@@ -2423,6 +2526,9 @@ export default function AdminDashboardPage() {
               borderRadius: "var(--radius-lg)",
               width: "100%",
               maxWidth: 520,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              overscrollBehavior: "contain",
               padding: 24,
             }}
             onClick={(e) => e.stopPropagation()}

@@ -38,9 +38,42 @@ interface SimulationResult {
   estimatedHoursPerWeek: string;
   impactOnGraduation: string;
   keyRisks: string[];
+  mitigationStrategies?: string[];
+  actionSteps?: {
+    phase: string;
+    steps: string[];
+  }[];
   suggestedAlternatives: AlternativeOption[];
+  questionsForAcademicAdvisor?: string[];
   simulationId?: string;
   isAiGenerated: boolean;
+}
+
+function renderFormattedText(text: string) {
+  const lines = text.split("\n");
+  return lines.map((line, lineIdx) => {
+    const parts = line.split(/(\*\*.*?\*\*)/g);
+    return (
+      <div
+        key={lineIdx}
+        style={{
+          marginBottom: line.trim() === "" ? 6 : 3,
+          paddingLeft: /^(\d+\.|•|-|\*)\s/.test(line.trim()) ? 6 : 0,
+        }}
+      >
+        {parts.map((part, pIdx) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return (
+              <strong key={pIdx} style={{ fontWeight: 700, color: "var(--text-primary)" }}>
+                {part.slice(2, -2)}
+              </strong>
+            );
+          }
+          return <span key={pIdx}>{part}</span>;
+        })}
+      </div>
+    );
+  });
 }
 
 interface ChatMessage {
@@ -795,7 +828,7 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
             </p>
 
             {/* 2 Metrik Utama Sederhana */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 14 }}>
               <div
                 style={{
                   background: "var(--surface-hover)",
@@ -831,25 +864,93 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
               </div>
             </div>
 
-            {/* Catatan Risiko Ringkas */}
-            {simulationResult.keyRisks && simulationResult.keyRisks.length > 0 && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "var(--text-secondary)",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 8,
-                  background: "rgba(255, 179, 71, 0.05)",
-                  padding: "10px 14px",
-                  borderRadius: 6,
-                  border: "1px solid rgba(255, 179, 71, 0.2)",
-                }}
-              >
-                <ShieldAlert size={15} color="var(--orange)" style={{ flexShrink: 0, marginTop: 1 }} />
-                <span>
-                  <strong style={{ color: "var(--orange)" }}>Perhatian:</strong> {simulationResult.keyRisks[0]}
-                </span>
+            {/* Risiko & Mitigasi Side-by-Side */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12, marginBottom: 14 }}>
+              {simulationResult.keyRisks && simulationResult.keyRisks.length > 0 && (
+                <div
+                  style={{
+                    background: "rgba(255, 179, 71, 0.06)",
+                    padding: "12px 14px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(255, 179, 71, 0.25)",
+                  }}
+                >
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)", display: "flex", alignItems: "center", gap: 6, marginBottom: 8, textTransform: "uppercase" }}>
+                    <ShieldAlert size={14} color="var(--orange)" />
+                    Risiko yang Perlu Diantisipasi
+                  </div>
+                  {simulationResult.keyRisks.map((r, ri) => (
+                    <div key={ri} style={{ fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 5, lineHeight: 1.5, display: "flex", gap: 6 }}>
+                      <span style={{ color: "var(--orange)", fontWeight: 700 }}>•</span>
+                      <span>{r}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {simulationResult.mitigationStrategies && simulationResult.mitigationStrategies.length > 0 && (
+                <div
+                  style={{
+                    background: "rgba(124, 230, 168, 0.06)",
+                    padding: "12px 14px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(124, 230, 168, 0.25)",
+                  }}
+                >
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--lime)", display: "flex", alignItems: "center", gap: 6, marginBottom: 8, textTransform: "uppercase" }}>
+                    <CheckCircle2 size={14} color="var(--lime)" />
+                    Strategi Mitigasi AI
+                  </div>
+                  {simulationResult.mitigationStrategies.map((m, mi) => (
+                    <div key={mi} style={{ fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 5, lineHeight: 1.5, display: "flex", gap: 6 }}>
+                      <span style={{ color: "var(--lime)", fontWeight: 700 }}>✓</span>
+                      <span>{m}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Tahapan Aksi (Pra-Kegiatan, Pelaksanaan, Pasca-Kegiatan) */}
+            {simulationResult.actionSteps && simulationResult.actionSteps.length > 0 && (
+              <div style={{ marginTop: 6 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
+                  Langkah Eksekusi yang Disarankan STARA AI:
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10 }}>
+                  {simulationResult.actionSteps.map((stepGroup, sIdx) => (
+                    <div
+                      key={sIdx}
+                      style={{
+                        background: "var(--surface-hover)",
+                        border: "1px solid var(--border-subtle)",
+                        borderRadius: 8,
+                        padding: "10px 12px",
+                      }}
+                    >
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--teal)", marginBottom: 6 }}>
+                        {sIdx + 1}. {stepGroup.phase}
+                      </div>
+                      {stepGroup.steps.map((st, stIdx) => (
+                        <div key={stIdx} style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4, lineHeight: 1.45 }}>
+                          • {st}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pertanyaan untuk Dosen Wali */}
+            {simulationResult.questionsForAcademicAdvisor && simulationResult.questionsForAcademicAdvisor.length > 0 && (
+              <div className="info-box" style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                  Pertanyaan Kunci untuk Dosen Wali / Kemahasiswaan:
+                </div>
+                {simulationResult.questionsForAcademicAdvisor.map((q, qi) => (
+                  <div key={qi} style={{ fontSize: 12.5, marginBottom: 3 }}>• {q}</div>
+                ))}
               </div>
             )}
           </div>
@@ -862,20 +963,27 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                 alignItems: "center",
                 justifyContent: "space-between",
                 marginBottom: 12,
+                flexWrap: "wrap",
+                gap: 8,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Lightbulb size={16} color="var(--lime)" />
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-                  Rekomendasi Alternatif AI
-                </h3>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Lightbulb size={16} color="var(--lime)" />
+                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                    Rekomendasi Strategi & Alternatif AI
+                  </h3>
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>
+                  Opsi taktis agar rencana ini makin optimal tanpa membebani SKS kuliahmu
+                </div>
               </div>
 
               <button
-                className="btn btn-ghost btn-sm"
+                className="btn btn-secondary btn-sm"
                 onClick={handleRefreshAlternatives}
                 disabled={refreshingAlt}
-                style={{ gap: 5, fontSize: 11.5, padding: "4px 8px" }}
+                style={{ gap: 5, fontSize: 11.5, padding: "5px 10px" }}
                 id="btn-refresh-alternatives"
                 title="Muat variasi rekomendasi alternatif baru dari AI"
               >
@@ -883,42 +991,58 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                   size={12}
                   style={{ animation: refreshingAlt ? "spin 1s linear infinite" : undefined }}
                 />
-                {refreshingAlt ? "Memperbarui..." : "Refresh Alternatif"}
+                {refreshingAlt ? "Memperbarui..." : "Cari Opsi Lain (AI)"}
               </button>
             </div>
 
             {alternativesList.length === 0 ? (
               <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "10px 0" }}>
-                Tidak ada alternatif yang tersedia. Klik tombol Refresh Alternatif di atas untuk memuat.
+                Tidak ada alternatif yang tersedia. Klik tombol Cari Opsi Lain di atas untuk memuat.
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                {alternativesList.slice(0, 2).map((alt, idx) => (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 12 }}>
+                {alternativesList.slice(0, 3).map((alt, idx) => (
                   <div
                     key={idx}
                     style={{
                       background: "var(--surface-hover)",
                       borderRadius: 8,
-                      padding: "12px 14px",
+                      padding: "14px 16px",
                       border: "1px solid var(--border-subtle)",
                       display: "flex",
                       flexDirection: "column",
                       justifyContent: "space-between",
+                      gap: 10,
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 4 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--text-primary)", marginBottom: 5 }}>
                         {alt.title}
                       </div>
-                      <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
+                      <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: 0, lineHeight: 1.55 }}>
                         {alt.description}
                       </p>
+                      {alt.benefit && (
+                        <div style={{ fontSize: 12, color: "var(--lime)", marginTop: 8, fontWeight: 600 }}>
+                          → {alt.benefit}
+                        </div>
+                      )}
                     </div>
-                    {alt.benefit && (
-                      <div style={{ fontSize: 11.5, color: "var(--lime)", marginTop: 8, fontWeight: 600 }}>
-                        → {alt.benefit}
-                      </div>
-                    )}
+
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() =>
+                        handleSendChat(
+                          `Bagaimana langkah konkret menerapkan strategi "${alt.title}" (${alt.description}) untuk rencana saya?`
+                        )
+                      }
+                      disabled={chatLoading}
+                      style={{ alignSelf: "flex-start", fontSize: 11.5, padding: "4px 8px", gap: 5, color: "var(--teal)" }}
+                    >
+                      <MessageSquare size={12} />
+                      Diskusikan Strategi Ini di Chat AI
+                    </button>
                   </div>
                 ))}
               </div>
@@ -927,26 +1051,35 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
 
           {/* 3. Tanya STARA AI (Konteks Rencana Terhubung Langsung) */}
           <div className="card" style={{ padding: "18px 22px", marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <MessageSquare size={16} color="var(--lime)" />
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-                  Tanya STARA AI
-                </h3>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(215,243,106,0.16)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Bot size={15} color="var(--lime)" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 14.5, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                    Tanya STARA AI — Konsultan Rencana Studi
+                  </h3>
+                  <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
+                    Tanyakan pembagian waktu, strategi menjaga IPK, atau klaim poin TAK/SKPI untuk rencana ini
+                  </div>
+                </div>
               </div>
-              <span className="badge badge-gray" style={{ fontSize: 10 }}>Konteks Rencana Aktif</span>
+              <span className="badge badge-lime" style={{ fontSize: 10.5 }}>
+                <Sparkles size={11} /> Konteks Rencana Aktif
+              </span>
             </div>
 
             {/* Chat Box */}
             <div
               style={{
                 background: "var(--surface-hover)",
-                borderRadius: 8,
-                padding: 12,
-                minHeight: 120,
-                maxHeight: 250,
+                borderRadius: 10,
+                padding: 14,
+                minHeight: 220,
+                maxHeight: 420,
                 overflowY: "auto",
-                marginBottom: 10,
+                marginBottom: 12,
                 border: "1px solid var(--border-subtle)",
               }}
             >
@@ -955,16 +1088,16 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                   key={i}
                   style={{
                     display: "flex",
-                    gap: 8,
-                    marginBottom: 10,
+                    gap: 10,
+                    marginBottom: 12,
                     flexDirection: msg.role === "user" ? "row-reverse" : "row",
                     alignItems: "flex-start",
                   }}
                 >
                   <div
                     style={{
-                      width: 24,
-                      height: 24,
+                      width: 28,
+                      height: 28,
                       borderRadius: "50%",
                       background: msg.role === "user" ? "var(--lime)" : "var(--surface-card)",
                       border: "1px solid var(--border-subtle)",
@@ -974,22 +1107,28 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                       flexShrink: 0,
                     }}
                   >
-                    {msg.role === "user" ? <User size={12} color="var(--bg-primary)" /> : <Bot size={12} color="var(--lime)" />}
+                    {msg.role === "user" ? <User size={13} color="var(--bg-primary)" /> : <Bot size={14} color="var(--lime)" />}
                   </div>
                   <div
                     style={{
-                      background: msg.role === "user" ? "rgba(124, 230, 168, 0.12)" : "var(--surface-card)",
+                      background: msg.role === "user" ? "rgba(124, 230, 168, 0.14)" : "var(--surface-card)",
                       border: "1px solid var(--border-subtle)",
-                      borderRadius: msg.role === "user" ? "10px 4px 10px 10px" : "4px 10px 10px 10px",
-                      padding: "8px 12px",
-                      fontSize: 12.5,
+                      borderRadius: msg.role === "user" ? "12px 4px 12px 12px" : "4px 12px 12px 12px",
+                      padding: "10px 14px",
+                      fontSize: 13,
                       color: "var(--text-primary)",
-                      lineHeight: 1.5,
-                      maxWidth: "80%",
-                      whiteSpace: "pre-wrap",
+                      lineHeight: 1.6,
+                      maxWidth: "84%",
                     }}
                   >
-                    {msg.isLoading ? <span style={{ opacity: 0.6 }}>⋯ Mengetik respon...</span> : msg.content}
+                    {msg.isLoading ? (
+                      <span style={{ opacity: 0.7, display: "flex", alignItems: "center", gap: 6 }}>
+                        <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} />
+                        STARA AI sedang menyusun jawaban lengkap...
+                      </span>
+                    ) : (
+                      renderFormattedText(msg.content)
+                    )}
                   </div>
                 </div>
               ))}
@@ -997,29 +1136,36 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
             </div>
 
             {/* Quick Consultation Chips */}
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-              {[
-                "Bagaimana cara membagi waktu agar tugas kuliah aman?",
-                "Apakah perlu mengajukan izin ke dosen wali?",
-              ].map((suggestion, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSendChat(suggestion)}
-                  disabled={chatLoading}
-                  style={{
-                    fontSize: 11,
-                    padding: "4px 10px",
-                    borderRadius: 14,
-                    background: "var(--surface-card)",
-                    border: "1px solid var(--border-subtle)",
-                    color: "var(--text-secondary)",
-                    cursor: "pointer",
-                  }}
-                >
-                  {suggestion}
-                </button>
-              ))}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, fontWeight: 600 }}>
+                💡 Pertanyaan Cepat:
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[
+                  "Bagaimana cara membagi waktu mingguan agar tugas kuliah aman?",
+                  "Apa saja persiapan yang harus saya mulai minggu ini?",
+                  "Bagaimana cara mengklaim kegiatan ini ke poin TAK/SKPI?",
+                  "Apakah perlu mengajukan izin ke dosen wali?",
+                ].map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSendChat(suggestion)}
+                    disabled={chatLoading}
+                    style={{
+                      fontSize: 11.5,
+                      padding: "5px 11px",
+                      borderRadius: 14,
+                      background: "var(--surface-card)",
+                      border: "1px solid var(--border-subtle)",
+                      color: "var(--text-secondary)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Input Row */}
@@ -1027,8 +1173,8 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
               <input
                 type="text"
                 className="form-input"
-                style={{ flex: 1, fontSize: 13, padding: "8px 12px" }}
-                placeholder="Tanyakan hal spesifik tentang rencana ini..."
+                style={{ flex: 1, fontSize: 13, padding: "9px 12px" }}
+                placeholder="Tanyakan hal spesifik tentang rencana ini (misal: jadwal latihan, strategi juara, SKS)..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendChat()}
@@ -1039,9 +1185,9 @@ Ringkasan: ${simulationResult.academicImpactSummary}`;
                 className="btn btn-primary btn-sm"
                 onClick={() => handleSendChat()}
                 disabled={!chatInput.trim() || chatLoading}
-                style={{ flexShrink: 0, gap: 5, fontSize: 12.5, padding: "8px 14px" }}
+                style={{ flexShrink: 0, gap: 5, fontSize: 12.5, padding: "9px 16px" }}
               >
-                <Send size={12} />
+                <Send size={13} />
                 Kirim
               </button>
             </div>

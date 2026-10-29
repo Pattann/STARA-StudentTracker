@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSession } from "@/features/session/context";
+import { useSession, getCachedRoadmap, setCachedRoadmap } from "@/features/session/context";
 import {
   CheckCircle2,
   Clock,
@@ -104,8 +104,8 @@ type RoadmapData = {
 
 export default function RoadmapPage() {
   const { token } = useSession();
-  const [data, setData] = useState<RoadmapData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<RoadmapData | null>(() => getCachedRoadmap<RoadmapData>(token));
+  const [loading, setLoading] = useState<boolean>(() => !getCachedRoadmap<RoadmapData>(token));
   const [error, setError] = useState<string | null>(null);
   const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set([5]));
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -191,15 +191,22 @@ export default function RoadmapPage() {
 
   const fetchRoadmap = () => {
     if (!token) return;
-    setLoading(true);
+    const cached = getCachedRoadmap<RoadmapData>(token);
+    if (cached && !data) {
+      setData(cached);
+      setLoading(false);
+    } else if (!cached && !data) {
+      setLoading(true);
+    }
     fetch(`/api/roadmap`, { headers: { "x-demo-token": token } })
       .then((r) => r.json())
       .then((d: RoadmapData) => {
         setData(d);
+        setCachedRoadmap(token, d);
         setLoading(false);
       })
       .catch((e: Error) => {
-        setError(e.message);
+        if (!cached && !data) setError(e.message);
         setLoading(false);
       });
   };
@@ -207,6 +214,25 @@ export default function RoadmapPage() {
   useEffect(() => {
     fetchRoadmap();
   }, [token]);
+
+  const isAnyRoadmapModalOpen = Boolean(
+    showAddCourseModal || showAddMilestoneModal || showTemplatePicker
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isAnyRoadmapModalOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [isAnyRoadmapModalOpen]);
 
   const toggleSemester = (num: number) => {
     setExpandedSemesters((prev) => {
@@ -674,16 +700,20 @@ export default function RoadmapPage() {
 
         {/* Action Group */}
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          {/* Toggle Sesuaikan Susunan (subtle, quiet toggle without noisy banners) */}
+          {/* Toggle Edit Roadmap */}
           <button
             onClick={() => setActiveMode(activeMode === "edit" ? "view" : "edit")}
             className={activeMode === "edit" ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"}
             style={{ gap: 6, fontSize: 12 }}
             id="btn-toggle-edit-mode"
-            title={activeMode === "edit" ? "Selesai Penyesuaian" : "Atur Beban SKS & Urutan"}
+            title={
+              activeMode === "edit"
+                ? "Simpan dan keluar dari mode edit"
+                : "Ubah isi roadmap: pindah semester, ubah status, hapus, atau atur target SKS"
+            }
           >
-            <SlidersHorizontal size={13} />
-            <span>{activeMode === "edit" ? "Selesai Mengatur" : "Sesuaikan Susunan"}</span>
+            <Edit3 size={13} />
+            <span>{activeMode === "edit" ? "Selesai Mengedit" : "Edit Roadmap"}</span>
           </button>
 
           {/* Add Course */}
@@ -910,9 +940,10 @@ export default function RoadmapPage() {
               transition: "all 0.15s ease",
             }}
             id="tab-view-visual"
+            title="Peta bergambar yang menunjukkan alur semester satu per satu"
           >
             <GitBranch size={13} color={activeView === "visual" ? "var(--lime)" : "var(--text-muted)"} />
-            <span>Peta Alur Visual</span>
+            <span>Peta Visual</span>
           </button>
 
           <button
@@ -932,6 +963,7 @@ export default function RoadmapPage() {
               transition: "all 0.15s ease",
             }}
             id="tab-view-timeline"
+            title="Daftar mata kuliah dan tugas per semester"
           >
             <Calendar size={13} color={activeView === "timeline" ? "var(--lime)" : "var(--text-muted)"} />
             <span>Daftar Semester</span>
@@ -954,17 +986,34 @@ export default function RoadmapPage() {
               transition: "all 0.15s ease",
             }}
             id="tab-view-split"
+            title="Tampilkan Daftar Semester dan Peta Visual sekaligus dalam dua kolom"
           >
             <Columns2 size={13} color={activeView === "split" ? "var(--amber)" : "var(--text-muted)"} />
-            <span>Berdampingan</span>
+            <span>Daftar + Peta</span>
           </button>
         </div>
 
-        {/* Quiet Mode Indicator */}
+        {/* Mode Indicator */}
         {activeMode === "edit" ? (
-          <div style={{ fontSize: 11.5, color: "var(--amber-deep)", display: "flex", alignItems: "center", gap: 6, fontWeight: 600 }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--amber)" }} />
-            <span>Mode penyesuaian susunan aktif: klik matkul atau tombol tambah untuk mengubah</span>
+          <div
+            role="status"
+            style={{
+              fontSize: 12,
+              color: "var(--amber-deep)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontWeight: 600,
+              background: "rgba(245,205,71,0.14)",
+              border: "1px solid var(--amber)",
+              borderRadius: 10,
+              padding: "8px 12px",
+            }}
+          >
+            <Edit3 size={14} style={{ flexShrink: 0 }} />
+            <span>
+              Mode Edit aktif. Klik mata kuliah untuk ubah status, pindah semester, atau hapus. Klik &quot;Selesai Mengedit&quot; jika sudah.
+            </span>
           </div>
         ) : (
           <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
@@ -1215,6 +1264,7 @@ export default function RoadmapPage() {
         <div
           className="dialog-overlay"
           onClick={() => setShowAddCourseModal(false)}
+          onWheel={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
         >
@@ -1414,6 +1464,7 @@ export default function RoadmapPage() {
         <div
           className="dialog-overlay"
           onClick={() => setShowAddMilestoneModal(false)}
+          onWheel={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
         >
@@ -1570,6 +1621,7 @@ export default function RoadmapPage() {
           onClick={() => {
             if (!isApplying) setShowTemplatePicker(false);
           }}
+          onWheel={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
         >
@@ -3044,6 +3096,16 @@ function SemesterInspectorModal({
 }) {
   const [targetCreditsInput, setTargetCreditsInput] = useState<number>(plan.targetCredits || 20);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, []);
+
   const academicTasks = plan.tasks.filter((t) => t.credits > 0);
   const milestoneTasks = plan.tasks.filter((t) => t.credits === 0);
   const academicCredits = academicTasks.reduce((sum, t) => sum + t.credits, 0);
@@ -3053,7 +3115,7 @@ function SemesterInspectorModal({
   const isTooLight = plan.semesterNum < 8 && academicCredits < 12 && academicCredits > 0;
 
   return (
-    <div className="dialog-overlay" onClick={onClose} role="dialog" aria-modal="true">
+    <div className="dialog-overlay" onClick={onClose} onWheel={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
       <div
         className="dialog"
         style={{ maxWidth: 660, maxHeight: "90vh", overflowY: "auto" }}

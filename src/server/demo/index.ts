@@ -48,189 +48,181 @@ function generateToken(): string {
 }
 
 async function seedDemoData(guestSessionId: string) {
-  // Academic Profile
-  await prisma.academicProfile.create({
-    data: {
-      guestSessionId,
-      institutionName: "Universitas Nusantara Maju",
-      facultyName: "Fakultas Ilmu Komputer",
-      programName: "Teknik Informatika",
-      educationLevel: "S1",
-      entryYear: 2022,
-      currentSemester: 5,
-      totalCurriculumCredits: 144,
-      completedCredits: 84,
-      inProgressCredits: 18,
-      gpa: 3.42,
-      goals: "balanced",
-      interests: JSON.stringify(["magang", "lomba", "penelitian"]),
-      takEnabled: true,
-      takTarget: 120,
-      weeklyHours: 30,
-    },
-  });
+  await prisma.$transaction(async (tx) => {
+    // 1. Academic Profile, Roadmap, Reminders, Achievements, CheckIn in parallel
+    const [, roadmap] = await Promise.all([
+      tx.academicProfile.create({
+        data: {
+          guestSessionId,
+          institutionName: "Universitas Nusantara Maju",
+          facultyName: "Fakultas Ilmu Komputer",
+          programName: "Teknik Informatika",
+          educationLevel: "S1",
+          entryYear: 2022,
+          currentSemester: 5,
+          totalCurriculumCredits: 144,
+          completedCredits: 84,
+          inProgressCredits: 18,
+          gpa: 3.42,
+          goals: "balanced",
+          interests: JSON.stringify(["magang", "lomba", "penelitian"]),
+          takEnabled: true,
+          takTarget: 120,
+          weeklyHours: 30,
+        },
+      }),
+      tx.roadmap.create({
+        data: {
+          guestSessionId,
+          title: "Roadmap Demo — Budi Santoso",
+          status: "active",
+        },
+      }),
+      tx.reminder.createMany({
+        data: [
+          {
+            guestSessionId,
+            title: "Pengumpulan KRS Semester 6",
+            category: "krs",
+            deadline: "2025-01-15",
+            isOfficial: false,
+            notes: "Pastikan sudah konsultasi dengan dosen wali.",
+          },
+          {
+            guestSessionId,
+            title: "Deadline Pendaftaran Magang BUMN",
+            category: "magang",
+            deadline: "2025-02-28",
+            isOfficial: false,
+            notes: "Siapkan CV dan surat motivasi.",
+          },
+          {
+            guestSessionId,
+            title: "Sidang Proposal Skripsi (target)",
+            category: "skripsi",
+            deadline: "2025-07-01",
+            isOfficial: false,
+            notes: "Estimasi pribadi, konfirmasi ke prodi.",
+          },
+        ],
+      }),
+      tx.achievement.createMany({
+        data: [
+          {
+            guestSessionId,
+            title: "Juara 2 Hackathon InnovaTech 2023",
+            category: "lomba",
+            role: "Lead Developer",
+            description: "Membangun aplikasi manajemen sampah berbasis IoT dalam 36 jam.",
+            startDate: "2023-11-10",
+            endDate: "2023-11-12",
+            impact: "Memenangkan hadiah Rp 5.000.000 dan mendapat liputan media kampus.",
+            skills: JSON.stringify(["React Native", "IoT", "Node.js", "Teamwork"]),
+            includeInCv: true,
+          },
+          {
+            guestSessionId,
+            title: "Asisten Laboratorium Algoritma",
+            category: "akademik",
+            role: "Asisten Lab",
+            description: "Membantu mahasiswa semester 2 dalam memahami konsep algoritma dasar dan struktur data.",
+            startDate: "2023-02-01",
+            endDate: "2023-06-30",
+            impact: "Meningkatkan rata-rata nilai praktikum kelas sebesar 12%.",
+            skills: JSON.stringify(["Teaching", "Algoritma", "Python", "Communication"]),
+            includeInCv: true,
+          },
+          {
+            guestSessionId,
+            title: "Magang Software Engineer — PT Teknologi Nusantara",
+            category: "magang",
+            role: "Software Engineer Intern",
+            description: "Mengembangkan fitur notifikasi real-time untuk aplikasi e-commerce internal.",
+            startDate: "2023-07-01",
+            endDate: "2023-09-30",
+            impact: "Fitur berhasil diluncurkan dan mengurangi waktu respons notifikasi sebesar 40%.",
+            skills: JSON.stringify(["React", "Node.js", "Redis", "Agile", "Git"]),
+            includeInCv: true,
+          },
+        ],
+      }),
+      tx.checkIn.create({
+        data: {
+          guestSessionId,
+          type: "start_semester",
+          semesterNum: 5,
+          answers: JSON.stringify({
+            sksRealistic: true,
+            scheduleCurrent: true,
+            mainPriority: "Menyelesaikan proyek akhir mata kuliah basis data.",
+            workloadAdjust: false,
+          }),
+        },
+      }),
+    ]);
 
-  // Roadmap
-  const roadmap = await prisma.roadmap.create({
-    data: {
-      guestSessionId,
-      title: "Roadmap Demo — Budi Santoso",
-      status: "active",
-    },
-  });
-
-  // Roadmap Version
-  const version = await prisma.roadmapVersion.create({
-    data: {
-      roadmapId: roadmap.id,
-      versionNum: 1,
-      label: "Roadmap Awal",
-      isBaseline: true,
-    },
-  });
-
-  await prisma.roadmap.update({
-    where: { id: roadmap.id },
-    data: { currentVersionId: version.id },
-  });
-
-  // Semester Plans (current + future)
-  const semesters = [
-    { num: 5, isCurrent: true, targetCredits: 20, tasks: demoSemester5Tasks() },
-    { num: 6, isCurrent: false, targetCredits: 20, tasks: demoSemester6Tasks() },
-    { num: 7, isCurrent: false, targetCredits: 18, tasks: demoSemester7Tasks() },
-    { num: 8, isCurrent: false, targetCredits: 12, tasks: demoSemester8Tasks() },
-  ];
-
-  for (const sem of semesters) {
-    const plan = await prisma.semesterPlan.create({
+    // 2. Roadmap Version
+    const version = await tx.roadmapVersion.create({
       data: {
-        roadmapVersionId: version.id,
-        semesterNum: sem.num,
-        isCurrentSemester: sem.isCurrent,
-        targetCredits: sem.targetCredits,
-        plannedCredits: sem.targetCredits,
-        semesterLabel:
-          sem.num === 5
-            ? "Semester 5 — Ganjil 2024/2025"
-            : sem.num === 6
-            ? "Semester 6 — Genap 2024/2025"
-            : sem.num === 7
-            ? "Semester 7 — Ganjil 2025/2026"
-            : "Semester 8 — Genap 2025/2026",
+        roadmapId: roadmap.id,
+        versionNum: 1,
+        label: "Roadmap Awal",
+        isBaseline: true,
       },
     });
 
-    for (const task of sem.tasks) {
-      await prisma.roadmapTask.create({
-        data: { semesterPlanId: plan.id, ...task },
+    await Promise.all([
+      tx.roadmap.update({
+        where: { id: roadmap.id },
+        data: { currentVersionId: version.id },
+      }),
+      tx.simulation.create({
+        data: {
+          guestSessionId,
+          roadmapId: roadmap.id,
+          baselineVersionId: version.id,
+          scenarioType: "magang",
+          title: "Simulasi Magang Semester 6",
+          parameters: JSON.stringify({
+            type: "magang",
+            startSemester: 6,
+            durationSemesters: 1,
+            creditsToConvert: 20,
+            conversionStatus: "belum_diketahui",
+            conflictsWithRegular: true,
+          }),
+          status: "calculated",
+        },
+      }),
+    ]);
+
+    // 3. Semester Plans & Batch Tasks
+    const semesters = [
+      { num: 5, isCurrent: true, targetCredits: 20, label: "Semester 5 — Ganjil 2024/2025", tasks: demoSemester5Tasks() },
+      { num: 6, isCurrent: false, targetCredits: 20, label: "Semester 6 — Genap 2024/2025", tasks: demoSemester6Tasks() },
+      { num: 7, isCurrent: false, targetCredits: 18, label: "Semester 7 — Ganjil 2025/2026", tasks: demoSemester7Tasks() },
+      { num: 8, isCurrent: false, targetCredits: 12, label: "Semester 8 — Genap 2025/2026", tasks: demoSemester8Tasks() },
+    ];
+
+    for (const sem of semesters) {
+      const plan = await tx.semesterPlan.create({
+        data: {
+          roadmapVersionId: version.id,
+          semesterNum: sem.num,
+          isCurrentSemester: sem.isCurrent,
+          targetCredits: sem.targetCredits,
+          plannedCredits: sem.targetCredits,
+          semesterLabel: sem.label,
+        },
+      });
+
+      await tx.roadmapTask.createMany({
+        data: sem.tasks.map((task) => ({
+          semesterPlanId: plan.id,
+          ...task,
+        })),
       });
     }
-  }
-
-  // Simulations
-  await prisma.simulation.create({
-    data: {
-      guestSessionId,
-      roadmapId: roadmap.id,
-      baselineVersionId: version.id,
-      scenarioType: "magang",
-      title: "Simulasi Magang Semester 6",
-      parameters: JSON.stringify({
-        type: "magang",
-        startSemester: 6,
-        durationSemesters: 1,
-        creditsToConvert: 20,
-        conversionStatus: "belum_diketahui",
-        conflictsWithRegular: true,
-      }),
-      status: "calculated",
-    },
-  });
-
-  // Reminders
-  const reminderData = [
-    {
-      title: "Pengumpulan KRS Semester 6",
-      category: "krs",
-      deadline: "2025-01-15",
-      isOfficial: false,
-      notes: "Pastikan sudah konsultasi dengan dosen wali.",
-    },
-    {
-      title: "Deadline Pendaftaran Magang BUMN",
-      category: "magang",
-      deadline: "2025-02-28",
-      isOfficial: false,
-      notes: "Siapkan CV dan surat motivasi.",
-    },
-    {
-      title: "Sidang Proposal Skripsi (target)",
-      category: "skripsi",
-      deadline: "2025-07-01",
-      isOfficial: false,
-      notes: "Estimasi pribadi, konfirmasi ke prodi.",
-    },
-  ];
-
-  for (const r of reminderData) {
-    await prisma.reminder.create({ data: { guestSessionId, ...r } });
-  }
-
-  // Achievements
-  const achievementData = [
-    {
-      title: "Juara 2 Hackathon InnovaTech 2023",
-      category: "lomba",
-      role: "Lead Developer",
-      description: "Membangun aplikasi manajemen sampah berbasis IoT dalam 36 jam.",
-      startDate: "2023-11-10",
-      endDate: "2023-11-12",
-      impact: "Memenangkan hadiah Rp 5.000.000 dan mendapat liputan media kampus.",
-      skills: JSON.stringify(["React Native", "IoT", "Node.js", "Teamwork"]),
-      includeInCv: true,
-    },
-    {
-      title: "Asisten Laboratorium Algoritma",
-      category: "akademik",
-      role: "Asisten Lab",
-      description: "Membantu mahasiswa semester 2 dalam memahami konsep algoritma dasar dan struktur data.",
-      startDate: "2023-02-01",
-      endDate: "2023-06-30",
-      impact: "Meningkatkan rata-rata nilai praktikum kelas sebesar 12%.",
-      skills: JSON.stringify(["Teaching", "Algoritma", "Python", "Communication"]),
-      includeInCv: true,
-    },
-    {
-      title: "Magang Software Engineer — PT Teknologi Nusantara",
-      category: "magang",
-      role: "Software Engineer Intern",
-      description: "Mengembangkan fitur notifikasi real-time untuk aplikasi e-commerce internal.",
-      startDate: "2023-07-01",
-      endDate: "2023-09-30",
-      impact: "Fitur berhasil diluncurkan dan mengurangi waktu respons notifikasi sebesar 40%.",
-      skills: JSON.stringify(["React", "Node.js", "Redis", "Agile", "Git"]),
-      includeInCv: true,
-    },
-  ];
-
-  for (const a of achievementData) {
-    await prisma.achievement.create({ data: { guestSessionId, ...a } });
-  }
-
-  // Check-ins
-  await prisma.checkIn.create({
-    data: {
-      guestSessionId,
-      type: "start_semester",
-      semesterNum: 5,
-      answers: JSON.stringify({
-        sksRealistic: true,
-        scheduleCurrent: true,
-        mainPriority: "Menyelesaikan proyek akhir mata kuliah basis data.",
-        workloadAdjust: false,
-      }),
-    },
   });
 }
 

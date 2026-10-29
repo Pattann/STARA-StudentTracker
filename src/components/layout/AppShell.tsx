@@ -24,6 +24,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useSession } from "@/features/session/context";
+import { StudentAvatarBadge, useStudentAvatar } from "@/components/ui/StudentAvatar";
 
 const navItems = [
   { href: "/app", label: "Beranda", icon: LayoutDashboard },
@@ -65,18 +66,19 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
         aria-label="Navigasi utama"
       >
         {/* Logo */}
-        <div className="sidebar-logo" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="sidebar-logo">
           <img
             src="/blackstara.svg"
             alt="Logo STARA"
-            width={26}
-            height={26}
-            style={{ width: 26, height: 26, objectFit: "contain", display: "block" }}
+            width={24}
+            height={24}
+            style={{ width: 24, height: 24, objectFit: "contain", display: "block", flexShrink: 0 }}
           />
           <span
             style={{
               fontWeight: 800,
-              fontSize: 17,
+              fontSize: 16,
+              lineHeight: 1,
               color: "var(--text-primary)",
               letterSpacing: "-0.02em",
             }}
@@ -107,6 +109,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 className={`sidebar-nav-item ${isActive(item.href) ? "active" : ""}`}
                 role="listitem"
                 onClick={() => onClose()}
@@ -165,6 +168,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           <div
             style={{
               margin: "8px",
+              flexShrink: 0,
               background: "#FFFFFF",
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-md)",
@@ -228,7 +232,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           </div>
         )}
 
-        <div style={{ padding: "8px" }}>
+        <div style={{ padding: "8px", flexShrink: 0 }}>
           <button
             id="btn-sidebar-logout"
             onClick={() => clearSession()}
@@ -251,11 +255,37 @@ export function Topbar({
   pageTitle: string;
   onMenuClick: () => void;
 }) {
+  const pathname = usePathname();
   const { token, user } = useSession();
+
+  const resolvedTitle = (() => {
+    if (pageTitle && pageTitle !== "STARA") return pageTitle;
+    if (pathname === "/app") return "Beranda";
+    if (pathname.startsWith("/app/roadmap")) return "Roadmap Saya";
+    if (pathname.startsWith("/app/simulator")) return "Simulasi Skenario";
+    if (pathname.startsWith("/app/templates")) return "Jelajahi Template";
+    if (pathname.startsWith("/app/thesis")) return "Panduan Skripsi";
+    if (pathname.startsWith("/app/achievements")) return "Prestasi & CV";
+    if (pathname.startsWith("/app/reminders")) return "Pengingat";
+    if (pathname.startsWith("/app/profile")) return "Profil & Pengaturan";
+    if (pathname.startsWith("/app/check-ins")) return "Riwayat Check-in";
+    return "Dashboard Mahasiswa";
+  })();
+
+  const isDemoAccount =
+    !user ||
+    user.id === "demo-student" ||
+    user.email === "mahasiswa@student.stara.ac.id";
+
+  const userInitial = user?.name
+    ? user.name.trim().charAt(0).toUpperCase()
+    : "M";
+
+  const [avatarId] = useStudentAvatar(user?.id);
 
   return (
     <header className="topbar">
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
         <button
           onClick={onMenuClick}
           className="btn btn-ghost btn-sm"
@@ -264,45 +294,97 @@ export function Topbar({
         >
           <Menu size={20} />
         </button>
-        <h1 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
-          {pageTitle}
-        </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted)", lineHeight: 1 }}>
+            Workspace
+          </span>
+          <ChevronRight size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 15,
+              fontWeight: 700,
+              lineHeight: 1,
+              color: "var(--text-primary)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {resolvedTitle}
+          </h1>
+        </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
         {token && (
           <span
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
               fontSize: 12,
-              color: "#92400E",
-              background: "rgba(245, 205, 71, 0.22)",
-              border: "1px solid rgba(217, 119, 6, 0.3)",
+              color: isDemoAccount ? "#92400E" : "#15803D",
+              background: isDemoAccount
+                ? "rgba(245, 205, 71, 0.22)"
+                : "rgba(22, 163, 74, 0.10)",
+              border: isDemoAccount
+                ? "1px solid rgba(217, 119, 6, 0.3)"
+                : "1px solid rgba(22, 163, 74, 0.25)",
               borderRadius: "var(--radius-pill)",
               padding: "4px 12px",
               fontWeight: 700,
-              letterSpacing: "0.02em",
+              letterSpacing: "0.01em",
+              lineHeight: 1.2,
             }}
           >
-            Demo Workspace
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: isDemoAccount ? "#D97706" : "#16A34A",
+                flexShrink: 0,
+              }}
+            />
+            <span>
+              {isDemoAccount
+                ? "Demo Workspace"
+                : user?.name || "Mahasiswa Aktif"}
+            </span>
           </span>
         )}
 
-        <Link href="/app/profile" aria-label="Profil pengguna">
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: "var(--bg-secondary)",
-              border: "1px solid var(--border)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            <User size={16} color="var(--text-secondary)" />
-          </div>
+        <Link
+          href="/app/profile"
+          aria-label="Profil pengguna"
+          style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+        >
+          {isDemoAccount ? (
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: "50%",
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+              title="Demo Workspace — Profil & Pengaturan"
+            >
+              <User size={15} color="var(--text-secondary)" />
+            </div>
+          ) : (
+            <StudentAvatarBadge
+              avatarId={avatarId}
+              initial={userInitial}
+              size={34}
+              title={`${user?.name || "Mahasiswa"} (${user?.email || "Profil & Pengaturan"})`}
+            />
+          )}
         </Link>
       </div>
     </header>

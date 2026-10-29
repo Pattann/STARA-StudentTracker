@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { calculateFullRoadmap } from "@/server/rules-engine";
+import { seedInitialRoadmapForSession } from "@/server/admin/service";
 import { parseJsonSafe } from "@/lib/utils";
 
 async function resolveSession(req: NextRequest) {
@@ -16,16 +17,53 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Sesi tidak valid." }, { status: 401 });
 
   try {
-    const roadmap = await prisma.roadmap.findFirst({
-      where: { guestSessionId: session.id },
-      orderBy: { createdAt: "desc" },
-    });
+    let [roadmap, profile] = await Promise.all([
+      prisma.roadmap.findFirst({
+        where: { guestSessionId: session.id },
+        orderBy: { createdAt: "desc" },
+        include: {
+          versions: {
+            orderBy: { versionNum: "desc" },
+            select: { id: true, versionNum: true, label: true, createdAt: true, isBaseline: true },
+          },
+        },
+      }),
+      prisma.academicProfile.findUnique({
+        where: { guestSessionId: session.id },
+      }),
+    ]);
+
+    // Auto-seed initial 8-semester roadmap if student has a profile but no roadmap yet (unless explicitly cleared)
+    if (!roadmap && profile && !session.isReset) {
+      await seedInitialRoadmapForSession(session.id, {
+        programName: profile.programName,
+        currentSemester: profile.currentSemester,
+        entryYear: profile.entryYear,
+      });
+      roadmap = await prisma.roadmap.findFirst({
+        where: { guestSessionId: session.id },
+        orderBy: { createdAt: "desc" },
+        include: {
+          versions: {
+            orderBy: { versionNum: "desc" },
+            select: { id: true, versionNum: true, label: true, createdAt: true, isBaseline: true },
+          },
+        },
+      });
+    }
 
     if (!roadmap) {
-      const profile = await prisma.academicProfile.findUnique({
-        where: { guestSessionId: session.id },
-      });
-      return NextResponse.json({ roadmap: null, profile });
+      const fallbackCalc = profile
+        ? calculateFullRoadmap({
+            totalCurriculumCredits: profile.totalCurriculumCredits,
+            completedCredits: profile.completedCredits,
+            inProgressCredits: profile.inProgressCredits,
+            currentSemester: profile.currentSemester,
+            goals: profile.goals,
+            semesterPlans: [],
+          })
+        : null;
+      return NextResponse.json({ roadmap: null, profile, calculation: fallbackCalc });
     }
 
     const version = roadmap.currentVersionId
@@ -40,15 +78,7 @@ export async function GET(req: NextRequest) {
         })
       : null;
 
-    const profile = await prisma.academicProfile.findUnique({
-      where: { guestSessionId: session.id },
-    });
-
-    const versions = await prisma.roadmapVersion.findMany({
-      where: { roadmapId: roadmap.id },
-      orderBy: { versionNum: "desc" },
-      select: { id: true, versionNum: true, label: true, createdAt: true, isBaseline: true },
-    });
+    const versions = roadmap.versions;
 
     // Calculate using rules engine
     let calculation = null;
@@ -125,20 +155,29 @@ export async function POST(req: NextRequest) {
     };
 
     if (body.action === "clear_roadmap") {
-      await prisma.roadmap.deleteMany({ where: { guestSessionId: session.id } });
+      await Promise.all([
+        prisma.roadmap.deleteMany({ where: { guestSessionId: session.id } }),
+        prisma.guestSession.update({ where: { id: session.id }, data: { isReset: true } }),
+      ]);
       return NextResponse.json({ success: true, message: "Roadmap berhasil dikosongkan." });
     }
 
     if (body.action === "update_task" && body.taskId) {
-      const task = await prisma.roadmapTask.findUnique({ where: { id: body.taskId } });
+      const task = await prisma.roadmapTask.findUnique({
+        where: { id: body.taskId },
+        include: {
+          semesterPlan: {
+            include: {
+              roadmapVersion: {
+                include: { roadmap: true },
+              },
+            },
+          },
+        },
+      });
       if (!task) return NextResponse.json({ error: "Task tidak ditemukan." }, { status: 404 });
 
-      // Verify ownership
-      const plan = await prisma.semesterPlan.findUnique({ where: { id: task.semesterPlanId } });
-      if (!plan) return NextResponse.json({ error: "Plan tidak ditemukan." }, { status: 404 });
-      const version = await prisma.roadmapVersion.findUnique({ where: { id: plan.roadmapVersionId } });
-      if (!version) return NextResponse.json({ error: "Version tidak ditemukan." }, { status: 404 });
-      const roadmap = await prisma.roadmap.findUnique({ where: { id: version.roadmapId } });
+      const roadmap = task.semesterPlan?.roadmapVersion?.roadmap;
       if (!roadmap || roadmap.guestSessionId !== session.id) {
         return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
       }

@@ -299,7 +299,7 @@ export default function ThesisPage() {
   const { token } = useSession();
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<"explore" | "chat" | "review" | "timeline">("explore");
+  const [activeTab, setActiveTab] = useState<"explore" | "chat" | "review" | "timeline">("timeline");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -367,12 +367,18 @@ export default function ThesisPage() {
       .then((data: { profile: StudentProfile | null }) => {
         if (data.profile) {
           setProfile(data.profile);
+          const pName = data.profile?.programName || "Teknik Informatika";
+          const isIndustri = /industri|manajemen|logistik/i.test(pName);
+          const defaultInterests = isIndustri
+            ? "Optimasi Rantai Pasok, Pengendalian Kualitas, Ergonomi & Sistem Kerja"
+            : "Machine Learning, Pengembangan Web, Analisis Data";
           setForm((prev) => ({
             ...prev,
-            programName: data.profile?.programName || prev.programName,
-            interests: data.profile?.interests && data.profile.interests.length > 0
-              ? data.profile.interests.join(", ")
-              : prev.interests,
+            programName: pName,
+            interests:
+              data.profile?.interests && data.profile.interests.length > 0
+                ? data.profile.interests.join(", ")
+                : prev.interests || defaultInterests,
           }));
         }
       })
@@ -706,13 +712,68 @@ export default function ThesisPage() {
     setTimeout(() => setCopiedTitle(null), 2500);
   };
 
+  // Adopt a title directly into Stage 1 of the 11-Stage Tracker
+  const adoptTitleIntoTracker = (title: string) => {
+    const updated = stages.map((s) => {
+      if (s.id !== 1) return s;
+      return {
+        ...s,
+        status: s.status === "belum_dimulai" ? ("proses_bimbingan" as StageStatus) : s.status,
+        fields: {
+          ...s.fields,
+          approvedTitle: title,
+        },
+      };
+    });
+    setStages(updated);
+    setTopicContext(title);
+    setExpandedStageId(1);
+    saveStagesProgress(updated);
+    setSaveSuccessMsg(`✓ Judul "${title.slice(0, 50)}..." berhasil diterapkan ke Tahap 1 Tracker Skripsi!`);
+    setTimeout(() => setSaveSuccessMsg(null), 4000);
+  };
+
+  // Send a title directly to Reviewer Judul & Topik AI
+  const sendTitleToReview = (title: string) => {
+    setReviewInput(title);
+    changeTab("review");
+  };
+
+  // Render formatted markdown text in AI chat bubbles
+  const renderFormattedThesisText = (text: string) => {
+    const lines = text.split("\n");
+    return lines.map((line, lineIdx) => {
+      const parts = line.split(/(\*\*.*?\*\*)/g);
+      return (
+        <div
+          key={lineIdx}
+          style={{
+            marginBottom: line.trim() === "" ? 6 : 3,
+            paddingLeft: /^(\d+\.|•|-|\*)\s/.test(line.trim()) ? 6 : 0,
+          }}
+        >
+          {parts.map((part, pIdx) => {
+            if (part.startsWith("**") && part.endsWith("**")) {
+              return (
+                <strong key={pIdx} style={{ fontWeight: 700, color: "var(--text-primary)" }}>
+                  {part.slice(2, -2)}
+                </strong>
+              );
+            }
+            return <span key={pIdx}>{part}</span>;
+          })}
+        </div>
+      );
+    });
+  };
+
   // Switch to chat with prefilled topic
   const consultTopicInChat = (topic: string) => {
     setTopicContext(topic);
     changeTab("chat");
-    if (chatMessages.length === 0) {
-      handleSendChat(`Halo STARA AI, saya tertarik dengan topik penelitian "${topic}". Tolong bantu saya merumuskan batasan masalah dan langkah awal pengerjaannya.`);
-    }
+    handleSendChat(
+      `Halo STARA AI, saya tertarik dengan judul/topik penelitian "${topic}". Tolong bantu saya menyusun: 1) Celah riset (research gap), 2) 3 butir rumusan masalah, dan 3) Kerangka awal BAB 1.`
+    );
   };
 
   // Reset 11 stages confirmation
@@ -731,22 +792,54 @@ export default function ThesisPage() {
   const currentActiveStage = stages.find((s) => s.status !== "acc_dospem") || stages[stages.length - 1];
   const progressPercentage = Math.round((completedStagesCount / 11) * 100);
 
+  const isIndustriProdi = /industri|manajemen|logistik/i.test(form.programName);
+  const quickInterestChips = isIndustriProdi
+    ? ["Optimasi Rantai Pasok", "Pengendalian Kualitas (Six Sigma)", "Ergonomi & K3", "Sistem Produksi Lean", "Simulasi Sistem Industri", "Riset Operasi & Logistik"]
+    : ["Machine Learning", "Pengembangan Web", "Keamanan Siber", "Internet of Things", "UI/UX & HCI", "Data Science & Analitik"];
+
   return (
     <div>
       {/* ── Page Header ── */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em", margin: 0 }}>
             Panduan Skripsi & Tugas Akhir
           </h1>
-          <span className="badge badge-lime" style={{ fontSize: 10, display: "flex", alignItems: "center", gap: 4 }}>
-            <Sparkles size={11} /> AI Powered
+          <span className="badge badge-lime" style={{ fontSize: 10.5, display: "flex", alignItems: "center", gap: 4 }}>
+            <Sparkles size={11} /> STARA Thesis AI
           </span>
         </div>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
-          Eksplorasi ide penelitian, pelacakan alur 11 tahapan skripsi terstruktur, dan konsultasi AI yang adaptif dengan progresmu.
+          Asisten AI terpadu untuk mencari ide judul, menguji kelayakan Sempro, berkonsultasi penulisan BAB 1–5, dan memantau 11 tahapan skripsi.
         </p>
       </div>
+
+      {/* ── Global Notification Toast if Title Adopted ── */}
+      {saveSuccessMsg && activeTab !== "timeline" && (
+        <div
+          style={{
+            marginBottom: 14,
+            padding: "10px 14px",
+            background: "rgba(215,243,106,0.16)",
+            border: "1px solid var(--lime)",
+            borderRadius: "var(--radius-md)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            color: "var(--text-primary)",
+            fontSize: 12.5,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <CheckCircle size={15} color="var(--lime)" />
+            <span>{saveSuccessMsg}</span>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => changeTab("timeline")} style={{ fontSize: 11.5 }}>
+            Lihat di Tracker →
+          </button>
+        </div>
+      )}
 
       {/* ── Profile Context Notice ── */}
       {profile && (
@@ -769,71 +862,109 @@ export default function ThesisPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Target size={14} color="var(--blue)" />
             <span>
-              Profil Terhubung: <strong style={{ color: "var(--text-primary)" }}>{profile.programName}</strong> ({profile.institutionName || "Kampus"}) • Semester {profile.currentSemester ?? 4}
+              Profil Akademik Aktif: <strong style={{ color: "var(--text-primary)" }}>{profile.programName}</strong> ({profile.institutionName || "Kampus"}) • Semester {profile.currentSemester ?? 4}
             </span>
           </div>
-          {profile.interests && profile.interests.length > 0 && (
-            <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-              <span style={{ color: "var(--text-muted)" }}>Fokus:</span>
-              {profile.interests.slice(0, 3).map((item, idx) => (
-                <span key={idx} className="badge badge-gray" style={{ fontSize: 10.5 }}>{item}</span>
-              ))}
-            </div>
-          )}
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <span style={{ color: "var(--text-muted)" }}>Posisi Skripsi:</span>
+            <span className="badge badge-lime" style={{ fontSize: 10.5 }}>
+              Tahap {currentActiveStage.id}/11: {currentActiveStage.stageName}
+            </span>
+          </div>
         </div>
       )}
 
-      {/* ── Navigation Tabs ── */}
+      {/* ── 4-Step Interactive AI Hub Cards (Makes Thesis Guide Super Clear) ── */}
       <div
         style={{
-          display: "flex",
-          gap: 6,
-          borderBottom: "1px solid var(--border-subtle)",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(215px, 1fr))",
+          gap: 10,
           marginBottom: 20,
-          overflowX: "auto",
-          paddingBottom: 2,
         }}
       >
-        <button
-          className={`btn btn-sm ${activeTab === "explore" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => changeTab("explore")}
-          style={{ gap: 6, fontSize: 12.5 }}
-          id="tab-thesis-explore"
-        >
-          <Lightbulb size={14} />
-          Eksplorasi Topik AI
-        </button>
-        <button
-          className={`btn btn-sm ${activeTab === "chat" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => changeTab("chat")}
-          style={{ gap: 6, fontSize: 12.5 }}
-          id="tab-thesis-chat"
-        >
-          <MessageSquare size={14} />
-          Tanya Konsultan Skripsi AI
-          {topicContext && <span className="badge badge-blue" style={{ fontSize: 9 }}>Aktif</span>}
-        </button>
-        <button
-          className={`btn btn-sm ${activeTab === "review" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => changeTab("review")}
-          style={{ gap: 6, fontSize: 12.5 }}
-          id="tab-thesis-review"
-        >
-          <FileCheck size={14} />
-          Reviewer Judul & Topik
-        </button>
-        <button
-          className={`btn btn-sm ${activeTab === "timeline" ? "btn-primary" : "btn-ghost"}`}
-          onClick={() => changeTab("timeline")}
-          style={{ gap: 6, fontSize: 12.5 }}
-          id="tab-thesis-timeline"
-        >
-          <ListChecks size={14} />
-          11 Tahapan & Tracker Skripsi
-          <span className="badge badge-lime" style={{ fontSize: 9.5, marginLeft: 2 }}>
-            {completedStagesCount}/11
-          </span>
-        </button>
+        {[
+          {
+            id: "explore" as const,
+            step: "Fitur AI 1",
+            title: "Eksplorasi Topik & Judul AI",
+            desc: "Belum punya judul? AI merancang 3 ide topik, rumusan masalah, & metode sesuai prodimu.",
+            icon: Lightbulb,
+            badge: "Cari Ide",
+          },
+          {
+            id: "review" as const,
+            step: "Fitur AI 2",
+            title: "Reviewer Kelayakan Judul",
+            desc: "Uji draf judulmu (Skor 0–100), deteksi celah sidang Sempro, & dapatkan variasi judul ilmiah.",
+            icon: FileCheck,
+            badge: "Uji Judul",
+          },
+          {
+            id: "chat" as const,
+            step: "Fitur AI 3",
+            title: "Konsultan Skripsi AI 24/7",
+            desc: "Tanya jawab penyusunan BAB 1–5, pencarian jurnal, metodologi, hingga simulasi tanya-jawab sidang.",
+            icon: MessageSquare,
+            badge: topicContext ? "Topik Aktif" : "Diskusi AI",
+          },
+          {
+            id: "timeline" as const,
+            step: "Tracker Progres",
+            title: "Tracker 11 Tahapan Skripsi",
+            desc: "Simpan judul ACC, catat revisi dospem dari pengajuan judul hingga yudisium kelulusan.",
+            icon: ListChecks,
+            badge: `${completedStagesCount}/11 Selesai`,
+          },
+        ].map((item) => {
+          const IconComp = item.icon;
+          const isSelected = activeTab === item.id;
+          return (
+            <div
+              key={item.id}
+              id={`tab-thesis-${item.id}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => changeTab(item.id)}
+              onKeyDown={(e) => e.key === "Enter" && changeTab(item.id)}
+              style={{
+                background: isSelected ? "rgba(215,243,106,0.12)" : "var(--surface-card)",
+                border: isSelected ? "2px solid var(--lime)" : "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-md)",
+                padding: "12px 14px",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: 6,
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                  <span style={{ fontSize: 10.5, fontWeight: 700, color: isSelected ? "var(--lime)" : "var(--text-muted)", textTransform: "uppercase" }}>
+                    {item.step}
+                  </span>
+                  <span className={`badge ${isSelected ? "badge-lime" : "badge-gray"}`} style={{ fontSize: 9.5 }}>
+                    {item.badge}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                  <IconComp size={15} color={isSelected ? "var(--lime)" : "var(--text-primary)"} style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--text-primary)" }}>
+                    {item.title}
+                  </span>
+                </div>
+                <p style={{ fontSize: 11.5, color: "var(--text-secondary)", margin: 0, lineHeight: 1.45 }}>
+                  {item.desc}
+                </p>
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: isSelected ? "var(--lime)" : "var(--teal)", display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                {isSelected ? "● Sedang Dibuka" : "Buka Fitur Ini →"}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ══════════════════════════════════════════════════════
@@ -844,10 +975,10 @@ export default function ThesisPage() {
           <div style={{ display: "grid", gridTemplateColumns: exploreResult ? "380px 1fr" : "1fr", gap: 20 }}>
             {/* Form Panel */}
             <div className="card" style={{ maxWidth: exploreResult ? "100%" : 680 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <h2 style={{ fontSize: 15.5, fontWeight: 700, color: "var(--text-primary)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
                   <Sparkles size={16} color="var(--lime)" />
-                  Kuesioner Minat & Kesiapan Riset
+                  Generator Ide Topik & Judul Skripsi AI
                 </h2>
                 {exploreResult && (
                   <button className="btn btn-ghost btn-sm" onClick={() => setExploreResult(null)} style={{ fontSize: 11 }}>
@@ -855,6 +986,9 @@ export default function ThesisPage() {
                   </button>
                 )}
               </div>
+              <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: "0 0 14px 0", lineHeight: 1.5 }}>
+                Sesuaikan minat dan ketersediaan datamu di bawah ini, lalu klik tombol <strong>Rancang Rekomendasi Topik dengan AI</strong>.
+              </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div className="form-group">
@@ -864,25 +998,25 @@ export default function ThesisPage() {
                     className="form-input"
                     value={form.programName}
                     onChange={(e) => setForm({ ...form, programName: e.target.value })}
-                    placeholder="Teknik Informatika"
+                    placeholder="Contoh: Teknik Industri / Teknik Informatika"
                   />
                 </div>
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="th-interests">
-                    Bidang Minat Riset * <span style={{ color: "var(--lime)", fontSize: 11 }}>(pisahkan koma)</span>
+                    Bidang Minat Riset * <span style={{ color: "var(--lime)", fontSize: 11 }}>(klik chip di bawah atau ketik bebas)</span>
                   </label>
                   <input
                     id="th-interests"
                     className="form-input"
                     value={form.interests}
                     onChange={(e) => setForm({ ...form, interests: e.target.value })}
-                    placeholder="Contoh: Machine Learning, Cloud Computing, Cyber Security"
+                    placeholder="Contoh: Optimasi Rantai Pasok, Machine Learning, Pengendalian Kualitas"
                     required
                   />
                   {/* Quick Interest Chips */}
                   <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 6 }}>
-                    {["Machine Learning", "Pengembangan Web", "Keamanan Siber", "Internet of Things", "UI/UX", "Data Science"].map((item) => (
+                    {quickInterestChips.map((item) => (
                       <button
                         key={item}
                         type="button"
@@ -915,7 +1049,7 @@ export default function ThesisPage() {
                     className="form-input"
                     value={form.methods}
                     onChange={(e) => setForm({ ...form, methods: e.target.value })}
-                    placeholder="Eksperimen, Scrum, Algoritma Klasifikasi, Kualitatif"
+                    placeholder={isIndustriProdi ? "Six Sigma, AHP, Linear Programming, Simulasi Monte Carlo" : "Eksperimen, Klasifikasi ML, Scrum, Studi Kasus"}
                   />
                 </div>
 
@@ -927,10 +1061,10 @@ export default function ThesisPage() {
                     value={form.dataAvailability}
                     onChange={(e) => setForm({ ...form, dataAvailability: e.target.value })}
                   >
-                    <option value="Dataset publik atau open-source">Dataset publik / open-source (Kaggle, Satu Data, UCI)</option>
-                    <option value="Data primer melalui survei/wawancara">Data primer (kuesioner, wawancara, observasi)</option>
-                    <option value="Data dari institusi/perusahaan (perlu izin)">Data institusi / perusahaan mitra (perlu izin)</option>
-                    <option value="Belum ada data, perlu dikumpulkan dari nol">Belum ada, perlu crawling / pengumpulan mandiri</option>
+                    <option value="Dataset publik atau open-source">Dataset publik / open-source (Kaggle, Satu Data, BPS, UCI)</option>
+                    <option value="Data primer melalui survei/wawancara">Data primer (kuesioner, wawancara, observasi lapangan)</option>
+                    <option value="Data dari institusi/perusahaan (perlu izin)">Data institusi / perusahaan tempat magang</option>
+                    <option value="Belum ada data, perlu dikumpulkan dari nol">Belum ada, perlu pengumpulan data dari awal</option>
                   </select>
                 </div>
 
@@ -949,13 +1083,13 @@ export default function ThesisPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="th-skills">Skills & Bahasa Pemrograman / Tools yang Dikuasai</label>
+                  <label className="form-label" htmlFor="th-skills">Skills / Software / Tools yang Dikuasai (opsional)</label>
                   <input
                     id="th-skills"
                     className="form-input"
                     value={form.skills}
                     onChange={(e) => setForm({ ...form, skills: e.target.value })}
-                    placeholder="Python, PyTorch, React, SQL, Figma, Docker"
+                    placeholder={isIndustriProdi ? "Excel Solver, Arena Simulation, SPSS, Python, Minitab" : "Python, PyTorch, React, SQL, Figma, Docker"}
                   />
                 </div>
 
@@ -966,7 +1100,7 @@ export default function ThesisPage() {
                     className="form-input"
                     value={form.constraints}
                     onChange={(e) => setForm({ ...form, constraints: e.target.value })}
-                    placeholder="Contoh: Tidak bisa penelitian lapangan jauh, minim biaya server"
+                    placeholder="Contoh: Tidak bisa penelitian lapangan jauh, ingin fokus studi kasus perusahaan"
                   />
                 </div>
 
@@ -987,7 +1121,7 @@ export default function ThesisPage() {
                   {exploreLoading ? (
                     <>
                       <RotateCcw size={15} style={{ animation: "spin 1s linear infinite" }} />
-                      <span>STARA AI Menyusun Arah Topik Riset...</span>
+                      <span>STARA AI Menyusun 3 Rekomendasi Topik Riset...</span>
                     </>
                   ) : (
                     <>
@@ -1005,54 +1139,63 @@ export default function ThesisPage() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                   <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
                     <Lightbulb size={17} color="var(--lime)" />
-                    Rekomendasi Arah Penelitian untuk Anda
+                    Rekomendasi Judul & Arah Penelitian ({form.programName})
                   </h2>
-                  <span className="badge badge-teal" style={{ fontSize: 11 }}>
-                    {exploreResult.directions.length} Alternatif Dihasilkan
+                  <span className="badge badge-lime" style={{ fontSize: 11 }}>
+                    <Sparkles size={11} /> {exploreResult.directions.length} Rekomendasi AI
                   </span>
                 </div>
 
                 {exploreResult.directions.map((d, i) => (
                   <div key={i} className="card" style={{ border: "1px solid var(--border-subtle)" }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(215,243,106,0.12)", border: "1px solid rgba(215,243,106,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flex: 1, minWidth: 240 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(215,243,106,0.12)", border: "1px solid rgba(215,243,106,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
                           <span style={{ fontSize: 14, fontWeight: 800, color: "var(--lime)" }}>{i + 1}</span>
                         </div>
                         <div>
-                          <div style={{ fontSize: 15.5, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
+                          <div style={{ fontSize: 15.5, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.35 }}>
                             {d.topicArea}
                           </div>
-                          <span className="badge" style={{ background: `${feasibilityColors[d.feasibility]}18`, color: feasibilityColors[d.feasibility], fontSize: 10.5, marginTop: 4 }}>
+                          <span className="badge" style={{ background: `${feasibilityColors[d.feasibility]}18`, color: feasibilityColors[d.feasibility], fontSize: 10.5, marginTop: 5 }}>
                             {feasibilityLabels[d.feasibility]}
                           </span>
                         </div>
                       </div>
 
                       {/* Quick Actions */}
-                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => copyToClipboard(d.topicArea)}
-                          title="Salin judul ini"
-                          style={{ fontSize: 11.5, gap: 4 }}
-                        >
-                          {copiedTitle === d.topicArea ? <Check size={12} color="var(--lime)" /> : <Copy size={12} />}
-                          <span>{copiedTitle === d.topicArea ? "Tersalin" : "Salin"}</span>
-                        </button>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         <button
                           className="btn btn-primary btn-sm"
+                          onClick={() => adoptTitleIntoTracker(d.topicArea)}
+                          title="Simpan judul ini ke Tahap 1 Tracker Skripsi"
+                          style={{ fontSize: 11.5, gap: 4 }}
+                        >
+                          <Check size={12} />
+                          <span>Pakai ke Tracker</span>
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => sendTitleToReview(d.topicArea)}
+                          title="Uji skor kelayakan judul ini"
+                          style={{ fontSize: 11.5, gap: 4 }}
+                        >
+                          <FileCheck size={12} />
+                          <span>Uji Kelayakan</span>
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
                           onClick={() => consultTopicInChat(d.topicArea)}
                           title="Konsultasikan topik ini ke AI"
                           style={{ fontSize: 11.5, gap: 4 }}
                         >
                           <MessageSquare size={12} />
-                          <span>Bahas di Chat</span>
+                          <span>Bahas di Chat AI</span>
                         </button>
                       </div>
                     </div>
 
-                    <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 12 }}>
+                    <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.55, marginBottom: 12 }}>
                       <strong style={{ color: "var(--text-primary)" }}>Alasan Kecocokan:</strong> {d.whyItFits}
                     </p>
 
@@ -1090,7 +1233,7 @@ export default function ThesisPage() {
                     {d.firstSteps.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
                         <div style={{ fontSize: 11, color: "var(--lime)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>
-                          Langkah Awal yang Bisa Dilakukan:
+                          Langkah Awal yang Bisa Dilakukan Minggu Ini:
                         </div>
                         {d.firstSteps.map((s, si) => (
                           <div key={si} style={{ fontSize: 12.5, color: "var(--text-secondary)", display: "flex", gap: 6, marginBottom: 3 }}>
@@ -1124,19 +1267,19 @@ export default function ThesisPage() {
           TAB 2: TANYA KONSULTAN SKRIPSI AI (Stage-Aware)
       ══════════════════════════════════════════════════════ */}
       {activeTab === "chat" && (
-        <div className="card" style={{ maxWidth: 840, margin: "0 auto" }}>
+        <div className="card" style={{ maxWidth: 860, margin: "0 auto" }}>
           {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(215,243,106,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Bot size={17} color="var(--lime)" />
+              <div style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(215,243,106,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Bot size={18} color="var(--lime)" />
               </div>
               <div>
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                <h2 style={{ fontSize: 15.5, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
                   STARA Thesis AI Consultant
                 </h2>
                 <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
-                  Spesialis Metodologi, Rumusan Masalah, dan Strategi 11 Tahapan Bimbingan Skripsi
+                  Pendamping Metodologi, Penulisan BAB 1–5, dan Persiapan Sidang ({form.programName})
                 </span>
               </div>
             </div>
@@ -1144,7 +1287,7 @@ export default function ThesisPage() {
             {topicContext && (
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span className="badge badge-blue" style={{ fontSize: 11 }}>
-                  Fokus: {topicContext.length > 25 ? topicContext.slice(0, 25) + "..." : topicContext}
+                  Fokus Topik: {topicContext.length > 35 ? topicContext.slice(0, 35) + "..." : topicContext}
                 </span>
                 <button
                   className="btn btn-ghost btn-sm"
@@ -1178,41 +1321,36 @@ export default function ThesisPage() {
                 </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-                    Posisi Tahapan Skripsi: <span style={{ color: "var(--lime)" }}>{currentActiveStage.stageName}</span>
+                    Tahap Aktif Saat Ini: <span style={{ color: "var(--lime)" }}>Tahap {currentActiveStage.id} — {currentActiveStage.stageName}</span>
                   </div>
                   <div style={{ fontSize: 11.5, color: "var(--text-secondary)" }}>
                     {stages[0]?.fields?.approvedTitle ? (
-                      <>Judul ACC: <em>&quot;{stages[0].fields.approvedTitle}&quot;</em></>
+                      <>Judul di Tracker: <strong>&quot;{stages[0].fields.approvedTitle}&quot;</strong></>
                     ) : (
-                      <>Belum ada judul yang disimpan di Tahap 1</>
+                      <>Belum ada judul di Tahap 1 — kamu bisa mencari judul di tab <strong>Eksplorasi Topik AI</strong></>
                     )}
                   </div>
                 </div>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span className={`badge ${currentActiveStage.status === "acc_dospem" ? "badge-lime" : currentActiveStage.status === "revisi_dospem" ? "badge-orange" : "badge-blue"}`} style={{ fontSize: 11 }}>
-                  {currentActiveStage.status === "acc_dospem" ? "✓ ACC Dospem" : currentActiveStage.status === "revisi_dospem" ? "⚠️ Revisi Dospem" : currentActiveStage.status === "proses_bimbingan" ? "🔄 Proses Bimbingan" : "⚪ Belum Dimulai"}
-                </span>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => changeTab("explore")}
+                  style={{ fontSize: 11, padding: "4px 8px", gap: 4 }}
+                >
+                  <Lightbulb size={12} />
+                  Cari Ide Judul
+                </button>
                 <button
                   className="btn btn-secondary btn-sm"
                   onClick={() => changeTab("timeline")}
-                  style={{ fontSize: 11, padding: "3px 8px", gap: 4 }}
+                  style={{ fontSize: 11, padding: "4px 8px", gap: 4 }}
                 >
                   <ListChecks size={12} />
-                  Buka Tracker Tahapan
+                  Buka Tracker 11 Tahap
                 </button>
               </div>
-            </div>
-
-            {/* Progress Bar mini */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--surface-hover)", overflow: "hidden" }}>
-                <div style={{ width: `${progressPercentage}%`, height: "100%", background: "var(--lime)", transition: "width 0.3s ease" }} />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", whiteSpace: "nowrap" }}>
-                {completedStagesCount} dari 11 Tahapan Selesai ({progressPercentage}%)
-              </span>
             </div>
           </div>
 
@@ -1222,22 +1360,61 @@ export default function ThesisPage() {
               background: "var(--surface-hover)",
               borderRadius: "var(--radius-md)",
               border: "1px solid var(--border-subtle)",
-              padding: 14,
-              minHeight: 280,
-              maxHeight: 440,
+              padding: 16,
+              minHeight: 300,
+              maxHeight: 460,
               overflowY: "auto",
               marginBottom: 14,
             }}
           >
             {chatMessages.length === 0 && (
-              <div style={{ textAlign: "center", padding: "36px 16px", color: "var(--text-muted)" }}>
-                <Bot size={36} style={{ margin: "0 auto 10px", display: "block", opacity: 0.4 }} />
-                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 4 }}>
-                  Ada yang ingin kamu diskusikan tentang skripsimu?
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  marginBottom: 14,
+                  alignItems: "flex-start",
+                }}
+              >
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    background: "var(--surface-card)",
+                    border: "1px solid var(--border-subtle)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Bot size={14} color="var(--lime)" />
                 </div>
-                <p style={{ fontSize: 12.5, maxWidth: 520, margin: "0 auto", lineHeight: 1.5 }}>
-                  STARA AI mengenali posisimu di <strong>{currentActiveStage.stageName}</strong>. Tanyakan strategi menyusun naskah, tips bimbingan dospem, atau checklist tahapan berikutnya.
-                </p>
+                <div
+                  style={{
+                    background: "var(--surface-card)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "4px 12px 12px 12px",
+                    padding: "10px 14px",
+                    fontSize: 13,
+                    color: "var(--text-primary)",
+                    lineHeight: 1.6,
+                    maxWidth: "85%",
+                  }}
+                >
+                  {renderFormattedThesisText(
+                    `Halo! Saya **STARA Thesis AI Consultant** untuk program studi **${form.programName}**.\n\n` +
+                      `Saat ini progres skripsimu berada di **Tahap ${currentActiveStage.id}: ${currentActiveStage.stageName}**${
+                        stages[0]?.fields?.approvedTitle ? ` dengan judul **"${stages[0].fields.approvedTitle}"**` : ""
+                      }.\n\n` +
+                      `Kamu bisa langsung memilih salah satu tombol pertanyaan cepat di bawah atau mengetikkan pertanyaan seputar:\n` +
+                      `• Ide judul & cara mencari *Research Gap* dari jurnal\n` +
+                      `• Panduan penulisan **BAB 1 sampai BAB 5**\n` +
+                      `• Pemilihan metode penelitian & metrik evaluasi\n` +
+                      `• Simulasi pertanyaan dosen penguji saat **Sidang Sempro / Sidang Akhir**`
+                  )}
+                </div>
               </div>
             )}
 
@@ -1270,23 +1447,22 @@ export default function ThesisPage() {
 
                 <div
                   style={{
-                    background: msg.role === "user" ? "rgba(124, 230, 168, 0.12)" : "var(--surface-card)",
+                    background: msg.role === "user" ? "rgba(124, 230, 168, 0.14)" : "var(--surface-card)",
                     border: "1px solid var(--border-subtle)",
                     borderRadius: msg.role === "user" ? "12px 4px 12px 12px" : "4px 12px 12px 12px",
-                    padding: "9px 13px",
+                    padding: "10px 14px",
                     fontSize: 13,
                     color: "var(--text-primary)",
                     lineHeight: 1.6,
-                    maxWidth: "82%",
-                    whiteSpace: "pre-wrap",
+                    maxWidth: "84%",
                   }}
                 >
                   {msg.isLoading ? (
-                    <span style={{ opacity: 0.6, display: "flex", alignItems: "center", gap: 6 }}>
-                      <RotateCcw size={12} style={{ animation: "spin 1s linear infinite" }} /> STARA AI sedang menganalisis naskah & tahapan skripsi...
+                    <span style={{ opacity: 0.7, display: "flex", alignItems: "center", gap: 6 }}>
+                      <RotateCcw size={12} style={{ animation: "spin 1s linear infinite" }} /> STARA Thesis AI sedang menyusun penjelasan lengkap...
                     </span>
                   ) : (
-                    msg.content
+                    renderFormattedThesisText(msg.content)
                   )}
                 </div>
               </div>
@@ -1297,24 +1473,25 @@ export default function ThesisPage() {
           {/* Dynamic Quick Prompts based on active stage */}
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, fontWeight: 600 }}>
-              💡 Rekomendasi Pertanyaan Sesuai Tahap Ini ({currentActiveStage.stageName}):
+              💡 Pertanyaan Cepat Sesuai Tahap ({currentActiveStage.stageName}):
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {(currentActiveStage.id === 1
                 ? [
-                    "Bantu buatkan 3 ide judul dari bidang minat saya",
-                    "Cara menghubungi calon dosen pembimbing via WhatsApp yang sopan",
-                    "Bagaimana memastikan judul saya belum pernah diteliti sebelumnya?",
+                    `Buatkan 3 ide judul skripsi spesifik untuk prodi ${form.programName}`,
+                    "Bagaimana cara menemukan research gap dari 5 jurnal acuan?",
+                    "Bagaimana struktur latar belakang BAB 1 piramida terbalik yang baik?",
+                    "Pertanyaan apa yang paling sering ditanyakan penguji saat Sempro?",
                   ]
                 : currentActiveStage.id === 2
                 ? [
                     "Bagaimana cara menemukan research gap yang tajam dari jurnal acuan?",
-                    "Bantu buatkan 3 butir rumusan masalah penelitian",
+                    "Bantu buatkan 3 butir rumusan masalah penelitian yang terukur",
                     "Batasan masalah apa saja yang wajar untuk level skripsi S1?",
                   ]
                 : currentActiveStage.id === 3
                 ? [
-                    "Cara mencari paper Q1/Q2 di Scopus & IEEE yang relevan",
+                    "Cara mencari paper Q1/Q2 di Scopus & Sinta yang relevan",
                     "Contoh matriks telaah literatur perbandingan 5 jurnal terdahulu",
                     "Bagaimana mengutip jurnal acuan dengan format IEEE/APA?",
                   ]
@@ -1333,7 +1510,7 @@ export default function ThesisPage() {
                 : currentActiveStage.id === 6
                 ? [
                     "Cara merancang diagram alur metodologi penelitian yang sistematis",
-                    "Bagaimana menentukan metrik evaluasi pengujian (Akurasi, F1, Likert)?",
+                    "Bagaimana menentukan metrik evaluasi pengujian yang objektif?",
                     "Rancangan dataset dan teknik sampling yang dapat dipertanggungjawabkan",
                   ]
                 : currentActiveStage.id === 7
@@ -1342,28 +1519,10 @@ export default function ThesisPage() {
                     "Tips membuat slide presentasi Sempro 10-12 slide dalam 15 menit",
                     "Bagaimana merespons masukan dan kritik tajam dosen penguji Sempro?",
                   ]
-                : currentActiveStage.id === 8
-                ? [
-                    "Format logbook bimbingan rutin dosen pembimbing yang rapi",
-                    "Tips mendokumentasikan log eksperimen dan kode di repositori GitHub",
-                    "Bagaimana jika hasil akurasi model eksperimen tidak sesuai ekspektasi?",
-                  ]
-                : currentActiveStage.id === 9
-                ? [
-                    "Cara menyusun pembahasan BAB 4 yang benar-benar menjawab rumusan masalah BAB 1",
-                    "Bagaimana menyajikan grafik komparasi performa model vs baseline?",
-                    "Apa perbedaan mendasar antara bab Hasil dan bab Pembahasan?",
-                  ]
-                : currentActiveStage.id === 10
-                ? [
-                    "Tips parafrase ilmiah untuk menurunkan similarity Turnitin hingga di bawah 20%",
-                    "Bagaimana struktur kesimpulan BAB 5 yang baik dan padat?",
-                    "Format ringkasan draf artikel publikasi ilmiah untuk jurnal Sinta",
-                  ]
                 : [
-                    "Simulasi pertanyaan tersulit dewan penguji Sidang Sarjana Meja Hijau",
-                    "Checklist berkas yudisium, bebas pustaka, dan pendaftaran wisuda",
-                    "Tips demonstrasi software/produk riset dalam durasi 5 menit",
+                    "Cara menyusun pembahasan BAB 4 yang benar-benar menjawab rumusan masalah BAB 1",
+                    "Tips parafrase ilmiah untuk menurunkan similarity Turnitin di bawah 20%",
+                    "Simulasi pertanyaan tersulit dewan penguji Sidang Sarjana",
                   ]
               ).map((chip, idx) => (
                 <button
@@ -1372,21 +1531,13 @@ export default function ThesisPage() {
                   disabled={chatLoading}
                   style={{
                     fontSize: 11.5,
-                    padding: "4px 10px",
+                    padding: "5px 11px",
                     borderRadius: 16,
                     background: "var(--surface-hover)",
                     border: "1px solid var(--border-subtle)",
                     color: "var(--text-secondary)",
                     cursor: "pointer",
                     transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "var(--lime)";
-                    e.currentTarget.style.color = "var(--lime)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "var(--border-subtle)";
-                    e.currentTarget.style.color = "var(--text-secondary)";
                   }}
                 >
                   {chip}
@@ -1401,7 +1552,7 @@ export default function ThesisPage() {
               type="text"
               className="form-input"
               style={{ flex: 1, fontSize: 13 }}
-              placeholder="Tulis pertanyaan skripsi, judul, atau rumusan masalahmu..."
+              placeholder="Tulis pertanyaan skripsi, judul, metodologi, atau rumusan masalahmu..."
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendChat()}
@@ -1412,7 +1563,7 @@ export default function ThesisPage() {
               className="btn btn-primary btn-sm"
               onClick={() => handleSendChat()}
               disabled={!chatInput.trim() || chatLoading}
-              style={{ flexShrink: 0, gap: 4 }}
+              style={{ flexShrink: 0, gap: 4, padding: "8px 16px" }}
             >
               <Send size={14} />
               <span>{chatLoading ? "..." : "Kirim"}</span>
@@ -1425,28 +1576,79 @@ export default function ThesisPage() {
           TAB 3: REVIEWER JUDUL & TOPIK AI
       ══════════════════════════════════════════════════════ */}
       {activeTab === "review" && (
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
           <div className="card" style={{ marginBottom: 18 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
               <FileCheck size={18} color="var(--lime)" />
-              Uji Kelayakan Judul & Draf Topik Skripsi
+              Uji Kelayakan Judul & Deteksi Celah Sidang Sempro
             </h2>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14 }}>
-              Ketikkan draf judul skripsi atau ide kasar yang ingin kamu ajukan. AI akan mengevaluasi ketajaman, potensi celah yang dicecar penguji sempro, dan memberikan alternatif redaksi judul yang lebih formal.
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
+              Ketikkan draf judul skripsi atau ide topik yang ingin kamu ajukan. STARA AI akan menilai skor kesiapan (0–100), mendeteksi kelemahan yang rawan dicecar penguji Sempro, dan menyusun alternatif judul yang lebih tajam.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div className="form-group">
-                <label className="form-label" htmlFor="review-title-input">Draf Judul / Ide Penelitian</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
+                  <label className="form-label" htmlFor="review-title-input" style={{ margin: 0 }}>
+                    Draf Judul / Ide Penelitian ({form.programName})
+                  </label>
+                  {stages[0]?.fields?.approvedTitle && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setReviewInput(stages[0].fields.approvedTitle)}
+                      style={{ fontSize: 11, padding: "2px 8px", color: "var(--lime)" }}
+                    >
+                      Gunakan Judul dari Tracker Tahap 1
+                    </button>
+                  )}
+                </div>
                 <textarea
                   id="review-title-input"
                   className="form-input"
                   rows={3}
                   style={{ fontSize: 13.5, resize: "vertical" }}
-                  placeholder="Contoh: Penerapan Algoritma Convolutional Neural Network untuk Klasifikasi Penyakit Daun Padi Berdasarkan Citra Digital"
+                  placeholder={
+                    isIndustriProdi
+                      ? "Contoh: Optimasi Rute Distribusi Logistik Menggunakan Algoritma Genetika untuk Meminimalkan Biaya Transportasi pada PT XYZ"
+                      : "Contoh: Penerapan Algoritma Convolutional Neural Network untuk Klasifikasi Penyakit Daun Padi Berdasarkan Citra Digital"
+                  }
                   value={reviewInput}
                   onChange={(e) => setReviewInput(e.target.value)}
                 />
+                {/* Quick Sample Titles */}
+                <div style={{ marginTop: 6 }}>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 6 }}>Contoh cepat:</span>
+                  {(isIndustriProdi
+                    ? [
+                        "Analisis Pengendalian Kualitas Produk Menggunakan Metode Six Sigma (DMAIC) dan FMEA untuk Menurunkan Tingkat Kecacatan Produksi",
+                        "Optimasi Perencanaan Persediaan Bahan Baku Menggunakan Metode Economic Order Quantity (EOQ) Probabilistik dan Simulasi Monte Carlo",
+                      ]
+                    : [
+                        "Analisis Sentimen Ulasan Pengguna Aplikasi Layanan Publik Menggunakan Metode IndoBERT dan Support Vector Machine",
+                        "Perancangan Sistem Deteksi Anomali Transaksi Keuangan Menggunakan Algoritma Isolation Forest dan Random Forest",
+                      ]
+                  ).map((sample, sIdx) => (
+                    <button
+                      key={sIdx}
+                      type="button"
+                      onClick={() => setReviewInput(sample)}
+                      style={{
+                        fontSize: 11,
+                        padding: "3px 9px",
+                        borderRadius: 12,
+                        background: "var(--surface-hover)",
+                        border: "1px solid var(--border-subtle)",
+                        color: "var(--text-secondary)",
+                        cursor: "pointer",
+                        marginRight: 6,
+                        marginBottom: 4,
+                      }}
+                    >
+                      Contoh {sIdx + 1}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {reviewError && (
@@ -1466,7 +1668,7 @@ export default function ThesisPage() {
                 {reviewLoading ? (
                   <>
                     <RotateCcw size={15} style={{ animation: "spin 1s linear infinite" }} />
-                    <span>AI Sedang Menganalisis Judul & Menilai Celah Sempro...</span>
+                    <span>STARA AI Sedang Menganalisis Judul & Menilai Celah Sempro...</span>
                   </>
                 ) : (
                   <>
@@ -1482,9 +1684,9 @@ export default function ThesisPage() {
           {reviewResult && (
             <div className="card" style={{ border: "1px solid var(--border-subtle)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-                <div>
+                <div style={{ flex: 1, minWidth: 240 }}>
                   <span style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Hasil Evaluasi Draf Judul:</span>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", fontStyle: "italic" }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", fontStyle: "italic", marginTop: 2 }}>
                     &quot;{reviewResult.originalTitle}&quot;
                   </div>
                 </div>
@@ -1514,31 +1716,47 @@ export default function ThesisPage() {
               </div>
 
               {/* Strengths & Weaknesses Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, marginBottom: 16 }}>
                 <div style={{ background: "rgba(124, 230, 168, 0.06)", border: "1px solid rgba(124, 230, 168, 0.25)", borderRadius: "var(--radius-sm)", padding: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: "var(--lime)", textTransform: "uppercase", marginBottom: 6 }}>
-                    Kelebihan Judul:
+                    ✓ Kelebihan Judul:
                   </div>
                   {reviewResult.strengths.map((s, i) => (
-                    <div key={i} style={{ fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 4 }}>• {s}</div>
+                    <div key={i} style={{ fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 5, lineHeight: 1.5 }}>• {s}</div>
                   ))}
                 </div>
 
                 <div style={{ background: "rgba(255, 107, 107, 0.06)", border: "1px solid rgba(255, 107, 107, 0.25)", borderRadius: "var(--radius-sm)", padding: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: "var(--coral)", textTransform: "uppercase", marginBottom: 6 }}>
-                    Potensi Titik Lemah (Celah Sempro):
+                    ⚠ Potensi Titik Lemah (Celah Sempro):
                   </div>
                   {reviewResult.weaknesses.map((w, i) => (
-                    <div key={i} style={{ fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 4 }}>• {w}</div>
+                    <div key={i} style={{ fontSize: 12.5, color: "var(--text-secondary)", marginBottom: 5, lineHeight: 1.5 }}>• {w}</div>
                   ))}
                 </div>
               </div>
 
+              {/* Suggested Methods */}
+              {reviewResult.suggestedMethods && reviewResult.suggestedMethods.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>
+                    Metode / Pendekatan yang Direkomendasikan AI:
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {reviewResult.suggestedMethods.map((m, mi) => (
+                      <span key={mi} className="badge badge-teal" style={{ fontSize: 11.5, padding: "4px 10px" }}>
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Suggested Alternative Titles */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                   <Sparkles size={14} color="var(--lime)" />
-                  Rekomendasi Alternatif Redaksi Judul yang Lebih Tajam:
+                  Rekomendasi Redaksi Judul Ilmiah yang Lebih Tajam:
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {reviewResult.improvedTitles.map((alt, i) => (
@@ -1551,21 +1769,41 @@ export default function ThesisPage() {
                         background: "var(--surface-hover)",
                         border: "1px solid var(--border-subtle)",
                         borderRadius: "var(--radius-sm)",
-                        padding: "9px 12px",
+                        padding: "10px 12px",
                         gap: 10,
+                        flexWrap: "wrap",
                       }}
                     >
-                      <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
+                      <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600, flex: 1, minWidth: 220 }}>
                         {i + 1}. {alt}
                       </span>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => copyToClipboard(alt)}
-                        style={{ fontSize: 11, flexShrink: 0, gap: 4 }}
-                      >
-                        {copiedTitle === alt ? <Check size={12} color="var(--lime)" /> : <Copy size={12} />}
-                        <span>{copiedTitle === alt ? "Tersalin" : "Salin"}</span>
-                      </button>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => adoptTitleIntoTracker(alt)}
+                          style={{ fontSize: 11, gap: 4 }}
+                          title="Simpan judul ini ke Tahap 1 Tracker Skripsi"
+                        >
+                          <Check size={12} />
+                          <span>Pakai ke Tracker</span>
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => consultTopicInChat(alt)}
+                          style={{ fontSize: 11, gap: 4 }}
+                        >
+                          <MessageSquare size={12} />
+                          <span>Bahas di Chat</span>
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => copyToClipboard(alt)}
+                          style={{ fontSize: 11, gap: 4 }}
+                        >
+                          {copiedTitle === alt ? <Check size={12} color="var(--lime)" /> : <Copy size={12} />}
+                          <span>{copiedTitle === alt ? "Tersalin" : "Salin"}</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1580,7 +1818,7 @@ export default function ThesisPage() {
                       Prediksi Pertanyaan Penguji saat Sidang Sempro untuk Topik Ini:
                     </div>
                     {reviewResult.defenseQuestions.map((q, i) => (
-                      <div key={i} style={{ fontSize: 12.5, marginBottom: 2 }}>
+                      <div key={i} style={{ fontSize: 12.5, marginBottom: 4, lineHeight: 1.5 }}>
                         {i + 1}. {q}
                       </div>
                     ))}
@@ -1707,26 +1945,88 @@ export default function ThesisPage() {
             </div>
           </div>
 
-          {/* Sequential Lock Guidance Alert */}
+          {/* How-to guide */}
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              background: "rgba(133,136,255,0.06)",
-              border: "1px solid rgba(133,136,255,0.25)",
-              borderRadius: "var(--radius-md)",
-              padding: "10px 14px",
-              marginBottom: 16,
-              fontSize: 12.5,
-              color: "var(--text-secondary)",
-            }}
+            className="card"
+            style={{ marginBottom: 14, padding: "14px 16px" }}
+            id="thesis-howto"
           >
-            <Lock size={16} color="var(--blue)" style={{ flexShrink: 0 }} />
-            <div>
-              <strong style={{ color: "var(--text-primary)" }}>Aturan Dependensi Berurutan:</strong> Anda hanya dapat mencentang atau menandai tahapan berstatus <em>ACC Dospem</em> jika tahapan sebelumnya telah disetujui resmi oleh Dosen Pembimbing. Tahapan berikutnya akan terbuka secara otomatis!
+            <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text-primary)", marginBottom: 10 }}>
+              Cara memakai tracker ini
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10 }}>
+              {[
+                { n: 1, t: "Kerjakan bersama dosen", d: "Isi catatan, judul, atau tautan dokumen di tahap yang sedang aktif." },
+                { n: 2, t: "Centang jika sudah ACC", d: "Centang hanya setelah dosen pembimbing menyetujui tahap itu. Tahap berikutnya langsung terbuka." },
+                { n: 3, t: "Tanya AI untuk langkah lanjut", d: "AI membaca progresmu, jadi sarannya sesuai tahap yang sedang kamu kerjakan." },
+              ].map((s) => (
+                <div key={s.n} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <div
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      background: "var(--lime)",
+                      color: "#0B0D0C",
+                      fontWeight: 800,
+                      fontSize: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {s.n}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)" }}>{s.t}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2, lineHeight: 1.5 }}>{s.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 10 }}>
+              Tracker ini hanya mencatat progres dan memberi saran. Keputusan tetap ada di dosen pembimbing.
             </div>
           </div>
+
+          {/* Current stage callout */}
+          {completedStagesCount < stages.length && (
+            <div
+              role="status"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                flexWrap: "wrap",
+                background: "rgba(215,243,106,0.12)",
+                border: "1.5px solid var(--lime)",
+                borderRadius: "var(--radius-md)",
+                padding: "10px 14px",
+                marginBottom: 16,
+              }}
+            >
+              <div style={{ fontSize: 13, color: "var(--text-primary)" }}>
+                <span style={{ color: "var(--text-muted)", fontSize: 11.5, display: "block" }}>Kamu sedang di</span>
+                <strong>
+                  Tahap {currentActiveStage.id} dari {stages.length}: {currentActiveStage.stageName}
+                </strong>
+              </div>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  setExpandedStageId(currentActiveStage.id);
+                  setTimeout(() => {
+                    document.getElementById(`stage-card-${currentActiveStage.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 50);
+                }}
+                style={{ fontSize: 12 }}
+              >
+                Kerjakan tahap ini
+              </button>
+            </div>
+          )}
 
           {/* Dependency Notice Feedback */}
           {dependencyAlert && (
@@ -1778,6 +2078,7 @@ export default function ThesisPage() {
               return (
                 <div
                   key={stage.id}
+                  id={`stage-card-${stage.id}`}
                   className="card"
                   style={{
                     border: isAcc
