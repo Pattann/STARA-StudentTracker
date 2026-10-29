@@ -38,6 +38,23 @@ interface OnboardingForm {
   takTarget: string;
 }
 
+const EMPTY_FORM: OnboardingForm = {
+  institutionName: "",
+  facultyName: "",
+  programName: "",
+  educationLevel: "S1",
+  entryYear: "",
+  currentSemester: "",
+  totalCurriculumCredits: "144",
+  completedCredits: "",
+  gpa: "",
+  goals: "balanced",
+  interests: "",
+  weeklyHours: "20",
+  takEnabled: true,
+  takTarget: "120",
+};
+
 const DEFAULT_FORM: OnboardingForm = {
   institutionName: "Telkom University",
   facultyName: "Fakultas Informatika",
@@ -58,7 +75,7 @@ const DEFAULT_FORM: OnboardingForm = {
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
-  const [form, setForm] = useState<OnboardingForm>(DEFAULT_FORM);
+  const [form, setForm] = useState<OnboardingForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,13 +104,39 @@ export default function OnboardingPage() {
     setForm(DEFAULT_FORM);
   };
 
+  const validateStep = (s: Step): string | null => {
+    if (s === 0) {
+      if (!form.institutionName.trim()) return "Isi nama kampus dulu ya.";
+      if (!form.programName.trim()) return "Isi program studi dulu ya.";
+      if (!form.entryYear.trim()) return "Isi tahun angkatan dulu ya.";
+    }
+    if (s === 1) {
+      if (!form.currentSemester) return "Pilih semester aktifmu saat ini.";
+      if (form.completedCredits === "") return "Isi jumlah SKS yang sudah kamu selesaikan (isi 0 jika belum ada).";
+      if (!form.totalCurriculumCredits) return "Isi total SKS kurikulum prodimu (umumnya 144).";
+      if (form.gpa === "") return "Isi IPK terakhirmu (perkiraan juga boleh).";
+      const gpaNum = parseFloat(form.gpa);
+      if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 4.0) {
+        return "IPK harus berada di rentang 0.00 hingga 4.00 (maksimal 4.00).";
+      }
+    }
+    return null;
+  };
+
   const handleNext = () => {
+    const problem = validateStep(step);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setError(null);
     if (step < 3) {
       setStep((prev) => (prev + 1) as Step);
     }
   };
 
   const handlePrev = () => {
+    setError(null);
     if (step > 0) {
       setStep((prev) => (prev - 1) as Step);
     }
@@ -145,12 +188,7 @@ export default function OnboardingPage() {
           entryYear: form.entryYear,
         })
       );
-      const queryParams = new URLSearchParams({
-        kampus: form.institutionName,
-        jurusan: form.programName,
-        tahun: form.entryYear,
-      });
-      router.push(`/app/templates?${queryParams.toString()}`);
+      router.push("/app?welcome=1");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan sistem.");
       setSubmitting(false);
@@ -296,7 +334,7 @@ export default function OnboardingPage() {
                 marginBottom: 6,
               }}
             >
-              Langkah {step + 1} dari {steps.length}
+              Langkah {step + 1} dari {steps.length} · sekitar 2 menit
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 800, color: "#F5F5F0", margin: 0, letterSpacing: "-0.02em" }}>
               {steps[step].title}
@@ -464,12 +502,15 @@ export default function OnboardingPage() {
                       type="number"
                       value={form.completedCredits}
                       onChange={(e) => update("completedCredits", e.target.value)}
-                      placeholder="74"
+                      placeholder="Contoh: 74"
                       className="form-input"
                       style={{ width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 16, fontWeight: 800 }}
                       min={0}
                       max={200}
                     />
+                    <span style={{ fontSize: 11, color: "#A4AAA5", display: "block", marginTop: 4 }}>
+                      Lihat total SKS lulus di KHS/transkrip akademikmu.
+                    </span>
                   </div>
 
                   <div>
@@ -486,6 +527,9 @@ export default function OnboardingPage() {
                       min={100}
                       max={200}
                     />
+                    <span style={{ fontSize: 11, color: "#A4AAA5", display: "block", marginTop: 4 }}>
+                      Biasanya 144 SKS untuk S1. Cek buku panduan prodi.
+                    </span>
                   </div>
                 </div>
 
@@ -516,20 +560,58 @@ export default function OnboardingPage() {
               {/* IPK & TAK */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
-                    IPK Kumulatif Terakhir <span style={{ color: "var(--lime)" }}>*</span>
-                  </label>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5" }}>
+                      IPK Kumulatif Terakhir <span style={{ color: "var(--lime)" }}>*</span>
+                    </label>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--lime)" }}>
+                      Maks. 4.00
+                    </span>
+                  </div>
                   <input
                     type="number"
                     step="0.01"
+                    min="0.00"
+                    max="4.00"
                     value={form.gpa}
-                    onChange={(e) => update("gpa", e.target.value)}
+                    onChange={(e) => {
+                      const rawVal = e.target.value.replace(",", ".");
+                      if (rawVal === "") {
+                        update("gpa", "");
+                        return;
+                      }
+                      const parsed = parseFloat(rawVal);
+                      if (!isNaN(parsed) && parsed > 4.0) {
+                        update("gpa", "4.00");
+                      } else if (!isNaN(parsed) && parsed < 0) {
+                        update("gpa", "0.00");
+                      } else {
+                        update("gpa", rawVal);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const parsed = parseFloat(e.target.value);
+                      if (!isNaN(parsed)) {
+                        const clamped = Math.min(4.0, Math.max(0.0, parsed));
+                        update("gpa", clamped.toFixed(2));
+                      }
+                    }}
                     placeholder="3.50"
                     className="form-input"
-                    style={{ width: "100%", padding: "12px 16px", borderRadius: 12, background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 15, fontWeight: 700 }}
-                    min={0}
-                    max={4}
+                    style={{
+                      width: "100%",
+                      padding: "12px 16px",
+                      borderRadius: 12,
+                      background: "rgba(0,0,0,0.4)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      color: "#F5F5F0",
+                      fontSize: 15,
+                      fontWeight: 700,
+                    }}
                   />
+                  <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 5 }}>
+                    Skala standar perguruan tinggi (0.00 – 4.00)
+                  </div>
                 </div>
 
                 <div>
@@ -559,6 +641,9 @@ export default function OnboardingPage() {
                       style={{ accentColor: "var(--lime)", cursor: "pointer" }}
                     />
                   </div>
+                  <span style={{ fontSize: 11, color: "#A4AAA5", display: "block", marginTop: 4 }}>
+                    TAK/SKPI = poin kegiatan non-akademik (organisasi, lomba, dll). Matikan jika kampusmu tidak memakainya.
+                  </span>
                 </div>
               </div>
             </div>
@@ -764,6 +849,29 @@ export default function OnboardingPage() {
             </div>
           )}
 
+          {/* Validation error (steps 1-3) */}
+          {error && step < 3 && (
+            <div
+              role="alert"
+              style={{
+                marginTop: 20,
+                color: "#FF9E66",
+                fontSize: 13,
+                fontWeight: 600,
+                background: "rgba(255,122,69,0.1)",
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,122,69,0.3)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <AlertCircle size={15} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+          )}
+
           {/* Navigation Controls */}
           <div
             style={{
@@ -854,7 +962,7 @@ export default function OnboardingPage() {
                   </>
                 ) : (
                   <>
-                    <span>Simpan Profil & Buka Jelajahi Template</span>
+                    <span>Buat Roadmap Saya</span>
                     <ArrowRight size={16} />
                   </>
                 )}

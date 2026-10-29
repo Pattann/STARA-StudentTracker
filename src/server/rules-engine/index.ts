@@ -279,7 +279,7 @@ export function calculateFullRoadmap(input: RoadmapInput): RoadmapCalculation {
     .filter((sp) => sp.semesterNum > currentSemester)
     .reduce((sum, sp) => sum + sp.tasks.filter((t) => t.status !== "cancelled").reduce((s, t) => s + (Number(t.credits) || 0), 0), 0);
 
-  const remainingCredits = Math.max(0, totalCurriculumCredits - completedCredits - inProgressCredits);
+  const remainingCredits = Math.max(0, totalCurriculumCredits - completedCredits);
 
   // Estimate graduation
   const avgCreditsPerSem = DEFAULT_CREDITS_BY_GOAL[goals] ?? 20;

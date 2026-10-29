@@ -49,154 +49,42 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Reset old roadmaps for this session
-    await prisma.roadmap.deleteMany({ where: { guestSessionId: session.id } });
-
-    // 1. Create Roadmap
-    const roadmap = await prisma.roadmap.create({
-      data: {
-        guestSessionId: session.id,
-        title: `Roadmap Personal: ${profile.programName} (${profile.institutionName})`,
-        status: "active",
-      },
-    });
-
-    const version = await prisma.roadmapVersion.create({
-      data: {
-        roadmapId: roadmap.id,
-        versionNum: 1,
-        label: "Roadmap Auto-Generated Onboarding",
-        isBaseline: true,
-      },
-    });
-
-    await prisma.roadmap.update({
-      where: { id: roadmap.id },
-      data: { currentVersionId: version.id },
-    });
-
-    // 2. Generate Semester Plans from currentSemester up to target Graduation
+    // Reset old roadmaps and create new roadmap in a single fast transaction
     const currSem = profile.currentSemester;
     let targetSem = profile.goals === "fast" ? 7 : 8;
     if (currSem > targetSem) targetSem = currSem + 1;
-    const futureSemCount = Math.max(1, targetSem - currSem + 1);
-    const remainingCredits = Math.max(0, profile.totalCurriculumCredits - profile.completedCredits);
-    const avgCredits = Math.max(12, Math.min(24, Math.round(remainingCredits / futureSemCount)));
 
-    // 2. Coba susun daftar mata kuliah & rencana semester menggunakan AI jika provider tersedia
-    let aiSemesterData: Array<{
-      semesterNum: number;
-      semesterLabel: string;
-      targetCredits: number;
-      tasks: Array<{
-        title: string;
-        category: string;
-        credits: number;
-        status: string;
-        notes?: string;
-      }>;
-    }> | null = null;
+    const roadmap = await prisma.$transaction(async (tx) => {
+      await tx.roadmap.deleteMany({ where: { guestSessionId: session.id } });
 
-    if (process.env.GOOGLE_AI_API_KEY) {
-      try {
-        const { GoogleGenAI } = require("@google/genai");
-        const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY });
-        const prompt = `
-Anda adalah konsultan kurikulum akademik perguruan tinggi STARA.
-Rancanglah rencana semester dan mata kuliah yang realistis untuk mahasiswa:
-- Perguruan Tinggi: ${profile.institutionName}
-- Program Studi: ${profile.programName} (${profile.educationLevel})
-- Semester Berjalan Saat Ini: Semester ${currSem}
-- SKS Lulus Saat Ini: ${profile.completedCredits} dari ${profile.totalCurriculumCredits} SKS
-- Target Ritme: ${profile.goals} (fast = lulus semester 7, balanced = semester 8, active = fokus magang/MBKM di semester 6-7)
-- Minat Spesifik: ${profile.interests || "Umum"}
+      const createdRoadmap = await tx.roadmap.create({
+        data: {
+          guestSessionId: session.id,
+          title: `Roadmap Personal: ${profile.programName} (${profile.institutionName})`,
+          status: "active",
+        },
+      });
 
-ATURAN KRUSIAL BEBAN SKS AKADEMIK:
-1. Setiap semester reguler (di luar semester akhir skripsi) WAJIB memiliki beban realistis minimal 18–20 SKS akademik (terdiri dari 5–7 mata kuliah nyata dengan bobot 2–4 SKS per mata kuliah). DILARANG KERAS hanya menyusun 1–2 mata kuliah atau di bawah 18 SKS!
-2. Semester akhir (Semester ${targetSem}) berisi Skripsi / Tugas Akhir (6 SKS) dan mata kuliah pendukung / kolokium (2 SKS) total 8 SKS.
-3. Total akumulasi SKS semester harus mencukupi sisa SKS kelulusan (${remainingCredits} SKS).
+      const version = await tx.roadmapVersion.create({
+        data: {
+          roadmapId: createdRoadmap.id,
+          versionNum: 1,
+          label: "Roadmap Auto-Generated Onboarding",
+          isBaseline: true,
+        },
+      });
 
-Susunlah daftar semester mulai dari semester ${currSem} hingga target lulus (semester ${targetSem}).
-HANYA kembalikan format JSON valid tanpa backtick \`\`\`json:
-{
-  "semesters": [
-    {
-      "semesterNum": ${currSem},
-      "semesterLabel": "Semester ${currSem} (Berjalan)",
-      "targetCredits": 20,
-      "tasks": [
-        { "title": "Nama Mata Kuliah Nyata", "category": "akademik", "credits": 3, "status": "in_progress", "notes": "Keterangan singkat" }
-      ]
-    }
-  ]
-}
-`;
-        const CANDIDATE_MODELS = [
-          "gemini-3.1-flash-lite",
-          "gemini-3.5-flash-lite",
-          "gemini-3-flash-preview",
-          "gemini-3.5-flash",
-          "gemini-3.6-flash",
-        ];
+      await tx.roadmap.update({
+        where: { id: createdRoadmap.id },
+        data: { currentVersionId: version.id },
+      });
 
-        for (const model of CANDIDATE_MODELS) {
-          try {
-            const res = await ai.models.generateContent({
-              model,
-              contents: prompt,
-              config: { responseMimeType: "application/json" },
-            });
-            const parsed = JSON.parse(res.text || "{}");
-            if (Array.isArray(parsed.semesters) && parsed.semesters.length > 0) {
-              aiSemesterData = parsed.semesters;
-              break;
-            }
-          } catch (modelErr) {
-            console.warn(`[Generate AI Roadmap] Model ${model} limit/gagal, mencoba cadangan...`);
-          }
-        }
-      } catch (e) {
-        console.warn("[Generate AI Roadmap Fallback]", e);
-      }
-    }
-
-    if (aiSemesterData && aiSemesterData.length > 0) {
-      for (const semItem of aiSemesterData) {
-        const semNum = Number(semItem.semesterNum) || currSem;
-        const isCurrent = semNum === currSem;
-        const plan = await prisma.semesterPlan.create({
-          data: {
-            roadmapVersionId: version.id,
-            semesterNum: semNum,
-            isCurrentSemester: isCurrent,
-            targetCredits: Number(semItem.targetCredits) || avgCredits,
-            plannedCredits: Number(semItem.targetCredits) || avgCredits,
-            semesterLabel: semItem.semesterLabel || `Semester ${semNum}`,
-          },
-        });
-
-        if (Array.isArray(semItem.tasks) && semItem.tasks.length > 0) {
-          await prisma.roadmapTask.createMany({
-            data: semItem.tasks.map((t) => ({
-              semesterPlanId: plan.id,
-              title: String(t.title || "Mata Kuliah Pilihan"),
-              category: String(t.category || "akademik"),
-              credits: Number(t.credits) || 0,
-              status: isCurrent ? "in_progress" : String(t.status || "planned"),
-              notes: t.notes ? String(t.notes) : "Rekomendasi AI STARA",
-              certaintyLevel: "estimasi",
-            })),
-          });
-        }
-      }
-    } else {
-      // Deterministic Fallback menggunakan kurikulum standar nasional / institusi (18-20 SKS per semester)
       for (let sem = currSem; sem <= targetSem; sem++) {
         const isCurrent = sem === currSem;
         const defaultTasks = getDefaultTasksForSemester(sem, profile.programName, isCurrent);
         const academicCredits = defaultTasks.reduce((sum, t) => sum + (t.credits || 0), 0);
 
-        const plan = await prisma.semesterPlan.create({
+        const plan = await tx.semesterPlan.create({
           data: {
             roadmapVersionId: version.id,
             semesterNum: sem,
@@ -207,7 +95,7 @@ HANYA kembalikan format JSON valid tanpa backtick \`\`\`json:
           },
         });
 
-        await prisma.roadmapTask.createMany({
+        await tx.roadmapTask.createMany({
           data: defaultTasks.map((t) => ({
             semesterPlanId: plan.id,
             title: t.title,
@@ -220,7 +108,9 @@ HANYA kembalikan format JSON valid tanpa backtick \`\`\`json:
           })),
         });
       }
-    }
+
+      return createdRoadmap;
+    });
 
     return NextResponse.json({
       success: true,

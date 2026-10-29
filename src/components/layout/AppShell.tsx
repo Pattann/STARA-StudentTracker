@@ -20,6 +20,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useSession } from "@/features/session/context";
+import { StudentAvatarBadge, useStudentAvatar } from "@/components/ui/StudentAvatar";
 
 const navItems = [
   { href: "/app", label: "Beranda", icon: LayoutDashboard },
@@ -469,6 +470,7 @@ export function Topbar({
   onMenuClick: () => void;
 }) {
   const { token, user } = useSession();
+  const [avatarId] = useStudentAvatar(user?.id);
 
   return (
     <header className="topbar">
@@ -547,23 +549,12 @@ export function Topbar({
           aria-label="Profil & Pengaturan"
           title="Profil & Pengaturan"
         >
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: "50%",
-              background: "var(--bg-secondary)",
-              border: "1px solid var(--border)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "var(--text-secondary)",
-              transition: "all 0.15s ease",
-            }}
-          >
-            <User size={16} />
-          </div>
+          <StudentAvatarBadge
+            avatarId={avatarId}
+            initial={user?.name ? user.name.trim().charAt(0).toUpperCase() : "M"}
+            size={34}
+            title={`${user?.name || "Mahasiswa"} (${user?.email || "Profil & Pengaturan"})`}
+          />
         </Link>
       </div>
     </header>

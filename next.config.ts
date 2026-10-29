@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false,
+  devIndicators: false,
   serverExternalPackages: ["@prisma/client", "prisma"],
   experimental: {
     optimizePackageImports: [
@@ -10,7 +12,6 @@ const nextConfig: NextConfig = {
       "date-fns",
     ],
   },
-  devIndicators: false,
 };
 
 export default nextConfig;

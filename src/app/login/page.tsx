@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
@@ -13,6 +13,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    router.prefetch("/app");
+    router.prefetch("/admin");
+    router.prefetch("/onboarding");
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,8 +134,8 @@ export default function LoginPage() {
           <h1 style={{ fontSize: 24, fontWeight: 800, color: "#F5F5F0", margin: "0 0 6px" }}>
             Masuk ke STARA
           </h1>
-          <p style={{ fontSize: 13.5, color: "#A4AAA5", margin: 0 }}>
-            Akses portal akademik, asisten skripsi & sistem terintegrasi
+          <p style={{ fontSize: 13.5, color: "#A4AAA5", margin: "0 auto", maxWidth: 340, lineHeight: 1.5 }}>
+            STARA membantu mahasiswa merencanakan kuliah sampai lulus: roadmap per semester, simulasi &quot;bagaimana jika&quot;, dan panduan skripsi.
           </p>
         </div>
 
@@ -279,6 +285,11 @@ export default function LoginPage() {
 
           {/* Quick Demo Button for Students */}
           <div style={{ marginTop: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+              <span style={{ fontSize: 11.5, color: "#838A85", fontWeight: 600 }}>atau, belum mau daftar?</span>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+            </div>
             <button
               type="button"
               id="btn-quick-demo-student"
@@ -302,8 +313,11 @@ export default function LoginPage() {
               }}
             >
               <Sparkles size={14} color="var(--lime)" />
-              <span>{demoLoading ? "Memuat Sesi Demo..." : "Coba Mode Demo (Mahasiswa)"}</span>
+              <span>{demoLoading ? "Memuat Sesi Demo..." : "Coba Demo dengan Data Contoh"}</span>
             </button>
+            <p style={{ fontSize: 11.5, color: "#838A85", textAlign: "center", margin: "8px 0 0" }}>
+              Tanpa akun. Data contoh hanya untuk mencoba fitur.
+            </p>
           </div>
 
           {/* Signup link */}

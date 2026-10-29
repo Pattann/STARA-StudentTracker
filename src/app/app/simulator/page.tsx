@@ -5,7 +5,8 @@ import { useSession } from "@/features/session/context";
 import { SCENARIO_TYPES } from "@/lib/constants";
 import CustomAIPlan from "./CustomAIPlan";
 import {
-  Zap, AlertCircle, CheckCircle2, History, Play, ArrowRight, Sparkles, RefreshCw, Check
+  Zap, AlertCircle, CheckCircle2, History, Play, ArrowRight, Sparkles, RefreshCw,
+  Lightbulb, MessageSquare, Bot, User, Send
 } from "lucide-react";
 
 type ScenarioType = keyof typeof SCENARIO_TYPES;
@@ -65,6 +66,64 @@ export default function SimulatorPage() {
   const [applyLoading, setApplyLoading] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
 
+  // AI Alternatives & Chat for Jalur 1 (Standard Scenarios)
+  const [stdAlternatives, setStdAlternatives] = useState<Array<{ title: string; description: string; tradeoff?: string; suggestedAction?: string }>>([]);
+  const [stdAltLoading, setStdAltLoading] = useState(false);
+  const [stdChatMessages, setStdChatMessages] = useState<Array<{ role: "user" | "assistant"; content: string; isLoading?: boolean }>>([]);
+  const [stdChatInput, setStdChatInput] = useState("");
+  const [stdChatLoading, setStdChatLoading] = useState(false);
+
+  const loadStandardAlternatives = async (simId: string) => {
+    if (!token || !simId || stdAltLoading) return;
+    setStdAltLoading(true);
+    try {
+      const res = await fetch(`/api/simulator/${simId}/alternatives`, {
+        headers: { "x-demo-token": token },
+      });
+      const data = await res.json() as { alternatives?: typeof stdAlternatives };
+      if (res.ok && data.alternatives) {
+        setStdAlternatives(data.alternatives);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setStdAltLoading(false);
+    }
+  };
+
+  const handleSendStdChat = async (overrideMessage?: string) => {
+    const msg = (overrideMessage ?? stdChatInput).trim();
+    if (!token || !result?.simulation?.id || !msg || stdChatLoading) return;
+    if (!overrideMessage) setStdChatInput("");
+
+    const nextHistory = [...stdChatMessages, { role: "user" as const, content: msg }];
+    setStdChatMessages([...nextHistory, { role: "assistant" as const, content: "", isLoading: true }]);
+    setStdChatLoading(true);
+
+    try {
+      const res = await fetch(`/api/simulator/${result.simulation.id}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-demo-token": token },
+        body: JSON.stringify({
+          message: msg,
+          chatHistory: nextHistory.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+        }),
+      });
+      const data = await res.json() as { reply?: string };
+      setStdChatMessages([
+        ...nextHistory,
+        { role: "assistant", content: data.reply || "Maaf, tidak dapat memproses pertanyaan saat ini." },
+      ]);
+    } catch {
+      setStdChatMessages([
+        ...nextHistory,
+        { role: "assistant", content: "Terjadi gangguan jaringan. Silakan coba lagi." },
+      ]);
+    } finally {
+      setStdChatLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!token) return;
     fetch("/api/simulator", { headers: { "x-demo-token": token } })
@@ -116,6 +175,15 @@ export default function SimulatorPage() {
       if (!res.ok) throw new Error(data.error ?? "Gagal menjalankan simulasi.");
       setResult(data);
       setStep("result");
+      setStdChatMessages([
+        {
+          role: "assistant",
+          content: `Halo! Saya sudah menganalisis skenario **${data.simulation.title}**. ${data.explanation?.summary || ""}\n\nSilakan tanyakan strategi konversi SKS, pembagian beban kuliah, atau hal yang perlu dikonfirmasi ke dosen wali di bawah ini!`,
+        },
+      ]);
+      if (data.simulation?.id) {
+        loadStandardAlternatives(data.simulation.id);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Terjadi kesalahan.");
     }
@@ -163,84 +231,6 @@ export default function SimulatorPage() {
         </button>
       </div>
 
-      {/* Stepper Navigation */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: 24,
-          padding: "8px 12px",
-          background: "#FFFFFF",
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-          borderRadius: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        {[
-          { id: "select", num: 1, label: "Pilih Skenario" },
-          { id: "configure", num: 2, label: "Atur Parameter" },
-          { id: "result", num: 3, label: "Hasil & Rekomendasi" },
-        ].map((s, idx) => {
-          const isCurrent = step === s.id;
-          const isPast =
-            (s.id === "select" && (step === "configure" || step === "result")) ||
-            (s.id === "configure" && step === "result");
-
-          return (
-            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (isPast) {
-                    setStep(s.id as "select" | "configure" | "result");
-                  }
-                }}
-                disabled={!isPast && !isCurrent}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "6px 14px",
-                  borderRadius: "var(--radius-pill)",
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  background: isCurrent ? "#F5CD47" : isPast ? "#FAF9F5" : "transparent",
-                  color: isCurrent ? "#18181B" : isPast ? "#15803D" : "#71717A",
-                  border: isCurrent
-                    ? "1.5px solid #E5BB35"
-                    : isPast
-                    ? "1px solid rgba(21, 128, 61, 0.22)"
-                    : "1px solid transparent",
-                  cursor: isPast ? "pointer" : "default",
-                  boxShadow: isCurrent ? "0 2px 8px rgba(245, 205, 71, 0.25)" : "none",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <span
-                  style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: "50%",
-                    background: isCurrent ? "#18181B" : isPast ? "#15803D" : "rgba(0,0,0,0.08)",
-                    color: isCurrent ? "#FFFFFF" : isPast ? "#FFFFFF" : "#71717A",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 10,
-                    fontWeight: 800,
-                  }}
-                >
-                  {isPast ? <Check size={11} strokeWidth={3} /> : s.num}
-                </span>
-                <span>{s.label}</span>
-              </button>
-              {idx < 2 && <span style={{ color: "#D4D4D8", fontSize: 13 }}>→</span>}
-            </div>
-          );
-        })}
-      </div>
-
       {/* Past Simulations */}
       {showHistory && (
         <div className="card" style={{ marginBottom: 20 }}>
@@ -271,12 +261,15 @@ export default function SimulatorPage() {
           <div className="assumption-notice" style={{ marginBottom: 20 }}>
             <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
             <span>
-              Simulasi menggunakan data roadmapmu. Hasil adalah estimasi berdasarkan data yang tersedia—bukan keputusan resmi kampus.
+              Simulasi hanya mencoba &quot;bagaimana jika&quot;. Roadmapmu <strong>tidak berubah</strong> sampai kamu menekan Terapkan. Hasilnya estimasi, bukan keputusan resmi kampus.
             </span>
           </div>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 16 }}>
-            Pilih Jenis Skenario
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>
+            Jalur 1: Pilih skenario yang sudah tersedia
           </h2>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 14px" }}>
+            Pilih satu, lalu klik Lanjutkan. STARA menghitung dampaknya ke jadwal lulusmu.
+          </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
             {(Object.entries(SCENARIO_TYPES) as [ScenarioType, string][]).map(([type, label]) => (
               <div
@@ -296,33 +289,54 @@ export default function SimulatorPage() {
                 </div>
               </div>
             ))}
-            <div
-              className={`scenario-card ${customSelected ? "selected" : ""}`}
-              onClick={() => { setCustomSelected(true); setSelectedType(null); setStep("custom"); }}
-              role="radio"
-              tabIndex={0}
-              aria-checked={customSelected}
-              id="scenario-card-custom-ai"
-              onKeyDown={(e) => e.key === "Enter" && (setCustomSelected(true), setSelectedType(null), setStep("custom"))}
-            >
-              <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
-                <Sparkles size={14} color="#D97706" />
-                {CUSTOM_PLAN_TITLE}
-              </div>
-              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                {CUSTOM_PLAN_DESC}
-              </div>
-            </div>
           </div>
-          <div style={{ marginTop: 20 }}>
+          <div style={{ marginTop: 16 }}>
             <button
               className="btn btn-primary"
-              disabled={!selectedType && !customSelected}
-              onClick={() => setStep(customSelected ? "custom" : "configure")}
+              disabled={!selectedType}
+              onClick={() => setStep("configure")}
             >
               Lanjutkan
               <ArrowRight size={16} />
             </button>
+            {!selectedType && (
+              <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 10 }}>
+                Pilih satu skenario dulu
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "28px 0 18px" }}>
+            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)" }}>ATAU</span>
+            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          </div>
+
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>
+            Jalur 2: Susun rencana sendiri dengan AI
+          </h2>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 14px" }}>
+            Pilih ini jika kondisimu tidak cocok dengan skenario di atas. Kamu bisa bertanya bebas ke AI.
+          </p>
+          <div
+            className="scenario-card"
+            onClick={() => { setCustomSelected(true); setSelectedType(null); setStep("custom"); }}
+            role="button"
+            tabIndex={0}
+            id="scenario-card-custom-ai"
+            style={{ maxWidth: 520 }}
+            onKeyDown={(e) => e.key === "Enter" && (setCustomSelected(true), setSelectedType(null), setStep("custom"))}
+          >
+            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+              <Sparkles size={14} color="var(--lime)" />
+              {CUSTOM_PLAN_TITLE}
+            </div>
+            <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+              {CUSTOM_PLAN_DESC}
+            </div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--amber-deep)", marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>
+              Buka <ArrowRight size={13} />
+            </div>
           </div>
         </div>
       )}
@@ -387,9 +401,9 @@ export default function SimulatorPage() {
 
           {/* AI Notice */}
           {result.explanation && (
-            <div className="assumption-notice" style={{ marginBottom: 20, background: result.explanation.isAiGenerated ? "#FFFBEB" : undefined, borderColor: result.explanation.isAiGenerated ? "#FDE68A" : undefined }}>
-              {result.explanation.isAiGenerated ? <Sparkles size={16} style={{ flexShrink: 0, color: "#D97706" }} /> : <AlertCircle size={16} style={{ flexShrink: 0 }} />}
-              <span style={{ fontSize: 13, color: result.explanation.isAiGenerated ? "#92400E" : undefined, fontWeight: 500 }}>
+            <div className="assumption-notice" style={{ marginBottom: 20, background: result.explanation.isAiGenerated ? "rgba(124, 230, 168, 0.08)" : undefined, borderColor: result.explanation.isAiGenerated ? "rgba(124, 230, 168, 0.3)" : undefined }}>
+              {result.explanation.isAiGenerated ? <Sparkles size={16} style={{ flexShrink: 0, color: "var(--lime)" }} /> : <AlertCircle size={16} style={{ flexShrink: 0 }} />}
+              <span style={{ fontSize: 13, color: result.explanation.isAiGenerated ? "var(--lime)" : undefined }}>
                 {result.explanation.isAiGenerated
                   ? "✨ Analisis mendalam ini dipersonalisasi oleh STARA AI (Google Gemini)."
                   : (result.explanation.fallbackReason ?? "Penjelasan otomatis berbasis aturan.")}
@@ -397,11 +411,54 @@ export default function SimulatorPage() {
             </div>
           )}
 
+          {/* Plain-language verdict */}
+          {(() => {
+            const delta = result.diff.semesterDelta ?? 0;
+            const sksDiff = result.scenario.remainingCredits - result.baseline.remainingCredits;
+            const riskCount =
+              (result.explanation?.risks?.length ?? 0) + (result.diff?.additionalConflicts?.length ?? 0);
+            const tone = delta > 0 ? "var(--coral)" : delta < 0 ? "#16A34A" : "var(--amber-deep)";
+            const headline =
+              delta > 0
+                ? `Kamu akan lulus mundur ${delta} semester`
+                : delta < 0
+                ? `Kamu bisa lulus ${Math.abs(delta)} semester lebih cepat`
+                : "Jadwal lulusmu tidak berubah";
+            const sksLine =
+              sksDiff === 0
+                ? "Sisa SKS sama seperti rencana sekarang."
+                : sksDiff > 0
+                ? `Sisa SKS bertambah ${sksDiff} dibanding rencana sekarang.`
+                : `Sisa SKS berkurang ${Math.abs(sksDiff)} dibanding rencana sekarang.`;
+            return (
+              <div
+                className="card"
+                style={{ marginBottom: 20, borderLeft: `4px solid ${tone}` }}
+                id="simulation-verdict"
+              >
+                <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                  Kesimpulan singkat
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: tone, marginBottom: 6 }}>{headline}</div>
+                <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                  {sksLine}{" "}
+                  {riskCount > 0
+                    ? `Ada ${riskCount} hal yang perlu kamu waspadai (lihat di bawah).`
+                    : "Tidak ada risiko besar yang terdeteksi."}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>
+                  Cara membaca: kartu kiri adalah rencanamu sekarang, kartu kanan adalah hasilnya jika skenario ini dijalankan.
+                  Suka dengan hasilnya? Klik &quot;Terapkan ke Roadmap Saya&quot; di bagian bawah.
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Comparison */}
           <div className="comparison-grid" style={{ marginBottom: 20 }}>
             <div className="comparison-panel baseline">
               <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-secondary)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Roadmap Saat Ini (Baseline)
+                Rencana Sekarang
               </div>
               <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4 }}>
                 {result.baseline.estimatedGraduationSemester
@@ -414,8 +471,8 @@ export default function SimulatorPage() {
               </div>
             </div>
             <div className="comparison-panel scenario">
-              <div style={{ fontWeight: 700, fontSize: 14, color: "#D97706", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Skenario: {selectedType && SCENARIO_TYPES[selectedType]}
+              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--lime)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Jika Kamu Memilih: {selectedType && SCENARIO_TYPES[selectedType]}
               </div>
               <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4 }}>
                 {result.scenario.estimatedGraduationSemester
@@ -425,7 +482,7 @@ export default function SimulatorPage() {
               <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 12 }}>
                 Estimasi kelulusan
                 {result.diff.semesterDelta !== null && result.diff.semesterDelta !== 0 && (
-                  <span style={{ marginLeft: 8, color: result.diff.semesterDelta > 0 ? "var(--coral)" : "#15803D", fontWeight: 700 }}>
+                  <span style={{ marginLeft: 8, color: result.diff.semesterDelta > 0 ? "var(--coral)" : "var(--lime)", fontWeight: 700 }}>
                     {result.diff.semesterDelta > 0 ? `+${result.diff.semesterDelta} semester` : `${result.diff.semesterDelta} semester`}
                   </span>
                 )}
@@ -447,10 +504,10 @@ export default function SimulatorPage() {
 
             {result.explanation?.benefits?.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#15803D", marginBottom: 6, textTransform: "uppercase" }}>Manfaat</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--lime)", marginBottom: 6, textTransform: "uppercase" }}>Keuntungan</div>
                 {result.explanation.benefits.map((b, i) => (
                   <div key={i} style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 6, marginBottom: 4 }}>
-                    <CheckCircle2 size={14} color="#15803D" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <CheckCircle2 size={14} color="var(--lime)" style={{ flexShrink: 0, marginTop: 2 }} />
                     {b}
                   </div>
                 ))}
@@ -459,7 +516,7 @@ export default function SimulatorPage() {
 
             {result.explanation?.risks?.length > 0 && (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--coral)", marginBottom: 6, textTransform: "uppercase" }}>Risiko & Trade-off</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--coral)", marginBottom: 6, textTransform: "uppercase" }}>Yang Perlu Diwaspadai</div>
                 {result.explanation.risks.map((r, i) => (
                   <div key={i} style={{ fontSize: 13, color: "var(--text-secondary)", display: "flex", gap: 6, marginBottom: 4 }}>
                     <AlertCircle size={14} color="var(--coral)" style={{ flexShrink: 0, marginTop: 2 }} />
@@ -509,6 +566,194 @@ export default function SimulatorPage() {
             )}
           </div>
 
+          {/* Rekomendasi Alternatif AI */}
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Lightbulb size={16} color="var(--lime)" />
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                  Rekomendasi Strategi & Alternatif AI
+                </h3>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => result.simulation?.id && loadStandardAlternatives(result.simulation.id)}
+                disabled={stdAltLoading}
+                style={{ fontSize: 11.5, gap: 5 }}
+              >
+                <RefreshCw size={12} style={{ animation: stdAltLoading ? "spin 1s linear infinite" : undefined }} />
+                {stdAltLoading ? "Memuat..." : "Cari Opsi Lain (AI)"}
+              </button>
+            </div>
+            {stdAlternatives.length === 0 ? (
+              <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                {stdAltLoading ? "STARA AI sedang menyusun skenario alternatif..." : "Klik Cari Opsi Lain untuk memuat strategi alternatif."}
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 12 }}>
+                {stdAlternatives.slice(0, 3).map((alt, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      background: "var(--surface-hover)",
+                      borderRadius: 8,
+                      padding: "12px 14px",
+                      border: "1px solid var(--border-subtle)",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      gap: 8,
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--text-primary)", marginBottom: 4 }}>
+                        {alt.title}
+                      </div>
+                      <p style={{ fontSize: 12.5, color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
+                        {alt.description}
+                      </p>
+                      {(alt.suggestedAction || alt.tradeoff) && (
+                        <div style={{ fontSize: 12, color: "var(--lime)", marginTop: 8, fontWeight: 600 }}>
+                          → {alt.suggestedAction || alt.tradeoff}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => handleSendStdChat(`Bagaimana langkah menerapkan opsi "${alt.title}" untuk kondisi saya?`)}
+                      disabled={stdChatLoading}
+                      style={{ alignSelf: "flex-start", fontSize: 11.5, padding: "4px 8px", gap: 5, color: "var(--teal)" }}
+                    >
+                      <MessageSquare size={12} />
+                      Diskusikan Opsi Ini di Chat AI
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Tanya STARA AI */}
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <MessageSquare size={16} color="var(--lime)" />
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+                  Tanya STARA AI — Konsultasi Skenario Ini
+                </h3>
+              </div>
+              <span className="badge badge-lime" style={{ fontSize: 10.5 }}>
+                <Sparkles size={11} /> Konteks Skenario Aktif
+              </span>
+            </div>
+
+            <div
+              style={{
+                background: "var(--surface-hover)",
+                borderRadius: 10,
+                padding: 14,
+                minHeight: 180,
+                maxHeight: 380,
+                overflowY: "auto",
+                marginBottom: 12,
+                border: "1px solid var(--border-subtle)",
+              }}
+            >
+              {stdChatMessages.map((msg, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    marginBottom: 12,
+                    flexDirection: msg.role === "user" ? "row-reverse" : "row",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: msg.role === "user" ? "var(--lime)" : "var(--surface-card)",
+                      border: "1px solid var(--border-subtle)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {msg.role === "user" ? <User size={13} color="var(--bg-primary)" /> : <Bot size={14} color="var(--lime)" />}
+                  </div>
+                  <div
+                    style={{
+                      background: msg.role === "user" ? "rgba(124, 230, 168, 0.14)" : "var(--surface-card)",
+                      border: "1px solid var(--border-subtle)",
+                      borderRadius: msg.role === "user" ? "12px 4px 12px 12px" : "4px 12px 12px 12px",
+                      padding: "10px 14px",
+                      fontSize: 13,
+                      color: "var(--text-primary)",
+                      lineHeight: 1.6,
+                      maxWidth: "84%",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {msg.isLoading ? "STARA AI sedang menyusun jawaban lengkap..." : msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+              {[
+                "Bagaimana cara agar skenario ini tidak menunda kelulusan saya?",
+                "Apa saja syarat konversi SKS yang harus saya tanyakan ke Kaprodi?",
+                "Bagaimana mengatur mata kuliah wajib di semester terdampak?",
+              ].map((q, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleSendStdChat(q)}
+                  disabled={stdChatLoading}
+                  style={{
+                    fontSize: 11.5,
+                    padding: "5px 11px",
+                    borderRadius: 14,
+                    background: "var(--surface-card)",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-secondary)",
+                    cursor: "pointer",
+                  }}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                type="text"
+                className="form-input"
+                style={{ flex: 1, fontSize: 13 }}
+                placeholder="Tanyakan hal spesifik tentang hasil simulasi skenario ini..."
+                value={stdChatInput}
+                onChange={(e) => setStdChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendStdChat()}
+                disabled={stdChatLoading}
+              />
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => handleSendStdChat()}
+                disabled={!stdChatInput.trim() || stdChatLoading}
+                style={{ gap: 5 }}
+              >
+                <Send size={13} />
+                Kirim
+              </button>
+            </div>
+          </div>
+
           {/* Apply Section */}
           {!applySuccess && (
             <div className="card">
@@ -546,7 +791,7 @@ export default function SimulatorPage() {
           {applySuccess && (
             <div className="card">
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <CheckCircle2 size={24} color="#15803D" />
+                <CheckCircle2 size={24} color="var(--lime)" />
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
                     Skenario Berhasil Diterapkan!
@@ -653,7 +898,7 @@ function ScenarioForm({
                 type="checkbox"
                 checked={Boolean(params.conflictsWithRegular)}
                 onChange={(e) => update("conflictsWithRegular", e.target.checked)}
-                style={{ width: 16, height: 16, accentColor: "#D97706" }}
+                style={{ width: 16, height: 16, accentColor: "var(--lime)" }}
               />
               <span className="form-label" style={{ margin: 0 }}>
                 Berbenturan dengan kuliah reguler

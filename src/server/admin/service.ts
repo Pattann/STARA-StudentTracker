@@ -119,56 +119,66 @@ export function recordAiRequestLog(log: Omit<AiRequestLog, "id" | "timestamp">) 
   }
 }
 
+const globalForAdminSeed = globalThis as unknown as {
+  isSeeded?: boolean;
+  seedPromise?: Promise<void> | null;
+};
+
 /**
  * Ensures admin user, default templates, and sample moderation reports exist in DB
+ * Cached in memory so it only runs once per server lifecycle.
  */
 export async function ensureAdminAndSeededData() {
-  try {
-    // 1. Ensure Admin User
-    const defaultAdminPassword = hashPassword("admin123");
-    let adminUser = await prisma.user.findFirst({
-      where: { role: "admin" },
-    });
+  if (globalForAdminSeed.isSeeded) return;
+  if (globalForAdminSeed.seedPromise) return globalForAdminSeed.seedPromise;
 
-    if (!adminUser) {
-      adminUser = await prisma.user.upsert({
-        where: { email: "admin@stara.ac.id" },
-        update: { role: "admin", password: defaultAdminPassword },
-        create: {
-          email: "admin@stara.ac.id",
-          name: "Administrator STARA",
-          password: defaultAdminPassword,
-          role: "admin",
-        },
+  globalForAdminSeed.seedPromise = (async () => {
+    try {
+      // 1. Ensure Admin User
+      let adminUser = await prisma.user.findFirst({
+        where: { role: "admin" },
       });
-    } else if (!adminUser.password) {
-      adminUser = await prisma.user.update({
-        where: { id: adminUser.id },
-        data: { password: defaultAdminPassword },
-      });
-    }
 
-    // Also get or create a student reporter user for reports
-    let reporterUser = await prisma.user.findFirst({
-      where: { role: "student" },
-    });
-    if (!reporterUser) {
-      reporterUser = await prisma.user.create({
-        data: {
-          email: "mahasiswa@telkomuniversity.ac.id",
-          name: "Rian Mahasiswa",
-          role: "student",
-        },
-      });
-    }
+      if (!adminUser) {
+        const defaultAdminPassword = hashPassword("admin123");
+        adminUser = await prisma.user.upsert({
+          where: { email: "admin@stara.ac.id" },
+          update: { role: "admin", password: defaultAdminPassword },
+          create: {
+            email: "admin@stara.ac.id",
+            name: "Administrator STARA",
+            password: defaultAdminPassword,
+            role: "admin",
+          },
+        });
+      } else if (!adminUser.password) {
+        const defaultAdminPassword = hashPassword("admin123");
+        adminUser = await prisma.user.update({
+          where: { id: adminUser.id },
+          data: { password: defaultAdminPassword },
+        });
+      }
 
-    // 2. Ensure Templates in DB
-    const templateCount = await prisma.template.count();
-    if (templateCount === 0) {
-      const templatesToSeed = MOCK_TEMPLATES.slice(0, 10);
-      for (const t of templatesToSeed) {
-        await prisma.template.create({
+      // Also get or create a student reporter user for reports
+      let reporterUser = await prisma.user.findFirst({
+        where: { role: "student" },
+      });
+      if (!reporterUser) {
+        reporterUser = await prisma.user.create({
           data: {
+            email: "mahasiswa@telkomuniversity.ac.id",
+            name: "Rian Mahasiswa",
+            role: "student",
+          },
+        });
+      }
+
+      // 2. Ensure Templates in DB
+      const templateCount = await prisma.template.count();
+      if (templateCount === 0) {
+        const templatesToSeed = MOCK_TEMPLATES.slice(0, 10);
+        await prisma.template.createMany({
+          data: templatesToSeed.map((t) => ({
             id: t.id,
             title: t.title,
             description: t.description,
@@ -185,46 +195,195 @@ export async function ensureAdminAndSeededData() {
             authorDisplayName: t.authorDisplayName,
             isAnonymous: t.isAnonymous || false,
             userId: adminUser.id,
-          },
+          })),
         });
       }
-    }
 
-    // 3. Ensure Reports in DB
-    const reportCount = await prisma.report.count();
-    if (reportCount === 0) {
-      const firstTemplate = await prisma.template.findFirst();
-      if (firstTemplate && reporterUser) {
-        await prisma.report.createMany({
-          data: [
-            {
-              templateId: firstTemplate.id,
-              reportedByUserId: reporterUser.id,
-              reason: "Kurikulum Semester 4 sudah update ke versi 2024. Mohon verifikasi ulang mata kuliah pilihan AI & Big Data.",
-              status: "open",
-              moderatorNote: null,
-            },
-            {
-              templateId: firstTemplate.id,
-              reportedByUserId: reporterUser.id,
-              reason: "SKS prasyarat untuk Kerja Praktik / Magang Industri tertera 80 SKS, apakah regulasi Telkom University 2024 berubah menjadi 90 SKS?",
-              status: "open",
-              moderatorNote: null,
-            },
-            {
-              templateId: firstTemplate.id,
-              reportedByUserId: reporterUser.id,
-              reason: "Rincian jadwal bimbingan skripsi sangat relevan dan terbukti efektif.",
-              status: "resolved",
-              moderatorNote: "Laporan informasi: verifikasi konten akurat dan disetujui tim kurikulum.",
-            },
-          ],
-        });
+      // 3. Ensure Reports in DB
+      const reportCount = await prisma.report.count();
+      if (reportCount === 0) {
+        const firstTemplate = await prisma.template.findFirst();
+        if (firstTemplate && reporterUser) {
+          await prisma.report.createMany({
+            data: [
+              {
+                templateId: firstTemplate.id,
+                reportedByUserId: reporterUser.id,
+                reason: "Kurikulum Semester 4 sudah update ke versi 2024. Mohon verifikasi ulang mata kuliah pilihan AI & Big Data.",
+                status: "open",
+                moderatorNote: null,
+              },
+              {
+                templateId: firstTemplate.id,
+                reportedByUserId: reporterUser.id,
+                reason: "SKS prasyarat untuk Kerja Praktik / Magang Industri tertera 80 SKS, apakah regulasi Telkom University 2024 berubah menjadi 90 SKS?",
+                status: "open",
+                moderatorNote: null,
+              },
+              {
+                templateId: firstTemplate.id,
+                reportedByUserId: reporterUser.id,
+                reason: "Rincian jadwal bimbingan skripsi sangat relevan dan terbukti efektif.",
+                status: "resolved",
+                moderatorNote: "Laporan informasi: verifikasi konten akurat dan disetujui tim kurikulum.",
+              },
+            ],
+          });
+        }
       }
+
+      // 4. Ensure Campuses, Programs, and Courses in DB
+      if ((prisma as any).campus) {
+        const campusCount = await prisma.campus.count();
+        if (campusCount === 0) {
+          const defaultCampuses = [
+            {
+              id: "camp-telkom",
+              name: "Telkom University",
+              city: "Bandung, Jawa Barat",
+              type: "PTS",
+              facultiesCount: 7,
+              programsCount: 38,
+              totalStudents: 142,
+              status: "partner",
+              syncStatus: "Tersinkronisasi",
+              lastCurriculumUpdate: "Kurikulum 2024/2025",
+            },
+            {
+              id: "camp-binus",
+              name: "BINUS University",
+              city: "Jakarta Barat, DKI Jakarta",
+              type: "PTS",
+              facultiesCount: 8,
+              programsCount: 42,
+              totalStudents: 74,
+              status: "partner",
+              syncStatus: "Tersinkronisasi",
+              lastCurriculumUpdate: "Kurikulum 2024/2025 (Enrichment 3+1)",
+            },
+            {
+              id: "camp-itb",
+              name: "Institut Teknologi Bandung",
+              city: "Bandung, Jawa Barat",
+              type: "PTN",
+              facultiesCount: 12,
+              programsCount: 50,
+              totalStudents: 44,
+              status: "active",
+              syncStatus: "Tersinkronisasi",
+              lastCurriculumUpdate: "Kurikulum ITB 2023/2024",
+            },
+            {
+              id: "camp-ui",
+              name: "Universitas Indonesia",
+              city: "Depok, Jawa Barat",
+              type: "PTN",
+              facultiesCount: 14,
+              programsCount: 64,
+              totalStudents: 22,
+              status: "active",
+              syncStatus: "Tersinkronisasi",
+              lastCurriculumUpdate: "Kurikulum UI Merdeka 2024",
+            },
+            {
+              id: "camp-ugm",
+              name: "Universitas Gadjah Mada",
+              city: "Sleman, D.I. Yogyakarta",
+              type: "PTN",
+              facultiesCount: 18,
+              programsCount: 70,
+              totalStudents: 14,
+              status: "active",
+              syncStatus: "Perlu Review",
+              lastCurriculumUpdate: "Kurikulum UGM 2023",
+            },
+          ];
+
+          await prisma.campus.createMany({ data: defaultCampuses });
+
+          const defaultPrograms = [
+            {
+              id: "prog-if-telkom",
+              campusId: "camp-telkom",
+              campusName: "Telkom University",
+              code: "IF-S1",
+              name: "Teknik Informatika",
+              level: "S1",
+              totalCredits: 144,
+              accreditation: "Unggul",
+              activeCurriculumYear: "2024/2025",
+              totalCourses: 44,
+              status: "active",
+            },
+            {
+              id: "prog-si-telkom",
+              campusId: "camp-telkom",
+              campusName: "Telkom University",
+              code: "SI-S1",
+              name: "Sistem Informasi",
+              level: "S1",
+              totalCredits: 144,
+              accreditation: "Unggul",
+              activeCurriculumYear: "2024/2025",
+              totalCourses: 42,
+              status: "active",
+            },
+            {
+              id: "prog-mb-telkom",
+              campusId: "camp-telkom",
+              campusName: "Telkom University",
+              code: "MB-S1",
+              name: "Manajemen Bisnis Telekomunikasi & Informatika",
+              level: "S1",
+              totalCredits: 144,
+              accreditation: "Unggul",
+              activeCurriculumYear: "2024/2025",
+              totalCourses: 40,
+              status: "active",
+            },
+            {
+              id: "prog-cs-binus",
+              campusId: "camp-binus",
+              campusName: "BINUS University",
+              code: "CS-BINUS",
+              name: "Computer Science",
+              level: "S1",
+              totalCredits: 146,
+              accreditation: "Unggul",
+              activeCurriculumYear: "2024/2025",
+              totalCourses: 45,
+              status: "active",
+            },
+          ];
+
+          await prisma.program.createMany({ data: defaultPrograms });
+
+          // Seed default courses from CURRICULUM_CATALOG
+          const baseCourses = CURRICULUM_CATALOG["Teknik Informatika"] || [];
+          await prisma.course.createMany({
+            data: baseCourses.map((c) => ({
+              programId: "prog-if-telkom",
+              code: c.code,
+              name: c.name,
+              credits: c.credits,
+              semesterNum: c.semesterNum,
+              category: c.category,
+              prerequisites: JSON.stringify(c.prerequisites || []),
+              description: c.description || "",
+            })),
+          });
+        }
+      }
+
+      globalForAdminSeed.isSeeded = true;
+    } catch (error) {
+      console.error("[ensureAdminAndSeededData]", error);
+    } finally {
+      globalForAdminSeed.seedPromise = null;
     }
-  } catch (error) {
-    console.error("[ensureAdminAndSeededData]", error);
-  }
+  })();
+
+  return globalForAdminSeed.seedPromise;
 }
 
 /**
@@ -330,10 +489,10 @@ export async function getAdminOverviewData() {
 }
 
 /**
- * Academic Data for Admin Dashboard Tab 2
+ * Fallback Academic Data in case Prisma Client is reloading or unseeded
  */
-export function getAcademicsData() {
-  const campuses: CampusItem[] = [
+function getFallbackAcademicsData() {
+  const campuses = [
     {
       id: "camp-telkom",
       name: "Telkom University",
@@ -396,7 +555,7 @@ export function getAcademicsData() {
     },
   ];
 
-  const programs: ProgramItem[] = [
+  const programs = [
     {
       id: "prog-if-telkom",
       campusName: "Telkom University",
@@ -447,10 +606,7 @@ export function getAcademicsData() {
     },
   ];
 
-  // Combine standard catalog with dynamic courses
   const baseCourses = CURRICULUM_CATALOG["Teknik Informatika"] || [];
-  const allCourses = [...baseCourses, ...dynamicCourses];
-
   const semesterSummary = [
     { semesterNum: 1, credits: 19, courseCount: 7, focus: "Fondasi Matematika & Logika Komputasi" },
     { semesterNum: 2, credits: 19, courseCount: 7, focus: "Struktur Data, Algoritma & Arsitektur Komputer" },
@@ -465,14 +621,110 @@ export function getAcademicsData() {
   return {
     campuses,
     programs,
-    courses: allCourses,
+    courses: baseCourses,
     semesterSummary,
   };
 }
 
-export function addCourseToCatalog(newCourse: CatalogCourse) {
-  dynamicCourses.unshift(newCourse);
-  return newCourse;
+/**
+ * Academic Data for Admin Dashboard Tab 2 - Integrated with Prisma Database
+ */
+export async function getAcademicsData() {
+  try {
+    await ensureAdminAndSeededData();
+  } catch (seedErr) {
+    console.error("[getAcademicsData ensureAdminAndSeededData]", seedErr);
+  }
+
+  try {
+    // Check if new Prisma models are present on the client instance
+    if ((prisma as any).campus && (prisma as any).program && (prisma as any).course) {
+      const [dbCampuses, dbPrograms, dbCourses] = await Promise.all([
+        (prisma as any).campus.findMany({ orderBy: { createdAt: "asc" } }),
+        (prisma as any).program.findMany({ orderBy: { createdAt: "asc" } }),
+        (prisma as any).course.findMany({ orderBy: [{ semesterNum: "asc" }, { code: "asc" }] }),
+      ]);
+
+      if (dbCampuses && dbCampuses.length > 0) {
+        const mappedCourses: CatalogCourse[] = dbCourses.map((c: any) => {
+          let prereqs: string[] = [];
+          try {
+            prereqs = JSON.parse(c.prerequisites);
+          } catch {
+            prereqs = [];
+          }
+          return {
+            code: c.code,
+            name: c.name,
+            credits: c.credits,
+            semesterNum: c.semesterNum,
+            category: c.category as CatalogCourse["category"],
+            prerequisites: prereqs,
+            description: c.description || "",
+          };
+        });
+
+        const semesterSummary = [
+          { semesterNum: 1, credits: 19, courseCount: mappedCourses.filter((c) => c.semesterNum === 1).length, focus: "Fondasi Matematika & Logika Komputasi" },
+          { semesterNum: 2, credits: 19, courseCount: mappedCourses.filter((c) => c.semesterNum === 2).length, focus: "Struktur Data, Algoritma & Arsitektur Komputer" },
+          { semesterNum: 3, credits: 19, courseCount: mappedCourses.filter((c) => c.semesterNum === 3).length, focus: "Pemrograman Berorientasi Objek & Basis Data" },
+          { semesterNum: 4, credits: 20, courseCount: mappedCourses.filter((c) => c.semesterNum === 4).length, focus: "Rekayasa Perangkat Lunak & Jaringan Komputer" },
+          { semesterNum: 5, credits: 19, courseCount: mappedCourses.filter((c) => c.semesterNum === 5).length, focus: "Kecerdasan Buatan (AI), Web Lanjut & Big Data" },
+          { semesterNum: 6, credits: 19, courseCount: mappedCourses.filter((c) => c.semesterNum === 6).length, focus: "Cloud Computing, Metodologi Riset & Magang Industri" },
+          { semesterNum: 7, credits: 19, courseCount: mappedCourses.filter((c) => c.semesterNum === 7).length, focus: "MBKM Magang 20 SKS / Proyek Capstone & Seminar Proposal" },
+          { semesterNum: 8, credits: 8, courseCount: mappedCourses.filter((c) => c.semesterNum === 8).length, focus: "Tugas Akhir (Skripsi) & Kolokium Publikasi Ilmiah" },
+        ];
+
+        return {
+          campuses: dbCampuses,
+          programs: dbPrograms,
+          courses: mappedCourses,
+          semesterSummary,
+        };
+      }
+    }
+  } catch (dbErr) {
+    console.error("[getAcademicsData] Falling back to default academic data:", dbErr);
+  }
+
+  // Graceful fallback to default data
+  return getFallbackAcademicsData();
+}
+
+export async function addCourseToCatalog(newCourse: CatalogCourse) {
+  const prereqJson = JSON.stringify(newCourse.prerequisites || []);
+
+  const saved = await prisma.course.upsert({
+    where: { code: newCourse.code },
+    update: {
+      name: newCourse.name,
+      credits: newCourse.credits,
+      semesterNum: newCourse.semesterNum,
+      category: newCourse.category,
+      prerequisites: prereqJson,
+      description: newCourse.description || "",
+    },
+    create: {
+      programId: "prog-if-telkom",
+      code: newCourse.code,
+      name: newCourse.name,
+      credits: newCourse.credits,
+      semesterNum: newCourse.semesterNum,
+      category: newCourse.category,
+      prerequisites: prereqJson,
+      description: newCourse.description || "",
+    },
+  });
+
+  return {
+    code: saved.code,
+    name: saved.name,
+    credits: saved.credits,
+    semesterNum: saved.semesterNum,
+    category: saved.category as CatalogCourse["category"],
+    prerequisites: newCourse.prerequisites || [],
+    description: saved.description,
+  };
 }
 
 /**
@@ -626,7 +878,7 @@ export async function runAiPingBenchmark() {
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-2.5-flash",
       contents: "Ping check. Balas hanya dengan kata: PONG",
       config: { maxOutputTokens: 10 },
     });
@@ -663,4 +915,110 @@ export async function runAiPingBenchmark() {
       timestamp: new Date().toISOString(),
     };
   }
+}
+
+/**
+ * Generates an initial 8-semester Roadmap for a student's guestSessionId based on their AcademicProfile
+ */
+export async function seedInitialRoadmapForSession(
+  guestSessionId: string,
+  profile: {
+    programName: string;
+    currentSemester: number;
+    entryYear: number;
+  }
+) {
+  const academics = await getAcademicsData();
+  const allCourses = (academics.courses || []).filter(
+    (c) => c.code !== "IF4101" // Keep regular Semester 7 courses (19 SKS) by default so 8 semesters = 144 SKS
+  );
+
+  return prisma.$transaction(async (tx) => {
+    const roadmap = await tx.roadmap.create({
+      data: {
+        guestSessionId,
+        title: `Roadmap Studi — ${profile.programName}`,
+        status: "active",
+      },
+    });
+
+    const version = await tx.roadmapVersion.create({
+      data: {
+        roadmapId: roadmap.id,
+        versionNum: 1,
+        label: "Kurikulum Standar & Rencana Studi",
+        description: `Rencana studi 8 semester untuk ${profile.programName}`,
+        isBaseline: true,
+      },
+    });
+
+    await tx.roadmap.update({
+      where: { id: roadmap.id },
+      data: { currentVersionId: version.id },
+    });
+
+    const createdPlans = await Promise.all(
+      [1, 2, 3, 4, 5, 6, 7, 8].map((semNum) => {
+        const semCourses = allCourses.filter((c) => c.semesterNum === semNum);
+        const semCredits = semCourses.reduce((sum, c) => sum + c.credits, 0);
+        const yearOffset = Math.floor((semNum - 1) / 2);
+        const acadYear = `${profile.entryYear + yearOffset}/${profile.entryYear + yearOffset + 1}`;
+        const termLabel = semNum % 2 === 1 ? "Ganjil" : "Genap";
+        return tx.semesterPlan.create({
+          data: {
+            roadmapVersionId: version.id,
+            semesterNum: semNum,
+            semesterLabel: `Semester ${semNum} — ${termLabel} ${acadYear}`,
+            targetCredits: semNum === 8 ? 8 : 20,
+            plannedCredits: semCredits,
+            isCurrentSemester: semNum === profile.currentSemester,
+          },
+        });
+      })
+    );
+
+    const planIdBySem = new Map(createdPlans.map((p) => [p.semesterNum, p.id]));
+    const tasksToCreate: Array<{
+      semesterPlanId: string;
+      title: string;
+      courseCode: string;
+      category: string;
+      credits: number;
+      priority: string;
+      status: string;
+      dataSource: string;
+      certaintyLevel: string;
+      notes: string;
+    }> = [];
+
+    for (const c of allCourses) {
+      const spId = planIdBySem.get(c.semesterNum);
+      if (!spId) continue;
+      const status =
+        c.semesterNum < profile.currentSemester
+          ? "done"
+          : c.semesterNum === profile.currentSemester
+          ? "in_progress"
+          : "planned";
+
+      tasksToCreate.push({
+        semesterPlanId: spId,
+        title: c.name,
+        courseCode: c.code,
+        category: c.category || "akademik",
+        credits: c.credits,
+        priority: c.credits >= 3 || c.category === "skripsi" ? "high" : "medium",
+        status,
+        dataSource: "kampus",
+        certaintyLevel: "pasti",
+        notes: c.description || "",
+      });
+    }
+
+    if (tasksToCreate.length > 0) {
+      await tx.roadmapTask.createMany({ data: tasksToCreate });
+    }
+
+    return roadmap;
+  });
 }

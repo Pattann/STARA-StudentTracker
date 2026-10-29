@@ -191,6 +191,23 @@ export default function TemplatesPage() {
   const [isApplying, setIsApplying] = useState(false);
   const [applySuccessResult, setApplySuccessResult] = useState<{ message: string; versionId?: string } | null>(null);
 
+  const isAnyTemplateModalOpen = Boolean(previewTemplate || selectedTemplateForApply);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isAnyTemplateModalOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [isAnyTemplateModalOpen]);
+
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
 
@@ -1013,6 +1030,7 @@ export default function TemplatesPage() {
         <div
           className="dialog-overlay"
           onClick={() => setPreviewTemplate(null)}
+          onWheel={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
           aria-label={`Detail template ${previewTemplate.title}`}
@@ -1556,6 +1574,7 @@ export default function TemplatesPage() {
           onClick={() => {
             if (!isApplying) setSelectedTemplateForApply(null);
           }}
+          onWheel={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
           aria-label={`Integrasi ${selectedTemplateForApply.title} ke Roadmap`}
