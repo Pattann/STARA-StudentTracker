@@ -57,10 +57,7 @@ export async function GET(req: NextRequest) {
               },
             })
           : Promise.resolve(null),
-        prisma.achievement.findMany({
-          where: { guestSessionId: session.id },
-          orderBy: { createdAt: "desc" },
-        }),
+        Promise.resolve([]),
         prisma.reminder.findMany({
           where: { guestSessionId: session.id },
           orderBy: { deadline: "asc" },

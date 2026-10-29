@@ -332,3 +332,58 @@ model Reminder {
   user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   guestSession GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
 }
+
+
+// ===== ACADEMIC CATALOG =====
+
+model Campus {
+  id                   String        @id @default(cuid())
+  name                 String        @unique
+  city                 String
+  type                 String        // PTN | PTS
+  facultiesCount       Int           @default(1)
+  programsCount        Int           @default(1)
+  totalStudents        Int           @default(0)
+  status               String        @default("active") // active | partner | pilot
+  syncStatus           String        @default("Tersinkronisasi")
+  lastCurriculumUpdate String
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  programs Program[]
+}
+
+model Program {
+  id                   String   @id @default(cuid())
+  campusId             String
+  campusName           String
+  code                 String
+  name                 String
+  level                String   @default("S1") // S1 | D3 | S2
+  totalCredits         Int      @default(144)
+  accreditation        String   @default("Unggul")
+  activeCurriculumYear String   @default("2024/2025")
+  totalCourses         Int      @default(0)
+  status               String   @default("active")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  campus  Campus   @relation(fields: [campusId], references: [id], onDelete: Cascade)
+  courses Course[]
+}
+
+model Course {
+  id            String   @id @default(cuid())
+  programId     String?
+  code          String   @unique
+  name          String
+  credits       Int      @default(3)
+  semesterNum   Int      @default(1)
+  category      String   @default("akademik") // akademik | tak | karier | skripsi | pribadi
+  prerequisites String   @default("[]") // JSON string array
+  description   String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  program Program? @relation(fields: [programId], references: [id], onDelete: SetNull)
+}
