@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -70,6 +70,10 @@ export function OnboardingWizard() {
   const [form, setForm] = useState<OnboardingForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    router.prefetch("/app");
+  }, [router]);
 
   const steps = [
     { title: "Identitas Akademik", desc: "Data perguruan tinggi dan program studimu" },
@@ -178,7 +182,11 @@ export function OnboardingWizard() {
           entryYear: form.entryYear,
         })
       );
-      router.push("/app?welcome=1");
+      if (typeof window !== "undefined") {
+        window.location.href = "/app?welcome=1";
+      } else {
+        router.push("/app?welcome=1");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan sistem.");
       setSubmitting(false);
@@ -1017,7 +1025,7 @@ export function OnboardingWizard() {
                         animation: "spin 0.8s linear infinite",
                       }}
                     />
-                    <span>Menyusun Roadmap...</span>
+                    <span>Menyiapkan Roadmap & Dashboard...</span>
                   </>
                 ) : (
                   <>

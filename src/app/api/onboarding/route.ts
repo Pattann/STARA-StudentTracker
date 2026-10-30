@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
+import { getDefaultTasksForSemester } from "@/server/curriculum/defaults";
 import { z } from "zod";
 
 const OnboardingSchema = z.object({
@@ -67,55 +68,117 @@ export async function POST(req: NextRequest) {
       await prisma.reminder.deleteMany({ where: { guestSessionId: sessionId } });
     }
 
-    // 1. Create Academic Profile (TAK tracking completely disabled)
-    await prisma.academicProfile.create({
-      data: {
-        guestSessionId: sessionId,
-        institutionName: data.institutionName,
-        facultyName: data.facultyName || "Fakultas Utama",
-        programName: data.programName,
-        educationLevel: data.educationLevel,
-        entryYear: data.entryYear,
-        currentSemester: data.currentSemester,
-        totalCurriculumCredits: data.totalCurriculumCredits,
-        completedCredits: data.completedCredits,
-        inProgressCredits: Math.min(20, Math.max(0, data.totalCurriculumCredits - data.completedCredits)),
-        gpa: data.gpa,
-        goals: data.goals,
-        interests: JSON.stringify(data.interests ? data.interests.split(",").map((s) => s.trim()) : []),
-        takEnabled: false,
-        takTarget: null,
-        weeklyHours: data.weeklyHours,
-      },
-    });
-
-    // 2. Starter Reminders (Roadmap remains empty until user chooses a template or generates one)
+    // Atomic fast creation: Academic Profile + Reminders + Initial Roadmap
     const currSem = data.currentSemester;
-    await prisma.reminder.createMany({
-      data: [
-        {
+    let targetSem = data.goals === "fast" ? 7 : 8;
+    if (currSem > targetSem) targetSem = currSem + 1;
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Create Academic Profile (TAK tracking completely disabled)
+      await tx.academicProfile.create({
+        data: {
           guestSessionId: sessionId,
-          title: `Pengisian KRS Semester ${currSem + 1}`,
-          category: "krs",
-          deadline: "2025-02-15",
-          isOfficial: false,
-          notes: "Pastikan syarat prasyarat mata kuliah terpenuhi sebelum finalisasi KRS.",
+          institutionName: data.institutionName,
+          facultyName: data.facultyName || "Fakultas Utama",
+          programName: data.programName,
+          educationLevel: data.educationLevel,
+          entryYear: data.entryYear,
+          currentSemester: data.currentSemester,
+          totalCurriculumCredits: data.totalCurriculumCredits,
+          completedCredits: data.completedCredits,
+          inProgressCredits: Math.min(20, Math.max(0, data.totalCurriculumCredits - data.completedCredits)),
+          gpa: data.gpa,
+          goals: data.goals,
+          interests: JSON.stringify(data.interests ? data.interests.split(",").map((s) => s.trim()) : []),
+          takEnabled: false,
+          takTarget: null,
+          weeklyHours: data.weeklyHours,
         },
-        {
+      });
+
+      // 2. Starter Reminders
+      await tx.reminder.createMany({
+        data: [
+          {
+            guestSessionId: sessionId,
+            title: `Pengisian KRS Semester ${currSem + 1}`,
+            category: "krs",
+            deadline: "2025-02-15",
+            isOfficial: false,
+            notes: "Pastikan syarat prasyarat mata kuliah terpenuhi sebelum finalisasi KRS.",
+          },
+          {
+            guestSessionId: sessionId,
+            title: "Evaluasi Nilai & Target IPK Tengah Semester",
+            category: "akademik",
+            deadline: "2025-04-10",
+            isOfficial: false,
+            notes: "Tinjau performa kuis dan tugas besar mata kuliah inti.",
+          },
+        ],
+      });
+
+      // 3. Immediately Generate Active Roadmap with Semesters & Tasks
+      const createdRoadmap = await tx.roadmap.create({
+        data: {
           guestSessionId: sessionId,
-          title: "Evaluasi Nilai & Target IPK Tengah Semester",
-          category: "akademik",
-          deadline: "2025-04-10",
-          isOfficial: false,
-          notes: "Tinjau performa kuis dan tugas besar mata kuliah inti.",
+          title: `Roadmap Personal: ${data.programName} (${data.institutionName})`,
+          status: "active",
         },
-      ],
+      });
+
+      const version = await tx.roadmapVersion.create({
+        data: {
+          roadmapId: createdRoadmap.id,
+          versionNum: 1,
+          label: "Roadmap Auto-Generated Onboarding",
+          isBaseline: true,
+          isDraft: false,
+        },
+      });
+
+      await tx.roadmap.update({
+        where: { id: createdRoadmap.id },
+        data: { currentVersionId: version.id },
+      });
+
+      for (let sem = 1; sem <= targetSem; sem++) {
+        const isCurrent = sem === currSem;
+        const isPast = sem < currSem;
+        const defaultTasks = getDefaultTasksForSemester(sem, data.programName, isCurrent);
+        const academicCredits = defaultTasks.reduce((sum, t) => sum + (t.credits || 0), 0);
+
+        const plan = await tx.semesterPlan.create({
+          data: {
+            roadmapVersionId: version.id,
+            semesterNum: sem,
+            isCurrentSemester: isCurrent,
+            targetCredits: academicCredits > 0 ? academicCredits : (sem === 8 ? 8 : 20),
+            plannedCredits: academicCredits > 0 ? academicCredits : (sem === 8 ? 8 : 20),
+            semesterLabel: `Semester ${sem} (${sem % 2 === 1 ? "Ganjil" : "Genap"})`,
+          },
+        });
+
+        await tx.roadmapTask.createMany({
+          data: defaultTasks.map((t) => ({
+            semesterPlanId: plan.id,
+            title: t.title,
+            category: t.category,
+            itemType: t.credits > 0 ? "COURSE" : "ACTIVITY",
+            credits: t.credits,
+            status: isPast ? "done" : t.status,
+            courseCode: t.courseCode || null,
+            notes: t.notes || (t.credits > 0 ? "Kurikulum reguler" : "Milestone akademik"),
+            certaintyLevel: isPast ? "fixed" : t.certaintyLevel,
+          })),
+        });
+      }
     });
 
     return NextResponse.json({
       success: true,
       token: sessionToken,
-      redirectUrl: "/app/templates",
+      redirectUrl: "/app?welcome=1",
     });
   } catch (error) {
     console.error("[API /onboarding POST]", error);
