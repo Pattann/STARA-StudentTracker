@@ -1150,7 +1150,7 @@ export default function ThesisPage() {
                   <div key={i} className="card" style={{ border: "1px solid var(--border-subtle)" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flex: 1, minWidth: 240 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(215,243,106,0.12)", border: "1px solid rgba(215,243,106,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: "#FEF3C7", border: "1px solid rgba(215,243,106,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
                           <span style={{ fontSize: 14, fontWeight: 800, color: "var(--lime)" }}>{i + 1}</span>
                         </div>
                         <div>
@@ -1232,7 +1232,7 @@ export default function ThesisPage() {
 
                     {d.firstSteps.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
-                        <div style={{ fontSize: 11, color: "var(--lime)", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>
+                        <div style={{ fontSize: 11, color: "#92400E", textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>
                           Langkah Awal yang Bisa Dilakukan Minggu Ini:
                         </div>
                         {d.firstSteps.map((s, si) => (
@@ -1718,7 +1718,7 @@ export default function ThesisPage() {
               {/* Strengths & Weaknesses Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14, marginBottom: 16 }}>
                 <div style={{ background: "rgba(124, 230, 168, 0.06)", border: "1px solid rgba(124, 230, 168, 0.25)", borderRadius: "var(--radius-sm)", padding: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--lime)", textTransform: "uppercase", marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#92400E", textTransform: "uppercase", marginBottom: 6 }}>
                     ✓ Kelebihan Judul:
                   </div>
                   {reviewResult.strengths.map((s, i) => (
@@ -1921,7 +1921,7 @@ export default function ThesisPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
                 <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
-                  Progres Keseluruhan: <strong style={{ color: "var(--lime)" }}>{completedStagesCount} dari 11 Tahapan Selesai</strong>
+                  Progres Keseluruhan: <strong style={{ color: "#15803D" }}>{completedStagesCount} dari 11 Tahapan Selesai</strong>
                 </span>
                 <span style={{ fontWeight: 800, color: "var(--text-primary)" }}>{progressPercentage}% Selesai</span>
               </div>
@@ -2000,8 +2000,8 @@ export default function ThesisPage() {
                 justifyContent: "space-between",
                 gap: 12,
                 flexWrap: "wrap",
-                background: "rgba(215,243,106,0.12)",
-                border: "1.5px solid var(--lime)",
+                background: "#FEF3C7",
+                border: "1px solid #FCD34D",
                 borderRadius: "var(--radius-md)",
                 padding: "10px 14px",
                 marginBottom: 16,
@@ -2257,9 +2257,9 @@ export default function ThesisPage() {
                           </div>
                         </div>
 
-                        <div style={{ background: "rgba(215,243,106,0.06)", border: "1px solid rgba(215,243,106,0.2)", padding: "10px 12px", borderRadius: "var(--radius-sm)" }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--lime)", textTransform: "uppercase", marginBottom: 3, display: "flex", alignItems: "center", gap: 5 }}>
-                            <Lightbulb size={13} color="var(--lime)" /> Tips Sukses:
+                        <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", padding: "10px 12px", borderRadius: "var(--radius-sm)" }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#92400E", textTransform: "uppercase", marginBottom: 3, display: "flex", alignItems: "center", gap: 5 }}>
+                            <Lightbulb size={13} color="#D97706" /> Tips Sukses:
                           </div>
                           <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
                             {stage.guideTip}

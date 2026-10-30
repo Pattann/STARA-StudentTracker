@@ -12,7 +12,7 @@ export function ModalScrollLock() {
   useEffect(() => {
     if (typeof window === "undefined" || typeof document === "undefined") return;
 
-    const MODAL_SELECTOR = '.dialog-overlay, [data-modal-overlay="true"], .modal-overlay, .mobile-menu-overlay';
+    const MODAL_SELECTOR = '.dialog-overlay, [data-modal-overlay="true"], .modal-overlay, .mobile-menu-overlay, [role="dialog"][aria-modal="true"]';
 
     let isLocked = false;
     let originalBodyOverflow = "";
@@ -28,6 +28,10 @@ export function ModalScrollLock() {
       document.body.style.overflow = "hidden";
       document.documentElement.classList.add("modal-open");
       document.body.classList.add("modal-open");
+      const scrollAreas = document.querySelectorAll(".main-scroll-area");
+      scrollAreas.forEach((area) => {
+        (area as HTMLElement).style.overflow = "hidden";
+      });
     };
 
     const unlockScroll = () => {
@@ -38,6 +42,10 @@ export function ModalScrollLock() {
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.classList.remove("modal-open");
       document.body.classList.remove("modal-open");
+      const scrollAreas = document.querySelectorAll(".main-scroll-area");
+      scrollAreas.forEach((area) => {
+        (area as HTMLElement).style.overflow = "";
+      });
     };
 
     const checkModalState = () => {

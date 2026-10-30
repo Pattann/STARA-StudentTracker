@@ -1478,7 +1478,15 @@ body:has([role="dialog"]),
 html:has([data-modal-overlay="true"]),
 body:has([data-modal-overlay="true"]),
 html.modal-open,
-body.modal-open {
+body.modal-open,
+html:has(.dialog-overlay) .main-scroll-area,
+body:has(.dialog-overlay) .main-scroll-area,
+html:has([role="dialog"]) .main-scroll-area,
+body:has([role="dialog"]) .main-scroll-area,
+html:has([data-modal-overlay="true"]) .main-scroll-area,
+body:has([data-modal-overlay="true"]) .main-scroll-area,
+html.modal-open .main-scroll-area,
+body.modal-open .main-scroll-area {
   overflow: hidden !important;
   overscroll-behavior: none !important;
 }
