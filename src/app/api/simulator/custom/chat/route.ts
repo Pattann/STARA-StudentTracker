@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   try {
     const parsed = ChatBodySchema.safeParse((await req.json()) as unknown);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Input tidak valid.", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Input tidak valid." }, { status: 400 });
     }
 
     const ctx = await buildCustomPlanContext(session.id);

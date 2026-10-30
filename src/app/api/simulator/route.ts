@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as unknown;
     const parsed = ScenarioParamsSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Parameter tidak valid.", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Parameter tidak valid." }, { status: 400 });
     }
 
     const params = parsed.data;

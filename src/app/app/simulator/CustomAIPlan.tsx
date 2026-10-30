@@ -284,7 +284,7 @@ export default function CustomAIPlan({
         );
       }
     } catch (err) {
-      console.warn("Gagal refresh alternatif:", err);
+      // handled silently
     } finally {
       setRefreshingAlt(false);
     }

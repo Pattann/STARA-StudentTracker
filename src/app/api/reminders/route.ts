@@ -218,7 +218,7 @@ export async function POST(req: NextRequest) {
     const parsed = CreateReminderSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Data pengingat tidak valid.", details: parsed.error.flatten() },
+        { error: "Data pengingat tidak valid." },
         { status: 400 }
       );
     }
@@ -256,7 +256,7 @@ export async function PATCH(req: NextRequest) {
     const parsed = UpdateReminderSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Data pembaruan tidak valid.", details: parsed.error.flatten() },
+        { error: "Data pembaruan tidak valid." },
         { status: 400 }
       );
     }

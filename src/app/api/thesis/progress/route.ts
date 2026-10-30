@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as unknown;
     const parsed = ProgressPayloadSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Data progres tidak valid.", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Data progres tidak valid." }, { status: 400 });
     }
 
     const rejection = validateProgressStages(parsed.data.stages);

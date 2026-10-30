@@ -445,7 +445,7 @@ export default function ThesisPage() {
           }));
         }
       })
-      .catch((err) => console.warn("[Thesis Page] Failed to fetch profile:", err));
+      .catch(() => {});
   }, [token]);
 
   // Load saved 11 stages progress from localStorage and server
@@ -461,8 +461,8 @@ export default function ThesisPage() {
           }
         }
       }
-    } catch (e) {
-      console.warn("Failed to read localStorage stages", e);
+    } catch {
+      // ignore local storage parse errors
     }
 
     if (!token) return;
@@ -476,7 +476,7 @@ export default function ThesisPage() {
           }
         }
       })
-      .catch((err) => console.warn("Failed to fetch saved thesis progress from API:", err));
+      .catch(() => {});
   }, [token]);
 
   useEffect(() => {
@@ -548,8 +548,8 @@ export default function ThesisPage() {
         activeStageNumber: activeStage.id,
         savedAt: new Date().toISOString(),
       }));
-    } catch (err) {
-      console.warn("Failed to save to localStorage", err);
+    } catch {
+      // ignore storage quota errors
     }
 
     // 2. Server API
@@ -585,8 +585,8 @@ export default function ThesisPage() {
           setDependencyAlert(`⚠️ ${errMsg}`);
           setTimeout(() => setDependencyAlert(null), 7000);
         }
-      } catch (err) {
-        console.warn("Failed to sync progress to API", err);
+      } catch {
+        // network failure handled silently
       }
     }
     setIsSavingProgress(false);

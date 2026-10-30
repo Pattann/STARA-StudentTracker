@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as unknown;
     const parsed = ThesisReviewSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Judul atau draf topik belum diisi.", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Judul atau draf topik belum diisi." }, { status: 400 });
     }
 
     const profile = await prisma.academicProfile.findUnique({

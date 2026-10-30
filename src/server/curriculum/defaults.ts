@@ -1,3 +1,5 @@
+import "server-only";
+
 export interface DefaultTaskItem {
   title: string;
   category: "akademik" | "tak" | "karier" | "skripsi" | "pribadi";

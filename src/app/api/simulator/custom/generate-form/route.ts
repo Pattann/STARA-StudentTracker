@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as unknown;
     const parsed = GenerateFormSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Input rencana tidak valid.", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Input rencana tidak valid." }, { status: 400 });
     }
 
     const ctx = await buildCustomPlanContext(session.id);

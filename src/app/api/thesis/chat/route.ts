@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as unknown;
     const parsed = ThesisChatSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Data tidak valid.", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Data tidak valid." }, { status: 400 });
     }
 
     const profile = await prisma.academicProfile.findUnique({

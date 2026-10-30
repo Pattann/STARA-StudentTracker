@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const parsed = OnboardingSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Data formulir tidak valid.", details: parsed.error.flatten() },
+        { error: "Data formulir tidak valid." },
         { status: 400 }
       );
     }

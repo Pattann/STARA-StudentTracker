@@ -1,3 +1,4 @@
+import "server-only";
 import crypto from "crypto";
 import { NextRequest } from "next/server";
 import { prisma } from "@/server/db/prisma";

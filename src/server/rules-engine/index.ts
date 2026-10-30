@@ -4,6 +4,8 @@
  * All functions are deterministic given the same input.
  */
 
+import "server-only";
+
 export interface SemesterPlanInput {
   semesterNum: number;
   targetCredits: number;

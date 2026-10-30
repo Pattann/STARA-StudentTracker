@@ -1,3 +1,4 @@
+import "server-only";
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
@@ -8,12 +9,15 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: ["error"],
+    log: process.env.NODE_ENV === "development" ? ["error"] : [],
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-if (!globalForPrisma.sqliteConfigured) {
+if (
+  !globalForPrisma.sqliteConfigured &&
+  process.env.DATABASE_URL?.startsWith("file:")
+) {
   globalForPrisma.sqliteConfigured = true;
   prisma.$queryRawUnsafe("PRAGMA journal_mode = WAL;").catch(() => {});
   prisma.$queryRawUnsafe("PRAGMA synchronous = NORMAL;").catch(() => {});

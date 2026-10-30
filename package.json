@@ -1,15 +1,16 @@
 {
   "name": "stara",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev --webpack",
-    "build": "next build --webpack",
+    "build": "node scripts/prepare-db.mjs && next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "db:generate": "node node_modules/prisma/dist/prisma.js generate || node_modules/.bin/prisma generate",
-    "db:migrate": "node_modules/.bin/prisma.cmd migrate dev",
-    "db:studio": "node_modules/.bin/prisma.cmd studio"
+    "db:generate": "node scripts/prepare-db.mjs",
+    "db:push": "node scripts/prepare-db.mjs && npx prisma db push",
+    "db:migrate": "node scripts/prepare-db.mjs && npx prisma migrate dev",
+    "db:studio": "npx prisma studio"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",

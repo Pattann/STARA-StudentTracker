@@ -1,3 +1,4 @@
+import "server-only";
 import { prisma } from "@/server/db/prisma";
 import { CURRICULUM_CATALOG, CatalogCourse } from "@/features/curriculum/catalog";
 import { MOCK_TEMPLATES } from "@/features/templates/data";

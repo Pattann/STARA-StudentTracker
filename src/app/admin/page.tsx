@@ -107,8 +107,8 @@ function AdminDashboardContent() {
       if (data.success) {
         setOverviewData(data);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // handled silently
     } finally {
       setIsLoadingOverview(false);
     }
@@ -121,8 +121,8 @@ function AdminDashboardContent() {
       if (data.success) {
         setAcademicsData(data);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // handled silently
     }
   };
 
@@ -135,8 +135,8 @@ function AdminDashboardContent() {
       if (data.success) {
         setTemplatesList(data.templates);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // handled silently
     }
   };
 
@@ -147,8 +147,8 @@ function AdminDashboardContent() {
       if (data.success) {
         setAiData(data);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // handled silently
     }
   };
 

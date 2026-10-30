@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as unknown;
     const parsed = SimulatePlanSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Data simulasi tidak valid.", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json({ error: "Data simulasi tidak valid." }, { status: 400 });
     }
 
     const ctx = await buildCustomPlanContext(session.id);
