@@ -381,10 +381,35 @@ export default function RoadmapPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
+  // Helper to ensure draft mode exists before any mutation (Auto-Drafting Workflow: Pilihan 1 & 3)
+  const ensureDraftMode = async (): Promise<boolean> => {
+    if (data?.roadmap?.isDraftMode) return true;
+    if (!token) return false;
+    try {
+      const res = await fetch("/api/roadmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-demo-token": token },
+        body: JSON.stringify({ action: "create_draft" }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Gagal membuat draf rencana");
+      setActiveMode("edit");
+      await fetchRoadmap();
+      return true;
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Gagal membuat draf", "error");
+      return false;
+    }
+  };
+
   // Kemampuan A: Update Task / Status
   const handleUpdateTask = async (taskId: string, updates: Record<string, unknown>) => {
     if (!token) return;
     try {
+      if (!data?.roadmap?.isDraftMode) {
+        const ok = await ensureDraftMode();
+        if (!ok) return;
+      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -404,6 +429,10 @@ export default function RoadmapPage() {
   const handleMoveTask = async (taskId: string, targetSemesterNum: number) => {
     if (!token) return;
     try {
+      if (!data?.roadmap?.isDraftMode) {
+        const ok = await ensureDraftMode();
+        if (!ok) return;
+      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -423,6 +452,10 @@ export default function RoadmapPage() {
   const handleDeleteTask = async (taskId: string) => {
     if (!token) return;
     try {
+      if (!data?.roadmap?.isDraftMode) {
+        const ok = await ensureDraftMode();
+        if (!ok) return;
+      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -512,6 +545,10 @@ export default function RoadmapPage() {
   }) => {
     if (!token) return;
     try {
+      if (!data?.roadmap?.isDraftMode) {
+        const ok = await ensureDraftMode();
+        if (!ok) return;
+      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -554,6 +591,10 @@ export default function RoadmapPage() {
   const handleUpdateSemesterTarget = async (semesterNum: number, targetCredits: number) => {
     if (!token) return;
     try {
+      if (!data?.roadmap?.isDraftMode) {
+        const ok = await ensureDraftMode();
+        if (!ok) return;
+      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -899,7 +940,7 @@ export default function RoadmapPage() {
   const isEditOrDraft = data.roadmap.isDraftMode || activeMode === "edit";
 
   return (
-    <div>
+    <div style={{ paddingBottom: isEditOrDraft ? 90 : 32 }}>
       {/* ── Page Header & Dua Aksi Utama ── */}
       <div
         style={{
@@ -948,49 +989,9 @@ export default function RoadmapPage() {
           </p>
         </div>
 
-        {/* Action Group: Dua Aksi Utama & Menu Sekunder */}
+        {/* Action Group: Simulasi What-If & Menu Sekunder (Sesuaikan Roadmap berpindah ke toolbar kartu & floating bar) */}
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
-          {isEditOrDraft ? (
-            <>
-              {/* Tombol Simpan Perubahan */}
-              <button
-                onClick={handleSaveDraft}
-                className="btn btn-primary btn-sm"
-                style={{ gap: 6, fontSize: 12.5, fontWeight: 700 }}
-                id="btn-save-draft"
-                title="Terapkan seluruh perubahan ke roadmap aktif"
-              >
-                <Check size={14} />
-                <span>Simpan Perubahan</span>
-              </button>
-
-              {/* Tombol Batalkan */}
-              <button
-                onClick={() => handleCancelDraft(false)}
-                className="btn btn-secondary btn-sm"
-                style={{ gap: 6, fontSize: 12.5 }}
-                id="btn-cancel-draft"
-                title="Batalkan perubahan dan kembali ke roadmap tersimpan"
-              >
-                <RotateCcw size={13} />
-                <span>Batalkan</span>
-              </button>
-            </>
-          ) : (
-            /* Aksi Utama 1: Sesuaikan Roadmap */
-            <button
-              onClick={handleStartEditAndDraft}
-              className="btn btn-primary btn-sm"
-              style={{ gap: 6, fontSize: 12.5, fontWeight: 700 }}
-              id="btn-adjust-roadmap"
-              title="Mulai penyesuaian susunan roadmap secara aman dalam draf"
-            >
-              <SlidersHorizontal size={13} />
-              <span>Sesuaikan Roadmap</span>
-            </button>
-          )}
-
-          {/* Aksi Utama 2: Simulasi What-If */}
+          {/* Aksi Utama: Simulasi What-If */}
           <Link
             href="/app/simulator"
             className="btn btn-secondary btn-sm"
@@ -1043,6 +1044,33 @@ export default function RoadmapPage() {
                     gap: 2,
                   }}
                 >
+                  {!isEditOrDraft && (
+                    <button
+                      onClick={() => {
+                        setShowSecondaryMenu(false);
+                        handleStartEditAndDraft();
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "8px 10px",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        background: "transparent",
+                        border: "none",
+                        color: "var(--text-primary)",
+                        borderRadius: "var(--radius-sm)",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                    >
+                      <SlidersHorizontal size={14} color="#D97706" />
+                      <span>Sesuaikan Roadmap</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       setShowSecondaryMenu(false);
@@ -1128,53 +1156,6 @@ export default function RoadmapPage() {
         </div>
       </div>
 
-      {/* ── Mode Draf Rencana Aktif Banner (Minimalist & Responsive) ── */}
-      {isEditOrDraft && (
-        <div
-          style={{
-            background: "rgba(245, 158, 11, 0.08)",
-            border: "1px solid rgba(245, 158, 11, 0.3)",
-            borderRadius: "var(--radius-md)",
-            padding: "10px 16px",
-            marginBottom: 16,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <FileEdit size={16} color="#D97706" />
-            <div>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)" }}>
-                Mode Penyesuaian Draf Aktif:
-              </span>{" "}
-              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                Kamu dapat menambah item, mengedit beban SKS, atau memindahkan semester. Roadmap tersimpan tidak akan berubah hingga kamu menyimpan.
-              </span>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button
-              onClick={() => handleCancelDraft(false)}
-              className="btn btn-secondary btn-sm"
-              style={{ fontSize: 11.5, gap: 5 }}
-            >
-              <RotateCcw size={12} />
-              Batalkan
-            </button>
-            <button
-              onClick={handleSaveDraft}
-              className="btn btn-primary btn-sm"
-              style={{ fontSize: 11.5, gap: 5, fontWeight: 700 }}
-            >
-              <Check size={12} />
-              Simpan Perubahan
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── Version History Drawer (Conditional) ── */}
       {showHistory && (
@@ -1621,49 +1602,72 @@ export default function RoadmapPage() {
       {/* ── VIEW 1: TIMELINE VIEW ── */}
       {activeView === "timeline" && (
         <div>
-          {/* Status Filter Bar & Sole Expand/Collapse Control */}
-          {activeMode === "view" && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 16,
-                flexWrap: "wrap",
-                gap: 12,
-              }}
-            >
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginRight: 4, fontWeight: 600 }}>Filter Status:</span>
-                {[
-                  { id: "all", label: "Semua Item" },
-                  { id: "done", label: `Selesai (${completedCredits} SKS)` },
-                  { id: "in_progress", label: "Sedang Berjalan" },
-                  { id: "planned", label: "Direncanakan" },
-                  { id: "delayed", label: `Perlu Diulang ${retakeCount > 0 ? `(${retakeCount})` : ""}` },
-                ].map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setStatusFilter(f.id)}
-                    style={{
-                      padding: "5px 12px",
-                      borderRadius: "var(--radius-sm)",
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      border: statusFilter === f.id ? "1px solid #18181B" : "1px solid var(--border)",
-                      background: statusFilter === f.id ? "#18181B" : "#FFFFFF",
-                      color: statusFilter === f.id ? "#FFFFFF" : "var(--text-secondary)",
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                      boxShadow: statusFilter === f.id ? "0 1px 3px rgba(0, 0, 0, 0.12)" : "none",
-                    }}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
+          {/* Status Filter Bar & Controls (Selalu Tampil, dengan tombol Sesuaikan Roadmap kontekstual) */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16,
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginRight: 4, fontWeight: 600 }}>Filter Status:</span>
+              {[
+                { id: "all", label: "Semua Item" },
+                { id: "done", label: `Selesai (${completedCredits} SKS)` },
+                { id: "in_progress", label: "Sedang Berjalan" },
+                { id: "planned", label: "Direncanakan" },
+                { id: "delayed", label: `Perlu Diulang ${retakeCount > 0 ? `(${retakeCount})` : ""}` },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setStatusFilter(f.id)}
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    border: statusFilter === f.id ? "1px solid #18181B" : "1px solid var(--border)",
+                    background: statusFilter === f.id ? "#18181B" : "#FFFFFF",
+                    color: statusFilter === f.id ? "#FFFFFF" : "var(--text-secondary)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                    boxShadow: statusFilter === f.id ? "0 1px 3px rgba(0, 0, 0, 0.12)" : "none",
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
 
-              <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {!isEditOrDraft && (
+                <button
+                  onClick={handleStartEditAndDraft}
+                  className="btn btn-secondary btn-sm"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    gap: 6,
+                    padding: "6px 14px",
+                    borderRadius: 8,
+                    background: "#FEF3C7",
+                    color: "#92400E",
+                    borderColor: "#FCD34D",
+                    cursor: "pointer",
+                    boxShadow: "0 1px 3px rgba(217, 119, 6, 0.12)",
+                  }}
+                  id="btn-adjust-roadmap-toolbar"
+                  title="Mulai penyesuaian susunan roadmap secara aman dalam draf"
+                >
+                  <SlidersHorizontal size={13} color="#D97706" />
+                  <span>Sesuaikan Roadmap</span>
+                </button>
+              )}
+              <div style={{ display: "flex", gap: 4 }}>
                 <button className="btn btn-ghost btn-sm" onClick={expandAll} style={{ fontSize: 11.5, padding: "4px 8px" }}>
                   Buka Semua
                 </button>
@@ -1672,7 +1676,7 @@ export default function RoadmapPage() {
                 </button>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Timeline List of Semester Cards */}
           <div className="roadmap-timeline" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1688,7 +1692,7 @@ export default function RoadmapPage() {
                   plan={plan}
                   displayTasks={displayTasks}
                   profile={profile}
-                  mode={activeMode}
+                  mode={isEditOrDraft ? "edit" : "view"}
                   isExpanded={expandedSemesters.has(plan.semesterNum)}
                   onToggle={() => toggleSemester(plan.semesterNum)}
                   editingTaskId={editingTaskId}
@@ -1723,7 +1727,7 @@ export default function RoadmapPage() {
         <InteractiveVisualRoadmap
           semesterPlans={semesterPlans}
           profile={profile}
-          mode={activeMode}
+          mode={isEditOrDraft ? "edit" : "view"}
           editingTaskId={editingTaskId}
           onEditTaskId={setEditingTaskId}
           onUpdateTask={handleUpdateTask}
@@ -2632,6 +2636,110 @@ export default function RoadmapPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Floating Sticky Action Bar saat Mode Draf Aktif (Kombinasi Pilihan 1 & 3) ── */}
+      {isEditOrDraft && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 90,
+            background: "#FFFFFF",
+            border: "1.5px solid #F59E0B",
+            borderRadius: 16,
+            padding: "10px 18px",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            boxShadow: "0 16px 40px -8px rgba(180, 83, 9, 0.22), 0 4px 16px rgba(0, 0, 0, 0.08)",
+            maxWidth: "calc(100vw - 32px)",
+          }}
+          id="floating-draft-bar"
+        >
+          {/* Status info */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: "#D97706",
+                boxShadow: "0 0 0 3px rgba(217, 119, 6, 0.25)",
+                flexShrink: 0,
+              }}
+            />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "#18181B", display: "flex", alignItems: "center", gap: 6 }}>
+                <span>Mode Penyesuaian Draf</span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    background: "#FEF3C7",
+                    color: "#B45309",
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                  }}
+                >
+                  Belum Disimpan
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: "#71717A" }}>
+                Perubahan belum memengaruhi roadmap resmi hingga disimpan
+              </div>
+            </div>
+          </div>
+
+          <div style={{ width: 1, height: 26, background: "#E4E4E7", flexShrink: 0 }} />
+
+          {/* Action buttons */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => handleCancelDraft(false)}
+              className="btn btn-secondary btn-sm"
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                gap: 5,
+                padding: "7px 14px",
+                borderRadius: 10,
+                color: "#475569",
+                border: "1px solid #CBD5E1",
+              }}
+              id="btn-cancel-floating-draft"
+              title="Batalkan seluruh perubahan draf dan kembalikan ke versi resmi"
+            >
+              <RotateCcw size={13} />
+              <span>Batalkan</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              className="btn btn-primary btn-sm"
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                gap: 6,
+                padding: "7px 18px",
+                borderRadius: 10,
+                background: "#D97706",
+                borderColor: "#B45309",
+                color: "#FFFFFF",
+                boxShadow: "0 2px 8px rgba(217, 119, 6, 0.35)",
+              }}
+              id="btn-save-floating-draft"
+              title="Terapkan seluruh perubahan ke roadmap aktif"
+            >
+              <Check size={14} strokeWidth={2.5} />
+              <span>Simpan Perubahan</span>
+            </button>
           </div>
         </div>
       )}
