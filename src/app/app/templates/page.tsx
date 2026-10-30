@@ -136,17 +136,11 @@ export default function TemplatesPage() {
         .catch(() => {});
     }
 
-    const targetKampus = paramKampus || savedProfile?.institutionName;
-    const targetJurusan = paramJurusan || savedProfile?.programName;
+    // Jangan auto-filter template dari profil onboarding agar user dapat bebas menjelajahi semua template
+    // Filter hanya diaplikasikan jika secara eksplisit diberikan melalui URL search params (?kampus=... / ?jurusan=...)
+    const targetKampus = paramKampus;
+    const targetJurusan = paramJurusan;
     const targetTahun = paramTahun;
-
-    if (!savedProfile && (targetKampus || targetJurusan)) {
-      setOnboardingProfile({
-        institutionName: targetKampus || "",
-        programName: targetJurusan || "",
-        entryYear: targetTahun ? Number(targetTahun) : 2024,
-      });
-    }
 
     let appliedAny = false;
 
@@ -179,7 +173,7 @@ export default function TemplatesPage() {
 
     if (appliedAny) {
       setShowFilter(false);
-      setAutoFilteredFromOnboarding(true);
+      setAutoFilteredFromOnboarding(false);
     }
   }, [token]);
 
