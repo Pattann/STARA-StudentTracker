@@ -807,28 +807,6 @@ export default function ProfilePage() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Target Poin TAK / SKKM</label>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <input
-                    type="checkbox"
-                    checked={takEnabled}
-                    onChange={(e) => setTakEnabled(e.target.checked)}
-                    style={{ width: 18, height: 18, accentColor: "var(--amber)" }}
-                  />
-                  <input
-                    type="number"
-                    min={0}
-                    max={500}
-                    disabled={!takEnabled}
-                    className="form-input"
-                    value={takTarget}
-                    onChange={(e) => setTakTarget(e.target.value)}
-                    placeholder="120"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
                 <label className="form-label">Minat Karier / Peminatan (Pisahkan koma)</label>
                 <input
                   type="text"

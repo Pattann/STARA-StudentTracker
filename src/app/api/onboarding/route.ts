@@ -15,8 +15,6 @@ const OnboardingSchema = z.object({
   goals: z.enum(["fast", "balanced", "active", "relaxed"]).default("balanced"),
   interests: z.string().max(500).optional().default(""),
   weeklyHours: z.coerce.number().int().min(0).max(80).default(20),
-  takEnabled: z.boolean().default(true),
-  takTarget: z.coerce.number().int().min(0).max(500).default(120),
   token: z.string().optional(),
 });
 
@@ -69,7 +67,7 @@ export async function POST(req: NextRequest) {
       await prisma.reminder.deleteMany({ where: { guestSessionId: sessionId } });
     }
 
-    // 1. Create Academic Profile
+    // 1. Create Academic Profile (TAK tracking completely disabled)
     await prisma.academicProfile.create({
       data: {
         guestSessionId: sessionId,
@@ -85,8 +83,8 @@ export async function POST(req: NextRequest) {
         gpa: data.gpa,
         goals: data.goals,
         interests: JSON.stringify(data.interests ? data.interests.split(",").map((s) => s.trim()) : []),
-        takEnabled: data.takEnabled,
-        takTarget: data.takTarget,
+        takEnabled: false,
+        takTarget: null,
         weeklyHours: data.weeklyHours,
       },
     });

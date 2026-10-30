@@ -32,8 +32,6 @@ interface OnboardingForm {
   goals: "fast" | "balanced" | "active" | "relaxed";
   interests: string;
   weeklyHours: string;
-  takEnabled: boolean;
-  takTarget: string;
 }
 
 const EMPTY_FORM: OnboardingForm = {
@@ -49,8 +47,6 @@ const EMPTY_FORM: OnboardingForm = {
   goals: "balanced",
   interests: "",
   weeklyHours: "20",
-  takEnabled: true,
-  takTarget: "120",
 };
 
 const DEFAULT_FORM: OnboardingForm = {
@@ -66,8 +62,6 @@ const DEFAULT_FORM: OnboardingForm = {
   goals: "balanced",
   interests: "Artificial Intelligence, Full-Stack Web Development, UI/UX",
   weeklyHours: "24",
-  takEnabled: true,
-  takTarget: "120",
 };
 
 export function OnboardingWizard() {
@@ -160,8 +154,6 @@ export function OnboardingWizard() {
         goals: form.goals,
         interests: form.interests,
         weeklyHours: parseInt(form.weeklyHours) || 20,
-        takEnabled: form.takEnabled,
-        takTarget: parseInt(form.takTarget) || 120,
         token: existingToken || undefined,
       };
 
@@ -268,7 +260,7 @@ export function OnboardingWizard() {
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
-                    opacity: isActive ? 1 : isDone ? 0.9 : 0.45,
+                    opacity: isActive ? 1 : isDone ? 0.95 : 0.45,
                     transition: "all 0.2s ease",
                   }}
                 >
@@ -278,18 +270,22 @@ export function OnboardingWizard() {
                       height: 28,
                       borderRadius: "50%",
                       background: isDone
-                        ? "#15803D"
+                        ? "#D97706"
                         : isActive
                         ? "#0F172A"
                         : "#F1F5F9",
                       color: isDone || isActive ? "#FFFFFF" : "#64748B",
-                      border: `1.5px solid ${isDone ? "#15803D" : isActive ? "#0F172A" : "#CBD5E1"}`,
+                      border: `1.5px solid ${isDone ? "#B45309" : isActive ? "#0F172A" : "#CBD5E1"}`,
                       fontSize: 12,
                       fontWeight: 800,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      boxShadow: isActive ? "0 2px 8px rgba(15, 23, 42, 0.12)" : "none",
+                      boxShadow: isDone
+                        ? "0 2px 6px rgba(217, 119, 6, 0.3)"
+                        : isActive
+                        ? "0 2px 8px rgba(15, 23, 42, 0.12)"
+                        : "none",
                     }}
                   >
                     {isDone ? <CheckCircle2 size={15} strokeWidth={2.5} /> : idx + 1}
@@ -298,7 +294,7 @@ export function OnboardingWizard() {
                     style={{
                       fontSize: 13,
                       fontWeight: 700,
-                      color: isActive ? "#0F172A" : isDone ? "#334155" : "#64748B",
+                      color: isActive ? "#0F172A" : isDone ? "#92400E" : "#64748B",
                       display: isActive ? "inline" : "none",
                     }}
                     className="step-label"
@@ -315,7 +311,7 @@ export function OnboardingWizard() {
               style={{
                 width: `${((step + 1) / steps.length) * 100}%`,
                 height: "100%",
-                background: "#15803D",
+                background: "#D97706",
                 borderRadius: 99,
                 transition: "width 0.3s ease",
               }}
@@ -528,12 +524,13 @@ export function OnboardingWizard() {
                         style={{
                           padding: "11px 0",
                           borderRadius: 10,
-                          background: isSelected ? "#15803D" : "#F8FAFC",
+                          background: isSelected ? "#D97706" : "#F8FAFC",
                           color: isSelected ? "#FFFFFF" : "#334155",
                           fontWeight: 800,
                           fontSize: 14,
-                          border: `1.5px solid ${isSelected ? "#15803D" : "#E2E8F0"}`,
+                          border: `1.5px solid ${isSelected ? "#B45309" : "#E2E8F0"}`,
                           cursor: "pointer",
+                          boxShadow: isSelected ? "0 2px 8px rgba(217, 119, 6, 0.35)" : "none",
                           transition: "all 0.15s ease",
                         }}
                       >
@@ -619,7 +616,7 @@ export function OnboardingWizard() {
                     <span style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>
                       Pencapaian Kurikulum
                     </span>
-                    <span style={{ fontSize: 13.5, fontWeight: 800, color: "#15803D" }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 800, color: "#B45309" }}>
                       {progressPercent}% <span style={{ fontSize: 11, color: "#64748B", fontWeight: 600 }}>({completedSKS} dari {totalSKS} SKS)</span>
                     </span>
                   </div>
@@ -628,7 +625,7 @@ export function OnboardingWizard() {
                       style={{
                         width: `${progressPercent}%`,
                         height: "100%",
-                        background: "#15803D",
+                        background: "#D97706",
                         borderRadius: 99,
                         transition: "width 0.3s ease",
                       }}
@@ -637,95 +634,60 @@ export function OnboardingWizard() {
                 </div>
               </div>
 
-              {/* IPK & TAK */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
-                    <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B" }}>
-                      IPK Kumulatif Terakhir <span style={{ color: "#DC2626" }}>*</span>
-                    </label>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748B" }}>
-                      Maks. 4.00
-                    </span>
-                  </div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.00"
-                    max="4.00"
-                    value={form.gpa}
-                    onChange={(e) => {
-                      const rawVal = e.target.value.replace(",", ".");
-                      if (rawVal === "") {
-                        update("gpa", "");
-                        return;
-                      }
-                      const parsed = parseFloat(rawVal);
-                      if (!isNaN(parsed) && parsed > 4.0) {
-                        update("gpa", "4.00");
-                      } else if (!isNaN(parsed) && parsed < 0) {
-                        update("gpa", "0.00");
-                      } else {
-                        update("gpa", rawVal);
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const parsed = parseFloat(e.target.value);
-                      if (!isNaN(parsed)) {
-                        const clamped = Math.min(4.0, Math.max(0.0, parsed));
-                        update("gpa", clamped.toFixed(2));
-                      }
-                    }}
-                    placeholder="3.50"
-                    className="form-input"
-                    style={{
-                      width: "100%",
-                      padding: "11px 14px",
-                      borderRadius: 10,
-                      background: "#FFFFFF",
-                      border: "1px solid #CBD5E1",
-                      color: "#0F172A",
-                      fontSize: 15,
-                      fontWeight: 800,
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>
-                    Skala standar perguruan tinggi (0.00 - 4.00)
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 7 }}>
-                    Pelacakan Poin TAK / SKPI
+              {/* IPK Kumulatif (Single focused clean input, TAK completely removed) */}
+              <div style={{ maxWidth: 360 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B" }}>
+                    IPK Kumulatif Terakhir <span style={{ color: "#DC2626" }}>*</span>
                   </label>
-                  <div
-                    onClick={() => update("takEnabled", !form.takEnabled)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "11px 14px",
-                      borderRadius: 10,
-                      background: form.takEnabled ? "#F0FDF4" : "#F8FAFC",
-                      border: `1px solid ${form.takEnabled ? "#BBF7D0" : "#E2E8F0"}`,
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: form.takEnabled ? "#166534" : "#64748B" }}>
-                      {form.takEnabled ? "Aktifkan Pelacakan TAK" : "Nonaktifkan TAK"}
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={form.takEnabled}
-                      onChange={() => {}}
-                      style={{ accentColor: "#15803D", cursor: "pointer", width: 16, height: 16 }}
-                    />
-                  </div>
-                  <span style={{ fontSize: 11, color: "#64748B", display: "block", marginTop: 4 }}>
-                    Poin kegiatan non-akademik. Nonaktifkan jika kampusmu tidak memakainya.
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#64748B" }}>
+                    Maks. 4.00
                   </span>
+                </div>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.00"
+                  max="4.00"
+                  value={form.gpa}
+                  onChange={(e) => {
+                    const rawVal = e.target.value.replace(",", ".");
+                    if (rawVal === "") {
+                      update("gpa", "");
+                      return;
+                    }
+                    const parsed = parseFloat(rawVal);
+                    if (!isNaN(parsed) && parsed > 4.0) {
+                      update("gpa", "4.00");
+                    } else if (!isNaN(parsed) && parsed < 0) {
+                      update("gpa", "0.00");
+                    } else {
+                      update("gpa", rawVal);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const parsed = parseFloat(e.target.value);
+                    if (!isNaN(parsed)) {
+                      const clamped = Math.min(4.0, Math.max(0.0, parsed));
+                      update("gpa", clamped.toFixed(2));
+                    }
+                  }}
+                  placeholder="3.50"
+                  className="form-input"
+                  style={{
+                    width: "100%",
+                    padding: "11px 14px",
+                    borderRadius: 10,
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    color: "#0F172A",
+                    fontSize: 15,
+                    fontWeight: 800,
+                    boxSizing: "border-box",
+                  }}
+                />
+                <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>
+                  Skala standar perguruan tinggi (0.00 - 4.00)
                 </div>
               </div>
             </div>
@@ -753,8 +715,8 @@ export function OnboardingWizard() {
                       title: "Seimbang & Teratur (4 Tahun)",
                       sub: "8 Semester • Standar Ideal",
                       desc: "Beban 18-20 SKS per semester dengan ritme belajar stabil tanpa stres berlebih.",
-                      icon: <Clock size={18} color="#15803D" />,
-                      iconBg: "#F0FDF4",
+                      icon: <Clock size={18} color="#D97706" />,
+                      iconBg: "#FEF3C7",
                     },
                     {
                       id: "active",
@@ -779,13 +741,13 @@ export function OnboardingWizard() {
                         key={item.id}
                         onClick={() => update("goals", item.id as any)}
                         style={{
-                          background: isSelected ? "#F0FDF4" : "#FFFFFF",
-                          border: `1.5px solid ${isSelected ? "#16A34A" : "#E2E8F0"}`,
+                          background: isSelected ? "#FFFBEB" : "#FFFFFF",
+                          border: `1.5px solid ${isSelected ? "#D97706" : "#E2E8F0"}`,
                           borderRadius: 14,
                           padding: "16px 16px",
                           cursor: "pointer",
                           transition: "all 0.15s ease",
-                          boxShadow: isSelected ? "0 4px 16px rgba(22, 163, 74, 0.08)" : "0 1px 3px rgba(0,0,0,0.02)",
+                          boxShadow: isSelected ? "0 4px 16px rgba(217, 119, 6, 0.12)" : "0 1px 3px rgba(0,0,0,0.02)",
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -806,9 +768,9 @@ export function OnboardingWizard() {
                             </div>
                             <span style={{ fontSize: 13, fontWeight: 800, color: "#0F172A" }}>{item.title}</span>
                           </div>
-                          {isSelected && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#16A34A" }} />}
+                          {isSelected && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D97706" }} />}
                         </div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 4 }}>{item.sub}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: isSelected ? "#B45309" : "#64748B", marginBottom: 4 }}>{item.sub}</div>
                         <p style={{ fontSize: 12, color: "#64748B", lineHeight: 1.45, margin: 0 }}>{item.desc}</p>
                       </div>
                     );
@@ -851,35 +813,35 @@ export function OnboardingWizard() {
               {/* Summary Highlight Box */}
               <div
                 style={{
-                  background: "#F0FDF4",
-                  border: "1.5px solid #BBF7D0",
+                  background: "#FFFBEB",
+                  border: "1.5px solid #FDE68A",
                   borderRadius: 16,
                   padding: "20px 18px",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                  <Sparkles size={16} color="#15803D" />
-                  <span style={{ fontSize: 12, fontWeight: 800, color: "#166534", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                  <Sparkles size={16} color="#D97706" />
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "#92400E", letterSpacing: "0.04em", textTransform: "uppercase" }}>
                     Hasil Kalkulasi AI STARA
                   </span>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, textAlign: "center" }}>
-                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #DCFCE7" }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#15803D" }}>
+                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #FDE68A" }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#D97706" }}>
                       Sem {targetGradSem}
                     </div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#475569", marginTop: 2 }}>Target Kelulusan</div>
                   </div>
 
-                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #DCFCE7" }}>
+                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #FDE68A" }}>
                     <div style={{ fontSize: 22, fontWeight: 900, color: "#0F172A" }}>
                       {remainingSKS} SKS
                     </div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#475569", marginTop: 2 }}>Sisa Beban Studi</div>
                   </div>
 
-                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #DCFCE7" }}>
+                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #FDE68A" }}>
                     <div style={{ fontSize: 22, fontWeight: 900, color: "#0F172A" }}>
                       ~{avgSKSPerSem} SKS
                     </div>
@@ -1001,9 +963,9 @@ export function OnboardingWizard() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="btn btn-primary"
+                className="btn-gold-primary"
                 style={{
-                  background: "#15803D",
+                  background: "#D97706",
                   color: "#FFFFFF",
                   fontWeight: 700,
                   fontSize: 13.5,
@@ -1014,7 +976,7 @@ export function OnboardingWizard() {
                   gap: 8,
                   border: "none",
                   cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(21, 128, 61, 0.25)",
+                  boxShadow: "0 2px 10px rgba(217, 119, 6, 0.35)",
                   transition: "all 0.15s ease",
                 }}
               >
@@ -1026,9 +988,9 @@ export function OnboardingWizard() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="btn btn-primary"
+                className="btn-gold-primary"
                 style={{
-                  background: "#15803D",
+                  background: "#D97706",
                   color: "#FFFFFF",
                   fontWeight: 800,
                   fontSize: 13.5,
@@ -1039,7 +1001,7 @@ export function OnboardingWizard() {
                   gap: 8,
                   border: "none",
                   cursor: submitting ? "wait" : "pointer",
-                  boxShadow: "0 2px 10px rgba(21, 128, 61, 0.3)",
+                  boxShadow: "0 2px 12px rgba(217, 119, 6, 0.35)",
                   transition: "all 0.15s ease",
                 }}
               >
@@ -1073,8 +1035,11 @@ export function OnboardingWizard() {
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        .btn-gold-primary:hover:not(:disabled) {
+          background-color: #B45309 !important;
+          box-shadow: 0 4px 14px rgba(217, 119, 6, 0.45) !important;
+        }
       `}</style>
     </div>
   );
 }
-

@@ -64,8 +64,8 @@ async function seedDemoData(guestSessionId: string) {
       gpa: 3.42,
       goals: "balanced",
       interests: JSON.stringify(["magang", "lomba", "penelitian"]),
-      takEnabled: true,
-      takTarget: 120,
+      takEnabled: false,
+      takTarget: null,
       weeklyHours: 30,
     },
   });
