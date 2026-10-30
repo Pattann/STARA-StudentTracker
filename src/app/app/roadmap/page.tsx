@@ -990,6 +990,26 @@ export default function RoadmapPage() {
 
         {/* Action Group: Simulasi What-If & Menu Sekunder (Sesuaikan Roadmap berpindah ke toolbar kartu & floating bar) */}
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
+          {/* Tombol Bagikan Roadmap sebagai Template Komunitas */}
+          <button
+            onClick={() => setShowPublishTemplateModal(true)}
+            className="btn btn-primary btn-sm"
+            style={{
+              gap: 6,
+              fontSize: 12.5,
+              fontWeight: 700,
+              background: "#D97706",
+              borderColor: "#D97706",
+              color: "#FFFFFF",
+              boxShadow: "0 2px 6px rgba(217, 119, 6, 0.2)",
+            }}
+            id="btn-upload-template-header"
+            title="Upload roadmap aktif ke komunitas untuk diverifikasi admin"
+          >
+            <UploadCloud size={14} />
+            <span>Bagikan ke Template</span>
+          </button>
+
           {/* Aksi Utama: Simulasi What-If */}
           <Link
             href="/app/simulator"
@@ -2733,6 +2753,21 @@ export default function RoadmapPage() {
           </button>
         </div>
       )}
+
+      {/* Modal Publish Roadmap ke Template Komunitas (Tersambung ke Admin Moderasi) */}
+      <PublishTemplateModal
+        isOpen={showPublishTemplateModal}
+        onClose={() => setShowPublishTemplateModal(false)}
+        defaultData={{
+          institutionName: data?.profile?.institutionName,
+          programName: data?.profile?.programName,
+          totalSemesters: data?.roadmap?.currentVersion?.semesterPlans?.length,
+          totalCredits: data?.profile?.totalCurriculumCredits,
+        }}
+        onSuccess={() => {
+          showToast("✓ Roadmap berhasil diajukan! Admin STARA akan memverifikasi sebelum ditayangkan.");
+        }}
+      />
 
       {/* ── Toast Notification ── */}
       {toast && (
