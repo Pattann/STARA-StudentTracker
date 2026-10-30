@@ -24,8 +24,13 @@ function readEnvFallback(key) {
 }
 
 if (fs.existsSync(schemaPath)) {
-  const dbUrl = readEnvFallback("DATABASE_URL");
-  const directUrl = readEnvFallback("DIRECT_URL");
+  const dbUrl =
+    readEnvFallback("DATABASE_URL") ||
+    readEnvFallback("POSTGRES_PRISMA_URL") ||
+    readEnvFallback("POSTGRES_URL");
+  const directUrl =
+    readEnvFallback("DIRECT_URL") ||
+    readEnvFallback("POSTGRES_URL_NON_POOLING");
   const hasDirectUrl = Boolean(directUrl);
   const isPostgres =
     dbUrl.startsWith("postgres://") ||

@@ -7,6 +7,10 @@ Platform web perencanaan studi bagi mahasiswa perguruan tinggi di Indonesia untu
 # Link Deploy (VERCEL)
 https://stara-student-tracker.vercel.app/
 
+===https://stara-student-tracker.vercel.app/login===
+Username Admin: adminrendy@mail.com
+Password Admin: 123456
+
 
 ---
 
