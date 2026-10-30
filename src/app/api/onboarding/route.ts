@@ -87,12 +87,18 @@ export async function POST(req: NextRequest) {
       ? 0
       : Math.min(data.totalCurriculumCredits, Math.max(0, data.completedCredits));
     const effectiveGpa = sksBounds.isLocked ? 0 : Math.min(4.0, Math.max(0.0, data.gpa));
-    const activeSemCredits = getDefaultTasksForSemester(currSem, data.programName, true).reduce(
-      (sum, t) => sum + (t.credits || 0),
-      0
-    );
+    const remainingCredits = Math.max(0, data.totalCurriculumCredits - effectiveCompletedCredits);
+    const activeSemCredits =
+      currSem > 8
+        ? Math.min(18, Math.max(0, remainingCredits))
+        : getDefaultTasksForSemester(currSem, data.programName, true).reduce(
+            (sum, t) => sum + (t.credits || 0),
+            0
+          );
     let targetSem = data.goals === "fast" ? 7 : 8;
-    if (currSem > targetSem) targetSem = currSem + 1;
+    if (currSem >= targetSem) {
+      targetSem = remainingCredits <= 20 ? currSem : currSem + 1;
+    }
     const pastSemCount = Math.max(0, currSem - 1);
     const pastBaseCredits = pastSemCount > 0 ? Math.floor(effectiveCompletedCredits / pastSemCount) : 0;
     const pastRemainder = pastSemCount > 0 ? effectiveCompletedCredits % pastSemCount : 0;
@@ -172,7 +178,47 @@ export async function POST(req: NextRequest) {
       for (let sem = 1; sem <= targetSem; sem++) {
         const isCurrent = sem === currSem;
         const isPast = sem < currSem;
-        const defaultTasks = getDefaultTasksForSemester(sem, data.programName, isCurrent).map((t) => ({ ...t }));
+        const defaultTasks =
+          isPast && sem >= 8
+            ? [
+                { title: `Mata Kuliah Pilihan Lanjut I (Sem ${sem})`, category: "akademik" as const, credits: 3, status: "done" as const, certaintyLevel: "pasti" as const, notes: "Peminatan Lanjut" },
+                { title: `Mata Kuliah Pilihan Lanjut II (Sem ${sem})`, category: "akademik" as const, credits: 3, status: "done" as const, certaintyLevel: "pasti" as const, notes: "Peminatan Lanjut" },
+                { title: `Mata Kuliah Pengayaan Kompetensi (Sem ${sem})`, category: "akademik" as const, credits: 3, status: "done" as const, certaintyLevel: "pasti" as const, notes: "Pengayaan" },
+                { title: `Praktikum & Proyek Mandiri (Sem ${sem})`, category: "akademik" as const, credits: 3, status: "done" as const, certaintyLevel: "pasti" as const, notes: "Keterampilan Lanjutan" },
+                { title: `Seminar & Persiapan Riset (Sem ${sem})`, category: "skripsi" as const, credits: 3, status: "done" as const, certaintyLevel: "pasti" as const, notes: "Persiapan Tugas Akhir" },
+              ]
+            : !isPast && sem > 8 && sem === targetSem
+            ? [
+                {
+                  title: "Tugas Akhir / Skripsi",
+                  category: "skripsi" as const,
+                  credits: Math.max(2, Math.min(6, remainingCredits || 6)),
+                  status: (isCurrent ? "in_progress" : "planned") as "in_progress" | "planned",
+                  certaintyLevel: "pasti" as const,
+                  notes: "Penyelesaian Tugas Akhir",
+                },
+                ...(remainingCredits > 6
+                  ? [
+                      {
+                        title: `Penyelesaian SKS Pilihan Semester ${sem}`,
+                        category: "akademik" as const,
+                        credits: Math.min(14, remainingCredits - 6),
+                        status: (isCurrent ? "in_progress" : "planned") as "in_progress" | "planned",
+                        certaintyLevel: "estimasi" as const,
+                        notes: "Pemenuhan Kurikulum",
+                      },
+                    ]
+                  : []),
+                {
+                  title: "Sidang Tugas Akhir & Yudisium Kelulusan",
+                  category: "skripsi" as const,
+                  credits: 0,
+                  status: (isCurrent ? "in_progress" : "planned") as "in_progress" | "planned",
+                  certaintyLevel: "estimasi" as const,
+                  notes: "Milestone Kelulusan",
+                },
+              ]
+            : getDefaultTasksForSemester(sem, data.programName, isCurrent).map((t) => ({ ...t }));
 
         if (isPast && pastSemCount > 0) {
           const desiredPastCredits = pastBaseCredits + (sem <= pastRemainder ? 1 : 0);

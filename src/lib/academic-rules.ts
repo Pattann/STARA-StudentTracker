@@ -32,7 +32,8 @@ export function getCompletedCreditsBounds(
 
   const completedSemesters = safeSem - 1;
   const max = Math.min(safeTotal, completedSemesters * MAX_CREDITS_PER_COMPLETED_SEMESTER);
-  const min = Math.min(max, completedSemesters * MIN_CREDITS_PER_COMPLETED_SEMESTER);
+  const maxReasonableMin = Math.max(0, safeTotal - 6);
+  const min = Math.min(max, maxReasonableMin, completedSemesters * MIN_CREDITS_PER_COMPLETED_SEMESTER);
 
   return {
     isLocked: false,
@@ -41,3 +42,4 @@ export function getCompletedCreditsBounds(
     max,
   };
 }
+

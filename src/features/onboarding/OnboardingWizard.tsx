@@ -133,9 +133,19 @@ export function OnboardingWizard() {
     (Number.isNaN(parsedTypedSks) || parsedTypedSks < sksBounds.min || parsedTypedSks > sksBounds.max);
   const completedSKS = isFirstSemester ? 0 : Math.max(0, parsedTypedSks || 0);
   const remainingSKS = Math.max(0, totalSKS - completedSKS);
-  const targetGradSem = form.goals === "fast" ? Math.max(currentSem, 7) : Math.max(currentSem, 8);
+  const baseTargetSem = form.goals === "fast" ? 7 : 8;
+  const targetGradSem =
+    currentSem >= baseTargetSem
+      ? remainingSKS <= 20
+        ? currentSem
+        : currentSem + 1
+      : baseTargetSem;
   const remainingSemesters = Math.max(1, targetGradSem - currentSem + 1);
-  const avgSKSPerSem = Math.min(24, Math.max(12, Math.round(remainingSKS / remainingSemesters)));
+  const rawAvgSKS = Math.round(remainingSKS / remainingSemesters);
+  const avgSKSPerSem =
+    remainingSKS === 0
+      ? 0
+      : Math.min(24, remainingSKS < 12 ? remainingSKS : Math.max(12, rawAvgSKS));
   const progressPercent = Math.min(100, Math.round((completedSKS / Math.max(1, totalSKS)) * 100));
 
   const handleFillDemo = () => {
@@ -593,21 +603,29 @@ export function OnboardingWizard() {
                 <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 8 }}>
                   Semester Aktif Saat Ini <span style={{ color: "#DC2626" }}>*</span>
                 </label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 8 }}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => {
+                <div className="onboarding-semester-grid">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => {
                     const isSelected = form.currentSemester === s.toString();
                     return (
                       <button
                         key={s}
                         type="button"
+                        data-selected={isSelected}
+                        className="onboarding-sem-btn"
                         onClick={() => handleSelectSemester(s)}
                         style={{
-                          padding: "11px 0",
+                          minHeight: 44,
+                          padding: "10px 0",
                           borderRadius: 10,
                           background: isSelected ? "#D97706" : "#F8FAFC",
                           color: isSelected ? "#FFFFFF" : "#334155",
                           fontWeight: 800,
                           fontSize: 14,
+                          lineHeight: 1,
+                          fontVariantNumeric: "tabular-nums",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           border: `1.5px solid ${isSelected ? "#B45309" : "#E2E8F0"}`,
                           cursor: "pointer",
                           boxShadow: isSelected ? "0 2px 8px rgba(217, 119, 6, 0.35)" : "none",
@@ -1267,6 +1285,21 @@ export function OnboardingWizard() {
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        .onboarding-semester-grid {
+          display: grid;
+          grid-template-columns: repeat(10, minmax(0, 1fr));
+          gap: 7px;
+        }
+        @media (max-width: 559px) {
+          .onboarding-semester-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 8px;
+          }
+        }
+        .onboarding-sem-btn:hover:not([data-selected="true"]) {
+          background-color: #F1F5F9 !important;
+          border-color: #CBD5E1 !important;
         }
         .btn-gold-primary:hover:not(:disabled) {
           background-color: #B45309 !important;
