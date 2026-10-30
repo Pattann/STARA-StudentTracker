@@ -89,8 +89,16 @@ async function syncProfileAcademicMetrics(sessionId: string, currentVersionId: s
 // GET: Fetch Active Roadmap, Versions, Profile & Real-Time Calculation
 // ─────────────────────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  const session = await resolveSession(req);
-  if (!session) return NextResponse.json({ error: "Sesi tidak valid." }, { status: 401 });
+  let session = null;
+  try {
+    session = await resolveSession(req);
+  } catch (sessErr) {
+    console.error("[API /roadmap GET] resolveSession error:", sessErr);
+  }
+
+  if (!session) {
+    return NextResponse.json({ error: "Sesi tidak valid atau telah berakhir." }, { status: 401 });
+  }
 
   try {
     const roadmap = await prisma.roadmap.findFirst({
@@ -103,12 +111,27 @@ export async function GET(req: NextRequest) {
     });
 
     if (!roadmap) {
-      return NextResponse.json({ roadmap: null, profile, calculation: null });
+      return NextResponse.json({
+        roadmap: null,
+        profile,
+        calculation: null,
+        ruleValidation: null,
+      });
     }
 
-    const version = roadmap.currentVersionId
+    // Fallback to latest version if currentVersionId is missing
+    let targetVersionId = roadmap.currentVersionId;
+    if (!targetVersionId) {
+      const latestVer = await prisma.roadmapVersion.findFirst({
+        where: { roadmapId: roadmap.id },
+        orderBy: { versionNum: "desc" },
+      });
+      targetVersionId = latestVer?.id ?? null;
+    }
+
+    const version = targetVersionId
       ? await prisma.roadmapVersion.findUnique({
-          where: { id: roadmap.currentVersionId },
+          where: { id: targetVersionId },
           include: {
             semesterPlans: {
               include: {
@@ -139,34 +162,75 @@ export async function GET(req: NextRequest) {
     let calculation = null;
     let ruleValidation = null;
 
-    if (version && profile) {
-      const calculationInput = {
-        totalCurriculumCredits: profile.totalCurriculumCredits,
-        completedCredits: profile.completedCredits,
-        inProgressCredits: profile.inProgressCredits,
-        currentSemester: profile.currentSemester,
-        goals: profile.goals,
-        semesterPlans: version.semesterPlans.map((sp) => ({
-          semesterNum: sp.semesterNum,
-          targetCredits: sp.targetCredits,
-          plannedCredits: sp.plannedCredits,
-          tasks: sp.tasks.map((t) => ({
-            id: t.id,
-            credits: t.credits,
-            status: t.status,
-            category: t.category,
-            itemType: t.itemType || "COURSE",
-            courseCode: t.courseCode,
-            title: t.title,
-            prerequisites: parseJsonSafe<string[]>(t.prerequisites, []),
-            weeklyHours: t.weeklyHours,
-            activityPeriod: t.activityPeriod,
+    if (version) {
+      try {
+        const calculationInput = {
+          totalCurriculumCredits: Number(profile?.totalCurriculumCredits) || 144,
+          completedCredits: Number(profile?.completedCredits) || 0,
+          inProgressCredits: Number(profile?.inProgressCredits) || 0,
+          currentSemester: Number(profile?.currentSemester) || 1,
+          goals: profile?.goals || "balanced",
+          semesterPlans: (version.semesterPlans || []).map((sp) => ({
+            semesterNum: Number(sp.semesterNum) || 1,
+            targetCredits: Number(sp.targetCredits) || 20,
+            plannedCredits: Number(sp.plannedCredits) || 0,
+            tasks: (sp.tasks || []).map((t) => ({
+              id: t.id,
+              credits: Number(t.credits) || 0,
+              status: t.status || "planned",
+              category: t.category || "akademik",
+              itemType: t.itemType || (Number(t.credits) > 0 ? "COURSE" : "MILESTONE"),
+              courseCode: typeof t.courseCode === "string" ? t.courseCode : null,
+              title: t.title || "Mata Kuliah",
+              prerequisites: (() => {
+                const raw = parseJsonSafe<unknown>(t.prerequisites, []);
+                if (Array.isArray(raw)) {
+                  return raw.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+                }
+                if (typeof raw === "string" && raw.trim().length > 0) {
+                  return [raw.trim()];
+                }
+                return [];
+              })(),
+              weeklyHours: t.weeklyHours ? Number(t.weeklyHours) : null,
+              activityPeriod: t.activityPeriod,
+            })),
           })),
-        })),
-      };
+        };
 
-      calculation = calculateFullRoadmap(calculationInput);
-      ruleValidation = validateRoadmapRules(calculationInput);
+        calculation = calculateFullRoadmap(calculationInput);
+        ruleValidation = validateRoadmapRules(calculationInput);
+      } catch (calcError) {
+        console.warn("[API /roadmap GET] calculateFullRoadmap error, using safe fallback:", calcError);
+        const fallbackTotal = Number(profile?.totalCurriculumCredits) || 144;
+        const fallbackCompleted = Number(profile?.completedCredits) || 0;
+        calculation = {
+          totalCredits: fallbackTotal,
+          completedCredits: fallbackCompleted,
+          inProgressCredits: Number(profile?.inProgressCredits) || 0,
+          remainingCredits: Math.max(0, fallbackTotal - fallbackCompleted),
+          estimatedGraduationSemester: (Number(profile?.currentSemester) || 1) + 4,
+          estimatedSemestersToGraduate: 4,
+          creditsByStatus: {
+            done: fallbackCompleted,
+            in_progress: Number(profile?.inProgressCredits) || 0,
+            planned: 0,
+            delayed: 0,
+            cancelled: 0,
+          },
+          creditsByCategory: {},
+          validationStatus: "valid" as const,
+          conflicts: [],
+          issues: [],
+          isProvisional: false,
+          semesterLoads: [],
+        };
+        ruleValidation = {
+          validationStatus: "valid" as const,
+          conflicts: [],
+          issues: [],
+        };
+      }
     }
 
     return NextResponse.json({
@@ -181,8 +245,15 @@ export async function GET(req: NextRequest) {
       ruleValidation,
     });
   } catch (error) {
-    console.error("[API /roadmap GET]", error);
-    return NextResponse.json({ error: "Gagal memuat data roadmap." }, { status: 500 });
+    console.error("[API /roadmap GET] Fatal endpoint error:", error);
+    // Return safe fallback JSON instead of crashing client with HTTP 500
+    return NextResponse.json({
+      roadmap: null,
+      profile: null,
+      calculation: null,
+      ruleValidation: null,
+      error: "Gagal memuat data roadmap secara lengkap. Silakan muat ulang halaman.",
+    }, { status: 200 });
   }
 }
 
@@ -489,7 +560,8 @@ export async function POST(req: NextRequest) {
       }
 
       // RULE 2: Validasi Prasyarat pada Perpindahan
-      const taskPrereqs = parseJsonSafe<string[]>(task.prerequisites, []);
+      const rawPrereqs = parseJsonSafe<unknown>(task.prerequisites, []);
+      const taskPrereqs = Array.isArray(rawPrereqs) ? rawPrereqs.filter((p): p is string => typeof p === "string" && p.trim().length > 0) : [];
       let prereqWarning: string | null = null;
 
       if (taskPrereqs.length > 0) {

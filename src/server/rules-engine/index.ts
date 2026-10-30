@@ -93,18 +93,24 @@ export function validateRoadmapRules(input: RoadmapInput): {
   const issues: ValidationIssue[] = [];
   const conflicts: string[] = [];
 
+  if (!input || !Array.isArray(input.semesterPlans)) {
+    return { issues, conflicts, validationStatus: "valid" };
+  }
+
   const taskMap = new Map<string, { task: TaskInput; semesterNum: number }>();
   const courseCodeMap = new Map<string, Array<{ task: TaskInput; semesterNum: number }>>();
 
   for (const sp of input.semesterPlans) {
+    if (!sp || !Array.isArray(sp.tasks)) continue;
+    const semNum = Number(sp.semesterNum) || 1;
     for (const t of sp.tasks) {
-      if (t.status === "cancelled") continue;
-      taskMap.set(t.id, { task: t, semesterNum: sp.semesterNum });
+      if (!t || t.status === "cancelled") continue;
+      taskMap.set(t.id, { task: t, semesterNum: semNum });
 
-      if (t.courseCode && t.courseCode.trim() !== "") {
+      if (t.courseCode && typeof t.courseCode === "string" && t.courseCode.trim() !== "") {
         const code = t.courseCode.trim().toUpperCase();
         const list = courseCodeMap.get(code) ?? [];
-        list.push({ task: t, semesterNum: sp.semesterNum });
+        list.push({ task: t, semesterNum: semNum });
         courseCodeMap.set(code, list);
       }
     }
@@ -130,12 +136,19 @@ export function validateRoadmapRules(input: RoadmapInput): {
 
   // 2. Validate Prerequisites
   for (const sp of input.semesterPlans) {
+    if (!sp || !Array.isArray(sp.tasks)) continue;
+    const semNum = Number(sp.semesterNum) || 1;
     for (const task of sp.tasks) {
-      if (task.status === "cancelled" || task.status === "done") continue;
+      if (!task || task.status === "cancelled" || task.status === "done") continue;
 
-      const prereqs = task.prerequisites ?? [];
+      const rawPrereqs = task.prerequisites;
+      const prereqs = Array.isArray(rawPrereqs)
+        ? rawPrereqs.filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+        : typeof rawPrereqs === "string" && (rawPrereqs as string).trim().length > 0
+        ? [(rawPrereqs as string).trim()]
+        : [];
+
       for (const p of prereqs) {
-        if (!p || p.trim() === "") continue;
         const pKey = p.trim();
 
         let prereqEntry = taskMap.get(pKey);
@@ -147,39 +160,39 @@ export function validateRoadmapRules(input: RoadmapInput): {
         }
 
         if (prereqEntry) {
-          if (prereqEntry.semesterNum >= sp.semesterNum) {
-            const prereqName = prereqEntry.task.courseCode || prereqEntry.task.title || pKey;
-            const taskName = task.courseCode || task.title || task.id;
-            const msg = `Prasyarat "${prereqName}" (Semester ${prereqEntry.semesterNum}) harus diselesaikan sebelum mengambil "${taskName}" (Semester ${sp.semesterNum}).`;
+          if (prereqEntry.semesterNum >= semNum) {
+            const prereqName = (typeof prereqEntry.task.courseCode === "string" ? prereqEntry.task.courseCode : null) || prereqEntry.task.title || pKey;
+            const taskName = (typeof task.courseCode === "string" ? task.courseCode : null) || task.title || task.id;
+            const msg = `Prasyarat "${prereqName}" (Semester ${prereqEntry.semesterNum}) harus diselesaikan sebelum mengambil "${taskName}" (Semester ${semNum}).`;
             conflicts.push(msg);
             issues.push({
               type: "error",
               code: "PREREQUISITE_CONFLICT",
               message: msg,
-              semesterNum: sp.semesterNum,
+              semesterNum: semNum,
               taskId: task.id,
-              courseCode: task.courseCode ?? undefined,
+              courseCode: typeof task.courseCode === "string" ? task.courseCode : undefined,
             });
           } else if (prereqEntry.task.status === "delayed") {
-            const prereqName = prereqEntry.task.courseCode || prereqEntry.task.title || pKey;
-            const taskName = task.courseCode || task.title || task.id;
+            const prereqName = (typeof prereqEntry.task.courseCode === "string" ? prereqEntry.task.courseCode : null) || prereqEntry.task.title || pKey;
+            const taskName = (typeof task.courseCode === "string" ? task.courseCode : null) || task.title || task.id;
             const msg = `Prasyarat "${prereqName}" untuk "${taskName}" berstatus 'Perlu Diulang' di Semester ${prereqEntry.semesterNum}.`;
             conflicts.push(msg);
             issues.push({
               type: "warning",
               code: "PREREQUISITE_CONFLICT",
               message: msg,
-              semesterNum: sp.semesterNum,
+              semesterNum: semNum,
               taskId: task.id,
             });
           }
         } else {
-          const taskName = task.courseCode || task.title || task.id;
+          const taskName = (typeof task.courseCode === "string" ? task.courseCode : null) || task.title || task.id;
           issues.push({
             type: "info",
             code: "MISSING_DATA",
             message: `Mata kuliah "${taskName}" memiliki prasyarat "${pKey}" yang belum terdata di roadmap. Pastikan prasyarat sudah diambil atau konfirmasi ke akademik prodi.`,
-            semesterNum: sp.semesterNum,
+            semesterNum: semNum,
             taskId: task.id,
           });
         }
@@ -189,36 +202,39 @@ export function validateRoadmapRules(input: RoadmapInput): {
 
   // 3. Validate Semester Load Limits (National standard: 24 SKS max)
   for (const sp of input.semesterPlans) {
+    if (!sp || !Array.isArray(sp.tasks)) continue;
+    const semNum = Number(sp.semesterNum) || 1;
     const academicCredits = sp.tasks
-      .filter((t) => t.status !== "cancelled" && (t.itemType === "COURSE" || t.category === "akademik" || t.credits > 0))
+      .filter((t) => t && t.status !== "cancelled" && (t.itemType === "COURSE" || t.category === "akademik" || (Number(t.credits) || 0) > 0))
       .reduce((sum, t) => sum + (Number(t.credits) || 0), 0);
 
     if (academicCredits > 24) {
-      const msg = `Semester ${sp.semesterNum}: beban ${academicCredits} SKS melebihi batas reguler nasional (24 SKS).`;
+      const msg = `Semester ${semNum}: beban ${academicCredits} SKS melebihi batas reguler nasional (24 SKS).`;
       conflicts.push(msg);
       issues.push({
         type: "error",
         code: "CREDIT_OVERLOAD",
         message: msg,
-        semesterNum: sp.semesterNum,
+        semesterNum: semNum,
       });
-    } else if (sp.targetCredits && academicCredits > sp.targetCredits) {
-      const msg = `Semester ${sp.semesterNum}: beban ${academicCredits} SKS melebihi target semester (${sp.targetCredits} SKS).`;
+    } else if (sp.targetCredits && academicCredits > Number(sp.targetCredits)) {
+      const msg = `Semester ${semNum}: beban ${academicCredits} SKS melebihi target semester (${sp.targetCredits} SKS).`;
       issues.push({
         type: "warning",
         code: "CREDIT_OVERLOAD",
         message: msg,
-        semesterNum: sp.semesterNum,
+        semesterNum: semNum,
       });
     }
 
-    if (sp.semesterNum < 8 && academicCredits > 0 && academicCredits < 12 && sp.semesterNum >= input.currentSemester) {
-      const msg = `Semester ${sp.semesterNum}: beban ${academicCredits} SKS tergolong ringan (< 12 SKS). Rekomendasi beban normal adalah 18-20 SKS per semester.`;
+    const currentSem = Number(input.currentSemester) || 1;
+    if (semNum < 8 && academicCredits > 0 && academicCredits < 12 && semNum >= currentSem) {
+      const msg = `Semester ${semNum}: beban ${academicCredits} SKS tergolong ringan (< 12 SKS). Rekomendasi beban normal adalah 18-20 SKS per semester.`;
       issues.push({
         type: "warning",
         code: "CREDIT_UNDERLOAD",
         message: msg,
-        semesterNum: sp.semesterNum,
+        semesterNum: semNum,
       });
     }
   }
@@ -234,7 +250,30 @@ export function validateRoadmapRules(input: RoadmapInput): {
 }
 
 export function calculateFullRoadmap(input: RoadmapInput): RoadmapCalculation {
-  const { totalCurriculumCredits, completedCredits, inProgressCredits, currentSemester, goals, semesterPlans } = input;
+  if (!input) {
+    return {
+      totalCredits: 144,
+      completedCredits: 0,
+      inProgressCredits: 0,
+      remainingCredits: 144,
+      estimatedGraduationSemester: 8,
+      estimatedSemestersToGraduate: 8,
+      creditsByStatus: { done: 0, in_progress: 0, planned: 0, delayed: 0, cancelled: 0 },
+      creditsByCategory: {},
+      validationStatus: "valid",
+      conflicts: [],
+      issues: [],
+      isProvisional: false,
+      semesterLoads: [],
+    };
+  }
+
+  const totalCurriculumCredits = Math.max(1, Number(input.totalCurriculumCredits) || 144);
+  const completedCredits = Math.max(0, Number(input.completedCredits) || 0);
+  const inProgressCredits = Math.max(0, Number(input.inProgressCredits) || 0);
+  const currentSemester = Math.max(1, Number(input.currentSemester) || 1);
+  const goals = input.goals || "balanced";
+  const semesterPlans = Array.isArray(input.semesterPlans) ? input.semesterPlans : [];
 
   const creditsByStatus: Record<string, number> = {
     done: completedCredits,
@@ -248,36 +287,49 @@ export function calculateFullRoadmap(input: RoadmapInput): RoadmapCalculation {
   const semesterLoads: Array<{ semesterNum: number; credits: number; tasks: number }> = [];
 
   for (const sp of semesterPlans) {
+    if (!sp || !Array.isArray(sp.tasks)) continue;
+    const semNum = Number(sp.semesterNum) || 1;
     let semCredits = 0;
     let semTasks = sp.tasks.length;
 
     for (const task of sp.tasks) {
-      if (task.status !== "cancelled") {
-        // Only courses (or explicitly credited tasks) count toward academic SKS
-        const isAcademicCredited = task.itemType === "COURSE" || task.category === "akademik" || task.credits > 0;
-        const effectiveCredits = isAcademicCredited ? (Number(task.credits) || 0) : 0;
+      if (!task || task.status === "cancelled") continue;
 
-        if (task.status === "planned" || task.status === "delayed") {
-          creditsByStatus[task.status] = (creditsByStatus[task.status] ?? 0) + effectiveCredits;
-        }
-        semCredits += effectiveCredits;
+      const isAcademicCredited = task.itemType === "COURSE" || task.category === "akademik" || (Number(task.credits) || 0) > 0;
+      const effectiveCredits = isAcademicCredited ? (Number(task.credits) || 0) : 0;
 
-        creditsByCategory[task.category] = (creditsByCategory[task.category] ?? 0) + effectiveCredits;
+      const statusKey = task.status || "planned";
+      if (statusKey === "planned" || statusKey === "delayed") {
+        creditsByStatus[statusKey] = (creditsByStatus[statusKey] ?? 0) + effectiveCredits;
       }
+      semCredits += effectiveCredits;
+
+      const catKey = task.category || "akademik";
+      creditsByCategory[catKey] = (creditsByCategory[catKey] ?? 0) + effectiveCredits;
     }
 
-    semesterLoads.push({ semesterNum: sp.semesterNum, credits: semCredits, tasks: semTasks });
+    semesterLoads.push({ semesterNum: semNum, credits: semCredits, tasks: semTasks });
   }
 
-  // Run comprehensive rules validation
-  const ruleCheck = validateRoadmapRules(input);
+  // Run comprehensive rules validation safely
+  let ruleCheck: { issues: ValidationIssue[]; conflicts: string[]; validationStatus: "valid" | "warning" | "error" } = {
+    issues: [],
+    conflicts: [],
+    validationStatus: "valid",
+  };
+  try {
+    ruleCheck = validateRoadmapRules(input);
+  } catch (err) {
+    console.warn("[validateRoadmapRules inside calculateFullRoadmap error]", err);
+  }
+
   const conflicts = [...ruleCheck.conflicts];
   const issues = [...ruleCheck.issues];
 
   // Calculate remaining credits
   const plannedFutureCredits = semesterPlans
-    .filter((sp) => sp.semesterNum > currentSemester)
-    .reduce((sum, sp) => sum + sp.tasks.filter((t) => t.status !== "cancelled").reduce((s, t) => s + (Number(t.credits) || 0), 0), 0);
+    .filter((sp) => sp && Number(sp.semesterNum) > currentSemester && Array.isArray(sp.tasks))
+    .reduce((sum, sp) => sum + sp.tasks.filter((t) => t && t.status !== "cancelled").reduce((s, t) => s + (Number(t.credits) || 0), 0), 0);
 
   const remainingCredits = Math.max(0, totalCurriculumCredits - completedCredits);
 

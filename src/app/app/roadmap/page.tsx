@@ -342,9 +342,19 @@ export default function RoadmapPage() {
     if (!token) return;
     setLoading(true);
     fetch(`/api/roadmap`, { headers: { "x-demo-token": token } })
-      .then((r) => r.json())
-      .then((d: RoadmapData) => {
-        setData(d);
+      .then(async (r) => {
+        const d = (await r.json()) as (RoadmapData & { error?: string });
+        if (!r.ok || d.error) {
+          if (d.roadmap) {
+            setData(d);
+            setError(null);
+          } else if (d.error) {
+            setError(d.error);
+          }
+        } else {
+          setData(d);
+          setError(null);
+        }
         setLoading(false);
       })
       .catch((e: Error) => {
