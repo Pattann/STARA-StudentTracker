@@ -93,14 +93,15 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "radial-gradient(ellipse at top, #161D18 0%, #0B0D0C 70%)",
+        background: "var(--bg-base, #FAF9F5)",
+        color: "#0F172A",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 24,
+        padding: "32px 20px",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 420 }}>
+      <div style={{ width: "100%", maxWidth: 430 }}>
         {/* Brand Header */}
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <Link
@@ -114,27 +115,27 @@ export default function LoginPage() {
             }}
           >
             <img
-              src="/whitestara.svg"
+              src="/blackstara.svg"
               alt="Logo STARA"
-              width={38}
-              height={38}
-              style={{ width: 38, height: 38, objectFit: "contain" }}
+              width={34}
+              height={34}
+              style={{ width: 34, height: 34, objectFit: "contain", display: "block" }}
             />
             <span
               style={{
-                fontSize: 24,
+                fontSize: 23,
                 fontWeight: 900,
-                color: "#F5F5F0",
+                color: "#0F172A",
                 letterSpacing: "-0.02em",
               }}
             >
               STARA
             </span>
           </Link>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#F5F5F0", margin: "0 0 6px" }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#0F172A", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
             Masuk ke STARA
           </h1>
-          <p style={{ fontSize: 13.5, color: "#A4AAA5", margin: "0 auto", maxWidth: 340, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13.5, color: "#64748B", margin: "0 auto", maxWidth: 350, lineHeight: 1.55 }}>
             STARA membantu mahasiswa merencanakan kuliah sampai lulus: roadmap per semester, simulasi &quot;bagaimana jika&quot;, dan panduan skripsi.
           </p>
         </div>
@@ -142,27 +143,28 @@ export default function LoginPage() {
         {/* Card Form */}
         <div
           style={{
-            background: "linear-gradient(180deg, rgba(24, 29, 26, 0.9) 0%, rgba(14, 17, 15, 0.95) 100%)",
-            border: "1px solid rgba(255, 255, 255, 0.09)",
-            borderRadius: 22,
+            background: "#FFFFFF",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            borderRadius: 20,
             padding: "32px 28px",
-            boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
-            backdropFilter: "blur(20px)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)",
           }}
         >
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             {error && (
               <div
+                role="alert"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
-                  background: "rgba(255, 122, 69, 0.12)",
-                  border: "1px solid rgba(255, 122, 69, 0.35)",
-                  color: "#FF9E66",
-                  padding: "12px 14px",
+                  background: "#FEF2F2",
+                  border: "1px solid #FCA5A5",
+                  color: "#991B1B",
+                  padding: "11px 14px",
                   borderRadius: 12,
                   fontSize: 13,
+                  fontWeight: 600,
                 }}
               >
                 <AlertCircle size={16} style={{ flexShrink: 0 }} />
@@ -171,7 +173,10 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 6 }}>
+              <label
+                htmlFor="input-user-identifier"
+                style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 6 }}
+              >
                 Email atau Username
               </label>
               <input
@@ -181,21 +186,25 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@email.com atau username"
+                className="form-input"
                 style={{
                   width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  background: "rgba(0,0,0,0.45)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "#F5F5F0",
+                  padding: "11px 14px",
+                  borderRadius: 10,
+                  background: "#FFFFFF",
+                  border: "1px solid #CBD5E1",
+                  color: "#0F172A",
                   fontSize: 14,
-                  outline: "none",
+                  boxSizing: "border-box",
                 }}
               />
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 6 }}>
+              <label
+                htmlFor="input-user-password"
+                style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 6 }}
+              >
                 Kata Sandi
               </label>
               <div style={{ position: "relative" }}>
@@ -206,15 +215,16 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  className="form-input"
                   style={{
                     width: "100%",
-                    padding: "12px 42px 12px 14px",
-                    borderRadius: 12,
-                    background: "rgba(0,0,0,0.45)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "#F5F5F0",
+                    padding: "11px 42px 11px 14px",
+                    borderRadius: 10,
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    color: "#0F172A",
                     fontSize: 14,
-                    outline: "none",
+                    boxSizing: "border-box",
                   }}
                 />
                 <button
@@ -227,9 +237,12 @@ export default function LoginPage() {
                     transform: "translateY(-50%)",
                     background: "none",
                     border: "none",
-                    color: "#A4AAA5",
+                    color: "#64748B",
                     cursor: "pointer",
                     padding: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                   aria-label={showPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
                 >
@@ -242,13 +255,14 @@ export default function LoginPage() {
               type="submit"
               disabled={loading || demoLoading}
               id="btn-login-submit"
+              className="btn-login-gold"
               style={{
-                marginTop: 6,
-                background: "var(--lime)",
-                color: "#0B0D0C",
+                marginTop: 4,
+                background: "#D97706",
+                color: "#FFFFFF",
                 fontWeight: 800,
-                fontSize: 14.5,
-                padding: "13px",
+                fontSize: 14,
+                padding: "12px 18px",
                 borderRadius: "var(--radius-pill)",
                 border: "none",
                 cursor: loading ? "wait" : "pointer",
@@ -256,8 +270,8 @@ export default function LoginPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 8,
-                boxShadow: "0 4px 18px rgba(245, 205, 71, 0.35)",
-                transition: "all 0.2s ease",
+                boxShadow: "0 2px 10px rgba(217, 119, 6, 0.3)",
+                transition: "all 0.15s ease",
               }}
             >
               {loading ? (
@@ -266,7 +280,7 @@ export default function LoginPage() {
                     style={{
                       width: 16,
                       height: 16,
-                      border: "2px solid #0B0D0C",
+                      border: "2px solid #FFFFFF",
                       borderTop: "2px solid transparent",
                       borderRadius: "50%",
                       animation: "spin 0.8s linear infinite",
@@ -284,25 +298,26 @@ export default function LoginPage() {
           </form>
 
           {/* Quick Demo Button for Students */}
-          <div style={{ marginTop: 18 }}>
+          <div style={{ marginTop: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-              <span style={{ fontSize: 11.5, color: "#838A85", fontWeight: 600 }}>atau, belum mau daftar?</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+              <div style={{ flex: 1, height: 1, background: "#E2E8F0" }} />
+              <span style={{ fontSize: 11.5, color: "#64748B", fontWeight: 600 }}>atau, belum mau daftar?</span>
+              <div style={{ flex: 1, height: 1, background: "#E2E8F0" }} />
             </div>
             <button
               type="button"
               id="btn-quick-demo-student"
+              className="btn-demo-outline"
               onClick={handleQuickDemo}
               disabled={loading || demoLoading}
               style={{
                 width: "100%",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                color: "#E6EAE7",
+                background: "#FFFBEB",
+                border: "1px solid #FDE68A",
+                color: "#92400E",
                 fontSize: 13,
                 fontWeight: 700,
-                padding: "10px",
+                padding: "10px 14px",
                 borderRadius: "var(--radius-pill)",
                 cursor: demoLoading ? "wait" : "pointer",
                 display: "flex",
@@ -312,10 +327,10 @@ export default function LoginPage() {
                 transition: "all 0.15s ease",
               }}
             >
-              <Sparkles size={14} color="var(--lime)" />
+              <Sparkles size={14} color="#D97706" />
               <span>{demoLoading ? "Memuat Sesi Demo..." : "Coba Demo dengan Data Contoh"}</span>
             </button>
-            <p style={{ fontSize: 11.5, color: "#838A85", textAlign: "center", margin: "8px 0 0" }}>
+            <p style={{ fontSize: 11.5, color: "#64748B", textAlign: "center", margin: "8px 0 0" }}>
               Tanpa akun. Data contoh hanya untuk mencoba fitur.
             </p>
           </div>
@@ -325,13 +340,13 @@ export default function LoginPage() {
             style={{
               marginTop: 20,
               paddingTop: 16,
-              borderTop: "1px solid rgba(255,255,255,0.07)",
+              borderTop: "1px solid #E2E8F0",
               textAlign: "center",
             }}
           >
-            <span style={{ fontSize: 13, color: "#A4AAA5" }}>
+            <span style={{ fontSize: 13, color: "#475569" }}>
               Belum punya akun?{" "}
-              <Link href="/signup" style={{ color: "var(--lime)", fontWeight: 700, textDecoration: "none" }}>
+              <Link href="/signup" style={{ color: "#B45309", fontWeight: 700, textDecoration: "none" }}>
                 Daftar Sekarang
               </Link>
             </span>
@@ -341,6 +356,14 @@ export default function LoginPage() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-login-gold:hover:not(:disabled) {
+          background-color: #B45309 !important;
+          box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4) !important;
+        }
+        .btn-demo-outline:hover:not(:disabled) {
+          background-color: #FEF3C7 !important;
+          border-color: #FCD34D !important;
+        }
       `}</style>
     </div>
   );

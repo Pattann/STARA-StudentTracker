@@ -58,13 +58,16 @@ export async function POST(req: NextRequest) {
     // Resolve or create guest session
     let sessionToken = data.token;
     let sessionId: string | null = null;
+    let sessionUserId: string | null = null;
 
     if (sessionToken) {
       const existing = await prisma.guestSession.findUnique({
         where: { token: sessionToken },
+        include: { academicProfile: { select: { userId: true } } },
       });
       if (existing && existing.expiresAt > new Date()) {
         sessionId = existing.id;
+        sessionUserId = existing.academicProfile?.userId ?? null;
       }
     }
 
@@ -77,9 +80,12 @@ export async function POST(req: NextRequest) {
       sessionId = newSession.id;
     } else {
       // Clean up previous roadmaps & profiles for a fresh customized start
-      await prisma.roadmap.deleteMany({ where: { guestSessionId: sessionId } });
-      await prisma.academicProfile.deleteMany({ where: { guestSessionId: sessionId } });
-      await prisma.reminder.deleteMany({ where: { guestSessionId: sessionId } });
+      const cleanupWhere = sessionUserId
+        ? { OR: [{ guestSessionId: sessionId }, { userId: sessionUserId }] }
+        : { guestSessionId: sessionId };
+      await prisma.roadmap.deleteMany({ where: cleanupWhere });
+      await prisma.academicProfile.deleteMany({ where: cleanupWhere });
+      await prisma.reminder.deleteMany({ where: cleanupWhere });
     }
 
     // Atomic fast creation: Academic Profile + Reminders + Initial Roadmap
@@ -108,6 +114,7 @@ export async function POST(req: NextRequest) {
       await tx.academicProfile.create({
         data: {
           guestSessionId: sessionId,
+          ...(sessionUserId ? { userId: sessionUserId } : {}),
           institutionName: data.institutionName,
           facultyName: data.facultyName || "Fakultas Utama",
           programName: data.programName,
@@ -130,21 +137,25 @@ export async function POST(req: NextRequest) {
       });
 
       // 2. Starter Reminders
+      const krsDeadline = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const evalDeadline = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
       await tx.reminder.createMany({
         data: [
           {
             guestSessionId: sessionId,
+            userId: sessionUserId,
             title: `Pengisian KRS Semester ${currSem + 1}`,
             category: "krs",
-            deadline: "2025-02-15",
+            deadline: krsDeadline,
             isOfficial: false,
             notes: "Pastikan syarat prasyarat mata kuliah terpenuhi sebelum finalisasi KRS.",
           },
           {
             guestSessionId: sessionId,
+            userId: sessionUserId,
             title: "Evaluasi Nilai & Target IPK Tengah Semester",
             category: "akademik",
-            deadline: "2025-04-10",
+            deadline: evalDeadline,
             isOfficial: false,
             notes: "Tinjau performa kuis dan tugas besar mata kuliah inti.",
           },
@@ -155,6 +166,7 @@ export async function POST(req: NextRequest) {
       const createdRoadmap = await tx.roadmap.create({
         data: {
           guestSessionId: sessionId,
+          userId: sessionUserId,
           title: `Roadmap Personal: ${data.programName} (${data.institutionName})`,
           status: "active",
         },

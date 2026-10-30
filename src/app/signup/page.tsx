@@ -26,7 +26,7 @@ export default function SignupPage() {
         body: JSON.stringify({ name, email, password }),
       });
 
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         success?: boolean;
         token?: string;
         user?: { id: string; name: string; email: string };
@@ -56,32 +56,42 @@ export default function SignupPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "radial-gradient(ellipse at top, #161D18 0%, #0B0D0C 70%)",
+        background: "var(--bg-base, #FAF9F5)",
+        color: "#0F172A",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 24,
+        padding: "32px 20px",
       }}
     >
       <div style={{ width: "100%", maxWidth: 440 }}>
         {/* Brand Header */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none", marginBottom: 16 }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <Link
+            href="/"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              textDecoration: "none",
+              marginBottom: 14,
+            }}
+          >
             <img
-              src="/whitestara.svg"
+              src="/blackstara.svg"
               alt="Logo STARA"
-              width={38}
-              height={38}
-              style={{ width: 38, height: 38, objectFit: "contain" }}
+              width={34}
+              height={34}
+              style={{ width: 34, height: 34, objectFit: "contain", display: "block" }}
             />
-            <span style={{ fontSize: 24, fontWeight: 900, color: "#F5F5F0", letterSpacing: "-0.02em" }}>
+            <span style={{ fontSize: 23, fontWeight: 900, color: "#0F172A", letterSpacing: "-0.02em" }}>
               STARA
             </span>
           </Link>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#F5F5F0", margin: "0 0 6px" }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#0F172A", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
             Buat Akun Mahasiswa
           </h1>
-          <p style={{ fontSize: 14, color: "#A4AAA5", margin: 0 }}>
+          <p style={{ fontSize: 13.5, color: "#64748B", margin: 0 }}>
             Rencanakan kuliah, pantau SKS, dan capai wisuda tepat waktu
           </p>
         </div>
@@ -89,27 +99,28 @@ export default function SignupPage() {
         {/* Card Form */}
         <div
           style={{
-            background: "linear-gradient(180deg, rgba(24, 29, 26, 0.9) 0%, rgba(14, 17, 15, 0.95) 100%)",
-            border: "1px solid rgba(255, 255, 255, 0.09)",
-            borderRadius: 22,
+            background: "#FFFFFF",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            borderRadius: 20,
             padding: "32px 28px",
-            boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
-            backdropFilter: "blur(20px)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)",
           }}
         >
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {error && (
               <div
+                role="alert"
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
-                  background: "rgba(255, 122, 69, 0.12)",
-                  border: "1px solid rgba(255, 122, 69, 0.35)",
-                  color: "#FF9E66",
-                  padding: "12px 14px",
+                  background: "#FEF2F2",
+                  border: "1px solid #FCA5A5",
+                  color: "#991B1B",
+                  padding: "11px 14px",
                   borderRadius: 12,
                   fontSize: 13,
+                  fontWeight: 600,
                 }}
               >
                 <AlertCircle size={16} style={{ flexShrink: 0 }} />
@@ -118,7 +129,7 @@ export default function SignupPage() {
             )}
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 6 }}>
                 Nama Lengkap
               </label>
               <input
@@ -127,21 +138,22 @@ export default function SignupPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Misal: Budi Santoso"
+                className="form-input"
                 style={{
                   width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  background: "rgba(0,0,0,0.45)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "#F5F5F0",
+                  padding: "11px 14px",
+                  borderRadius: 10,
+                  background: "#FFFFFF",
+                  border: "1px solid #CBD5E1",
+                  color: "#0F172A",
                   fontSize: 14,
-                  outline: "none",
+                  boxSizing: "border-box",
                 }}
               />
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 6 }}>
                 Email Mahasiswa / Kampus
               </label>
               <input
@@ -150,21 +162,22 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@student.ac.id"
+                className="form-input"
                 style={{
                   width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  background: "rgba(0,0,0,0.45)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  color: "#F5F5F0",
+                  padding: "11px 14px",
+                  borderRadius: 10,
+                  background: "#FFFFFF",
+                  border: "1px solid #CBD5E1",
+                  color: "#0F172A",
                   fontSize: 14,
-                  outline: "none",
+                  boxSizing: "border-box",
                 }}
               />
             </div>
 
             <div>
-              <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 6 }}>
                 Kata Sandi (Minimal 6 Karakter)
               </label>
               <div style={{ position: "relative" }}>
@@ -175,15 +188,16 @@ export default function SignupPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  className="form-input"
                   style={{
                     width: "100%",
-                    padding: "12px 42px 12px 14px",
-                    borderRadius: 12,
-                    background: "rgba(0,0,0,0.45)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "#F5F5F0",
+                    padding: "11px 42px 11px 14px",
+                    borderRadius: 10,
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    color: "#0F172A",
                     fontSize: 14,
-                    outline: "none",
+                    boxSizing: "border-box",
                   }}
                 />
                 <button
@@ -196,9 +210,12 @@ export default function SignupPage() {
                     transform: "translateY(-50%)",
                     background: "none",
                     border: "none",
-                    color: "#A4AAA5",
+                    color: "#64748B",
                     cursor: "pointer",
                     padding: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                   aria-label={showPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
                 >
@@ -212,28 +229,29 @@ export default function SignupPage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                background: "rgba(245, 205, 71, 0.08)",
-                border: "1px solid rgba(245, 205, 71, 0.2)",
+                background: "#FFFBEB",
+                border: "1px solid #FDE68A",
                 padding: "10px 12px",
                 borderRadius: 10,
                 fontSize: 12,
-                color: "var(--lime)",
+                color: "#92400E",
               }}
             >
-              <Sparkles size={15} style={{ flexShrink: 0 }} />
+              <Sparkles size={15} color="#D97706" style={{ flexShrink: 0 }} />
               <span>Setelah mendaftar, kamu akan diarahkan ke panduan onboarding STARA.</span>
             </div>
 
             <button
               type="submit"
               disabled={loading}
+              className="btn-signup-gold"
               style={{
-                marginTop: 6,
-                background: "var(--lime)",
-                color: "#0B0D0C",
+                marginTop: 4,
+                background: "#D97706",
+                color: "#FFFFFF",
                 fontWeight: 800,
-                fontSize: 14.5,
-                padding: "13px",
+                fontSize: 14,
+                padding: "12px 18px",
                 borderRadius: "var(--radius-pill)",
                 border: "none",
                 cursor: loading ? "wait" : "pointer",
@@ -241,8 +259,8 @@ export default function SignupPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 8,
-                boxShadow: "0 4px 18px rgba(245, 205, 71, 0.35)",
-                transition: "all 0.2s ease",
+                boxShadow: "0 2px 10px rgba(217, 119, 6, 0.3)",
+                transition: "all 0.15s ease",
               }}
             >
               {loading ? (
@@ -251,7 +269,7 @@ export default function SignupPage() {
                     style={{
                       width: 16,
                       height: 16,
-                      border: "2px solid #0B0D0C",
+                      border: "2px solid #FFFFFF",
                       borderTop: "2px solid transparent",
                       borderRadius: "50%",
                       animation: "spin 0.8s linear infinite",
@@ -270,15 +288,15 @@ export default function SignupPage() {
 
           <div
             style={{
-              marginTop: 24,
-              paddingTop: 18,
-              borderTop: "1px solid rgba(255,255,255,0.07)",
+              marginTop: 22,
+              paddingTop: 16,
+              borderTop: "1px solid #E2E8F0",
               textAlign: "center",
             }}
           >
-            <span style={{ fontSize: 13, color: "#A4AAA5" }}>
+            <span style={{ fontSize: 13, color: "#475569" }}>
               Sudah memiliki akun?{" "}
-              <Link href="/login" style={{ color: "var(--lime)", fontWeight: 700, textDecoration: "none" }}>
+              <Link href="/login" style={{ color: "#B45309", fontWeight: 700, textDecoration: "none" }}>
                 Masuk di Sini
               </Link>
             </span>
@@ -288,6 +306,10 @@ export default function SignupPage() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        .btn-signup-gold:hover:not(:disabled) {
+          background-color: #B45309 !important;
+          box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4) !important;
+        }
       `}</style>
     </div>
   );

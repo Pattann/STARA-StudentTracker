@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
     // Link profile to guestSession in parallel
     if (user.academicProfile) {
-      await Promise.all([
+      await Promise.all([ prisma.reminder.updateMany({ where: { userId: user.id }, data: { guestSessionId: session.id } }),
         prisma.academicProfile.update({
           where: { id: user.academicProfile.id },
           data: { guestSessionId: session.id },
