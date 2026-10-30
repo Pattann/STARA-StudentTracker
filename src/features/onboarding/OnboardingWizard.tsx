@@ -15,6 +15,7 @@ import {
   Compass,
   ArrowRight,
   Info,
+  Lock,
 } from "lucide-react";
 
 type Step = 0 | 1 | 2 | 3;
@@ -75,6 +76,18 @@ export function OnboardingWizard() {
     router.prefetch("/app");
   }, [router]);
 
+  const isFirstSemester = form.currentSemester === "1";
+
+  useEffect(() => {
+    if (form.currentSemester === "1" && (form.completedCredits !== "0" || form.gpa !== "0.00")) {
+      setForm((prev) => ({
+        ...prev,
+        completedCredits: "0",
+        gpa: "0.00",
+      }));
+    }
+  }, [form.currentSemester, form.completedCredits, form.gpa]);
+
   const steps = [
     { title: "Identitas Akademik", desc: "Data perguruan tinggi dan program studimu" },
     { title: "Progres & SKS", desc: "Riwayat perolehan SKS dan capaian IPK" },
@@ -86,17 +99,37 @@ export function OnboardingWizard() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleSelectSemester = (semNum: number) => {
+    setError(null);
+    if (semNum === 1) {
+      setForm((prev) => ({
+        ...prev,
+        currentSemester: "1",
+        completedCredits: "0",
+        gpa: "0.00",
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        currentSemester: semNum.toString(),
+        completedCredits: prev.currentSemester === "1" ? "" : prev.completedCredits,
+        gpa: prev.currentSemester === "1" ? "" : prev.gpa,
+      }));
+    }
+  };
+
   // Calculations
-  const totalSKS = parseInt(form.totalCurriculumCredits) || 144;
-  const completedSKS = parseInt(form.completedCredits) || 0;
+  const totalSKS = parseInt(form.totalCurriculumCredits, 10) || 144;
+  const completedSKS = isFirstSemester ? 0 : Math.max(0, parseInt(form.completedCredits, 10) || 0);
   const remainingSKS = Math.max(0, totalSKS - completedSKS);
-  const currentSem = parseInt(form.currentSemester) || 1;
+  const currentSem = parseInt(form.currentSemester, 10) || 1;
   const targetGradSem = form.goals === "fast" ? Math.max(currentSem, 7) : Math.max(currentSem, 8);
   const remainingSemesters = Math.max(1, targetGradSem - currentSem + 1);
   const avgSKSPerSem = Math.min(24, Math.max(12, Math.round(remainingSKS / remainingSemesters)));
-  const progressPercent = Math.min(100, Math.round((completedSKS / totalSKS) * 100));
+  const progressPercent = Math.min(100, Math.round((completedSKS / Math.max(1, totalSKS)) * 100));
 
   const handleFillDemo = () => {
+    setError(null);
     setForm(DEFAULT_FORM);
   };
 
@@ -108,12 +141,25 @@ export function OnboardingWizard() {
     }
     if (s === 1) {
       if (!form.currentSemester) return "Pilih semester aktifmu saat ini.";
-      if (form.completedCredits === "") return "Isi jumlah SKS yang sudah kamu selesaikan (isi 0 jika belum ada).";
       if (!form.totalCurriculumCredits) return "Isi total SKS kurikulum prodimu (umumnya 144).";
-      if (form.gpa === "") return "Isi IPK terakhirmu (perkiraan juga boleh).";
-      const gpaNum = parseFloat(form.gpa);
-      if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 4.0) {
-        return "IPK harus berada di rentang 0.00 hingga 4.00 (maksimal 4.00).";
+      const totalNum = parseInt(form.totalCurriculumCredits, 10);
+      if (Number.isNaN(totalNum) || totalNum < 80 || totalNum > 200) {
+        return "Total SKS kurikulum harus berada di rentang 80 hingga 200 SKS.";
+      }
+      if (!isFirstSemester) {
+        if (form.completedCredits === "") return "Isi jumlah SKS yang sudah kamu selesaikan.";
+        const compNum = parseInt(form.completedCredits, 10);
+        if (Number.isNaN(compNum) || compNum < 0) {
+          return "Jumlah SKS tuntas tidak boleh bernilai negatif.";
+        }
+        if (compNum > totalNum) {
+          return "Jumlah SKS tuntas tidak boleh melebihi total SKS kurikulum prodi.";
+        }
+        if (form.gpa === "") return "Isi IPK kumulatif terakhirmu.";
+        const gpaNum = parseFloat(form.gpa);
+        if (Number.isNaN(gpaNum) || gpaNum < 0 || gpaNum > 4.0) {
+          return "IPK harus berada di rentang 0.00 hingga 4.00 (maksimal 4.00).";
+        }
       }
     }
     return null;
@@ -145,19 +191,34 @@ export function OnboardingWizard() {
     try {
       const existingToken = typeof window !== "undefined" ? localStorage.getItem("stara_demo_token") : null;
 
+      const semNum = parseInt(form.currentSemester, 10) || 1;
+      const totalCreditsNum = parseInt(form.totalCurriculumCredits, 10) || 144;
+      const parsedCompleted = parseInt(form.completedCredits, 10);
+      const parsedGpa = parseFloat(form.gpa);
+
       const payload = {
         institutionName: form.institutionName,
         facultyName: form.facultyName,
         programName: form.programName,
         educationLevel: form.educationLevel,
-        entryYear: parseInt(form.entryYear) || 2023,
-        currentSemester: parseInt(form.currentSemester) || 4,
-        totalCurriculumCredits: parseInt(form.totalCurriculumCredits) || 144,
-        completedCredits: parseInt(form.completedCredits) || 74,
-        gpa: parseFloat(form.gpa) || 3.5,
+        entryYear: parseInt(form.entryYear, 10) || 2025,
+        currentSemester: semNum,
+        totalCurriculumCredits: totalCreditsNum,
+        completedCredits:
+          semNum === 1
+            ? 0
+            : Number.isNaN(parsedCompleted)
+            ? 0
+            : Math.min(totalCreditsNum, Math.max(0, parsedCompleted)),
+        gpa:
+          semNum === 1
+            ? 0
+            : Number.isNaN(parsedGpa)
+            ? 0
+            : Math.min(4.0, Math.max(0.0, parsedGpa)),
         goals: form.goals,
         interests: form.interests,
-        weeklyHours: parseInt(form.weeklyHours) || 20,
+        weeklyHours: parseInt(form.weeklyHours, 10) || 20,
         token: existingToken || undefined,
       };
 
@@ -528,7 +589,7 @@ export function OnboardingWizard() {
                       <button
                         key={s}
                         type="button"
-                        onClick={() => update("currentSemester", s.toString())}
+                        onClick={() => handleSelectSemester(s)}
                         style={{
                           padding: "11px 0",
                           borderRadius: 10,
@@ -560,39 +621,94 @@ export function OnboardingWizard() {
               >
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                   <div>
-                    <label style={{ fontSize: 12.5, fontWeight: 700, color: "#475569", display: "block", marginBottom: 6 }}>
-                      SKS Tuntas Hingga Kini <span style={{ color: "#DC2626" }}>*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={form.completedCredits}
-                      onChange={(e) => update("completedCredits", e.target.value)}
-                      placeholder="Contoh: 74"
-                      className="form-input"
-                      style={{
-                        width: "100%",
-                        padding: "10px 14px",
-                        borderRadius: 10,
-                        background: "#FFFFFF",
-                        border: "1px solid #CBD5E1",
-                        color: "#0F172A",
-                        fontSize: 16,
-                        fontWeight: 800,
-                        boxSizing: "border-box",
-                      }}
-                      min={0}
-                      max={200}
-                    />
-                    <span style={{ fontSize: 11, color: "#64748B", display: "block", marginTop: 4 }}>
-                      Lihat total SKS lulus di KHS atau transkrip akademikmu.
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 6 }}>
+                      <label htmlFor="onboarding-completed-sks" style={{ fontSize: 12.5, fontWeight: 700, color: "#475569", display: "block" }}>
+                        SKS Tuntas Hingga Kini <span style={{ color: "#DC2626" }}>*</span>
+                      </label>
+                      {isFirstSemester && (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            color: "#334155",
+                            background: "#E2E8F0",
+                            padding: "2px 8px",
+                            borderRadius: 99,
+                          }}
+                        >
+                          <Lock size={10} strokeWidth={2.5} />
+                          <span>Terkunci</span>
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        id="onboarding-completed-sks"
+                        type={isFirstSemester ? "text" : "number"}
+                        value={isFirstSemester ? "0" : form.completedCredits}
+                        disabled={isFirstSemester}
+                        readOnly={isFirstSemester}
+                        onChange={(e) => {
+                          if (isFirstSemester) return;
+                          const raw = e.target.value;
+                          if (raw === "") {
+                            update("completedCredits", "");
+                            return;
+                          }
+                          const parsed = parseInt(raw, 10);
+                          if (Number.isNaN(parsed)) return;
+                          const clamped = Math.min(totalSKS, Math.max(0, parsed));
+                          update("completedCredits", String(clamped));
+                        }}
+                        placeholder="Contoh: 74"
+                        className="form-input"
+                        style={{
+                          width: "100%",
+                          padding: isFirstSemester ? "10px 36px 10px 14px" : "10px 14px",
+                          borderRadius: 10,
+                          background: isFirstSemester ? "#F1F5F9" : "#FFFFFF",
+                          border: "1px solid #CBD5E1",
+                          color: isFirstSemester ? "#475569" : "#0F172A",
+                          fontSize: 16,
+                          fontWeight: 800,
+                          boxSizing: "border-box",
+                          cursor: isFirstSemester ? "not-allowed" : "text",
+                        }}
+                        min={0}
+                        max={totalSKS}
+                      />
+                      {isFirstSemester && (
+                        <Lock
+                          size={15}
+                          color="#475569"
+                          style={{
+                            position: "absolute",
+                            right: 12,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            pointerEvents: "none",
+                          }}
+                        />
+                      )}
+                    </div>
+                    <span style={{ fontSize: 11, color: "#475569", display: "block", marginTop: 4 }}>
+                      {isFirstSemester
+                        ? "Terkunci otomatis 0 SKS karena kamu baru memulai Semester 1."
+                        : "Lihat total SKS lulus di KHS atau transkrip akademikmu."}
                     </span>
                   </div>
 
                   <div>
-                    <label style={{ fontSize: 12.5, fontWeight: 700, color: "#475569", display: "block", marginBottom: 6 }}>
-                      Total SKS Kurikulum Prodi <span style={{ color: "#DC2626" }}>*</span>
-                    </label>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <label htmlFor="onboarding-total-sks" style={{ fontSize: 12.5, fontWeight: 700, color: "#475569", display: "block" }}>
+                        Total SKS Kurikulum Prodi <span style={{ color: "#DC2626" }}>*</span>
+                      </label>
+                    </div>
                     <input
+                      id="onboarding-total-sks"
                       type="number"
                       value={form.totalCurriculumCredits}
                       onChange={(e) => update("totalCurriculumCredits", e.target.value)}
@@ -645,57 +761,99 @@ export function OnboardingWizard() {
               {/* IPK Kumulatif (Single focused clean input, TAK completely removed) */}
               <div style={{ maxWidth: 360 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B" }}>
+                  <label htmlFor="onboarding-gpa" style={{ fontSize: 13, fontWeight: 700, color: "#1E293B" }}>
                     IPK Kumulatif Terakhir <span style={{ color: "#DC2626" }}>*</span>
                   </label>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#64748B" }}>
-                    Maks. 4.00
-                  </span>
+                  {isFirstSemester ? (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        color: "#334155",
+                        background: "#E2E8F0",
+                        padding: "2px 8px",
+                        borderRadius: 99,
+                      }}
+                    >
+                      <Lock size={10} strokeWidth={2.5} />
+                      <span>Terkunci</span>
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748B" }}>
+                      Maks. 4.00
+                    </span>
+                  )}
                 </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.00"
-                  max="4.00"
-                  value={form.gpa}
-                  onChange={(e) => {
-                    const rawVal = e.target.value.replace(",", ".");
-                    if (rawVal === "") {
-                      update("gpa", "");
-                      return;
-                    }
-                    const parsed = parseFloat(rawVal);
-                    if (!isNaN(parsed) && parsed > 4.0) {
-                      update("gpa", "4.00");
-                    } else if (!isNaN(parsed) && parsed < 0) {
-                      update("gpa", "0.00");
-                    } else {
-                      update("gpa", rawVal);
-                    }
-                  }}
-                  onBlur={(e) => {
-                    const parsed = parseFloat(e.target.value);
-                    if (!isNaN(parsed)) {
-                      const clamped = Math.min(4.0, Math.max(0.0, parsed));
-                      update("gpa", clamped.toFixed(2));
-                    }
-                  }}
-                  placeholder="3.50"
-                  className="form-input"
-                  style={{
-                    width: "100%",
-                    padding: "11px 14px",
-                    borderRadius: 10,
-                    background: "#FFFFFF",
-                    border: "1px solid #CBD5E1",
-                    color: "#0F172A",
-                    fontSize: 15,
-                    fontWeight: 800,
-                    boxSizing: "border-box",
-                  }}
-                />
-                <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>
-                  Skala standar perguruan tinggi (0.00 - 4.00)
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="onboarding-gpa"
+                    type={isFirstSemester ? "text" : "number"}
+                    step="0.01"
+                    min="0.00"
+                    max="4.00"
+                    value={isFirstSemester ? "0.00" : form.gpa}
+                    disabled={isFirstSemester}
+                    readOnly={isFirstSemester}
+                    onChange={(e) => {
+                      if (isFirstSemester) return;
+                      const rawVal = e.target.value.replace(",", ".");
+                      if (rawVal === "") {
+                        update("gpa", "");
+                        return;
+                      }
+                      const parsed = parseFloat(rawVal);
+                      if (!isNaN(parsed) && parsed > 4.0) {
+                        update("gpa", "4.00");
+                      } else if (!isNaN(parsed) && parsed < 0) {
+                        update("gpa", "0.00");
+                      } else {
+                        update("gpa", rawVal);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (isFirstSemester) return;
+                      const parsed = parseFloat(e.target.value);
+                      if (!isNaN(parsed)) {
+                        const clamped = Math.min(4.0, Math.max(0.0, parsed));
+                        update("gpa", clamped.toFixed(2));
+                      }
+                    }}
+                    placeholder="3.50"
+                    className="form-input"
+                    style={{
+                      width: "100%",
+                      padding: isFirstSemester ? "11px 36px 11px 14px" : "11px 14px",
+                      borderRadius: 10,
+                      background: isFirstSemester ? "#F1F5F9" : "#FFFFFF",
+                      border: "1px solid #CBD5E1",
+                      color: isFirstSemester ? "#475569" : "#0F172A",
+                      fontSize: 15,
+                      fontWeight: 800,
+                      boxSizing: "border-box",
+                      cursor: isFirstSemester ? "not-allowed" : "text",
+                    }}
+                  />
+                  {isFirstSemester && (
+                    <Lock
+                      size={15}
+                      color="#475569"
+                      style={{
+                        position: "absolute",
+                        right: 12,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: "#475569", marginTop: 4 }}>
+                  {isFirstSemester
+                    ? "Terkunci otomatis 0.00 karena nilai KHS belum terbit di Semester 1."
+                    : "Skala standar perguruan tinggi (0.00 - 4.00)"}
                 </div>
               </div>
             </div>
@@ -747,7 +905,7 @@ export function OnboardingWizard() {
                     return (
                       <div
                         key={item.id}
-                        onClick={() => update("goals", item.id as any)}
+                        onClick={() => update("goals", item.id as OnboardingForm["goals"])}
                         style={{
                           background: isSelected ? "#FFFBEB" : "#FFFFFF",
                           border: `1.5px solid ${isSelected ? "#D97706" : "#E2E8F0"}`,
@@ -873,8 +1031,23 @@ export function OnboardingWizard() {
                 {[
                   { label: "Kampus & Prodi", value: `${form.programName} • ${form.institutionName}` },
                   { label: "Angkatan / Posisi", value: `Angkatan ${form.entryYear} • Semester ${form.currentSemester}` },
-                  { label: "Capaian Akademik", value: `${form.completedCredits} / ${form.totalCurriculumCredits} SKS (IPK ${form.gpa})` },
-                  { label: "Gaya Rencana", value: form.goals === "fast" ? "Lulus Cepat (3.5 Thn)" : form.goals === "active" ? "Fokus MBKM" : "Seimbang (4 Thn)" },
+                  {
+                    label: "Capaian Akademik",
+                    value: isFirstSemester
+                      ? `0 / ${form.totalCurriculumCredits} SKS (IPK 0.00)`
+                      : `${form.completedCredits} / ${form.totalCurriculumCredits} SKS (IPK ${form.gpa})`,
+                  },
+                  {
+                    label: "Gaya Rencana",
+                    value:
+                      form.goals === "fast"
+                        ? "Lulus Cepat (3.5 Thn)"
+                        : form.goals === "active"
+                        ? "Fokus MBKM"
+                        : form.goals === "relaxed"
+                        ? "Fleksibel & Terkendali"
+                        : "Seimbang (4 Thn)",
+                  },
                 ].map((row, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
                     <span style={{ color: "#64748B" }}>{row.label}</span>

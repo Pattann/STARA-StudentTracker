@@ -215,13 +215,13 @@ export async function POST(req: NextRequest) {
           : existingProfile?.entryYear ?? 2023,
       currentSemester: nextSemester,
       totalCurriculumCredits: nextTotalCredits,
-      completedCredits: nextCompletedCredits,
+      completedCredits: nextSemester === 1 ? 0 : nextCompletedCredits,
       inProgressCredits: Math.min(
         20,
         Math.max(0, nextTotalCredits - nextCompletedCredits)
       ),
       gpa:
-        typeof body.gpa === "number" && !isNaN(body.gpa)
+        nextSemester === 1 ? 0 : typeof body.gpa === "number" && !isNaN(body.gpa)
           ? Math.min(4.0, Math.max(0.0, body.gpa))
           : existingProfile?.gpa ?? 3.5,
       goals: body.goals || existingProfile?.goals || "balanced",

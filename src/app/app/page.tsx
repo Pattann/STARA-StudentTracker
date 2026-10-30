@@ -259,9 +259,17 @@ export default function DashboardPage() {
         />
         <StatCard
           label="IPK"
-          value={profile?.gpa ? profile.gpa.toFixed(2) : "Belum diisi"}
+          value={
+            profile?.currentSemester === 1
+              ? "0.00"
+              : profile?.gpa !== null && profile?.gpa !== undefined
+              ? profile.gpa.toFixed(2)
+              : "Belum diisi"
+          }
           sub={
-            profile?.gpa && profile.gpa >= 3.5
+            profile?.currentSemester === 1
+              ? "Belum terbit (Semester 1)"
+              : profile?.gpa && profile.gpa >= 3.5
               ? "Predikat Sangat Memuaskan"
               : profile?.gpa
               ? "Evaluasi Akademik Baik"

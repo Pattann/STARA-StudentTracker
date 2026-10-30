@@ -70,6 +70,15 @@ export async function POST(req: NextRequest) {
 
     // Atomic fast creation: Academic Profile + Reminders + Initial Roadmap
     const currSem = data.currentSemester;
+    const effectiveCompletedCredits =
+      currSem === 1
+        ? 0
+        : Math.min(data.totalCurriculumCredits, Math.max(0, data.completedCredits));
+    const effectiveGpa = currSem === 1 ? 0 : Math.min(4.0, Math.max(0.0, data.gpa));
+    const activeSemCredits = getDefaultTasksForSemester(currSem, data.programName, true).reduce(
+      (sum, t) => sum + (t.credits || 0),
+      0
+    );
     let targetSem = data.goals === "fast" ? 7 : 8;
     if (currSem > targetSem) targetSem = currSem + 1;
 
@@ -85,9 +94,12 @@ export async function POST(req: NextRequest) {
           entryYear: data.entryYear,
           currentSemester: data.currentSemester,
           totalCurriculumCredits: data.totalCurriculumCredits,
-          completedCredits: data.completedCredits,
-          inProgressCredits: Math.min(20, Math.max(0, data.totalCurriculumCredits - data.completedCredits)),
-          gpa: data.gpa,
+          completedCredits: effectiveCompletedCredits,
+          inProgressCredits: Math.min(
+            activeSemCredits > 0 ? activeSemCredits : 18,
+            Math.max(0, data.totalCurriculumCredits - effectiveCompletedCredits)
+          ),
+          gpa: effectiveGpa,
           goals: data.goals,
           interests: JSON.stringify(data.interests ? data.interests.split(",").map((s) => s.trim()) : []),
           takEnabled: false,

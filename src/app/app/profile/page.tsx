@@ -710,7 +710,14 @@ export default function ProfilePage() {
                 <select
                   className="form-input"
                   value={currentSemester}
-                  onChange={(e) => setCurrentSemester(e.target.value)}
+                  onChange={(e) => {
+                    const nextSem = e.target.value;
+                    setCurrentSemester(nextSem);
+                    if (nextSem === "1") {
+                      setCompletedCredits("0");
+                      setGpa("0.00");
+                    }
+                  }}
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((sem) => (
                     <option key={sem} value={String(sem)}>
@@ -739,7 +746,10 @@ export default function ProfilePage() {
                   min={0}
                   max={200}
                   className="form-input"
-                  value={completedCredits}
+                  value={currentSemester === "1" ? "0" : completedCredits}
+                  disabled={currentSemester === "1"}
+                  readOnly={currentSemester === "1"}
+                  style={currentSemester === "1" ? { background: "#F1F5F9", color: "#475569", cursor: "not-allowed" } : undefined}
                   onChange={(e) => setCompletedCredits(e.target.value)}
                 />
               </div>
@@ -764,7 +774,10 @@ export default function ProfilePage() {
                   min="0.00"
                   max="4.00"
                   className="form-input"
-                  value={gpa}
+                  value={currentSemester === "1" ? "0.00" : gpa}
+                  disabled={currentSemester === "1"}
+                  readOnly={currentSemester === "1"}
+                  style={currentSemester === "1" ? { background: "#F1F5F9", color: "#475569", cursor: "not-allowed" } : undefined}
                   onChange={(e) => {
                     const rawVal = e.target.value.replace(",", ".");
                     if (rawVal === "") {
