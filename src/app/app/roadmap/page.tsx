@@ -3233,64 +3233,24 @@ function SemesterCardItem({
               paddingTop: 12,
               borderTop: "1px solid #E2E8F0",
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
               alignItems: "center",
-              flexWrap: "wrap",
               gap: 8,
             }}
           >
-            <Link
-              href={`/app/simulator?semester=${plan.semesterNum}`}
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => (onOpenAddItem ? onOpenAddItem("COURSE") : onOpenAddCourse())}
               style={{
                 fontSize: 12,
-                color: "#92400E",
-                background: "#FEF3C7",
-                border: "1px solid #FDE68A",
-                padding: "5px 12px",
-                borderRadius: "8px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                textDecoration: "none",
                 fontWeight: 700,
-                transition: "all 0.15s ease",
+                padding: "6px 16px",
+                borderRadius: "8px",
+                gap: 5,
               }}
             >
-              <Compass size={14} color="#D97706" />
-              Uji di Simulator
-            </Link>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={onOpenTemplate}
-                style={{
-                  fontSize: 12,
-                  color: "#334155",
-                  fontWeight: 600,
-                  border: "1px solid #CBD5E1",
-                  borderRadius: "8px",
-                  padding: "5px 12px",
-                  background: "#FFFFFF",
-                  gap: 5,
-                }}
-              >
-                <Plus size={12} /> Dari Template
-              </button>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => (onOpenAddItem ? onOpenAddItem("COURSE") : onOpenAddCourse())}
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: "5px 14px",
-                  borderRadius: "8px",
-                  gap: 5,
-                }}
-              >
-                <Plus size={12} /> Tambah Item
-              </button>
-            </div>
+              <Plus size={13} /> Tambah Item
+            </button>
           </div>
         </div>
       )}
