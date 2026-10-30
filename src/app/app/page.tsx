@@ -99,16 +99,16 @@ export default function DashboardPage() {
 
   const quickActions = [
     {
+      href: "/app/roadmap",
+      icon: Map,
+      label: "Roadmap Saya",
+      sub: "Distribusi rencana tiap semester",
+    },
+    {
       href: "/app/simulator",
       icon: SlidersHorizontal,
       label: "Simulasi Skenario",
       sub: "Uji beban SKS & opsi MBKM",
-    },
-    {
-      href: "/app/roadmap",
-      icon: Map,
-      label: "Roadmap Akademik",
-      sub: "Distribusi rencana tiap semester",
     },
     {
       href: "/app/templates",
@@ -117,16 +117,16 @@ export default function DashboardPage() {
       sub: "Blueprint kurikulum komunitas",
     },
     {
-      href: "/app/reminders",
-      icon: Bell,
-      label: "Pengingat & Agenda",
-      sub: "Batas KRS, revisi, & sidang",
-    },
-    {
       href: "/app/thesis",
       icon: GraduationCap,
       label: "Panduan Skripsi",
       sub: "Tracker 11 tahap tugas akhir",
+    },
+    {
+      href: "/app/reminders",
+      icon: Bell,
+      label: "Pengingat & Agenda",
+      sub: "Batas KRS, revisi, & sidang",
     },
   ];
 
@@ -155,14 +155,14 @@ export default function DashboardPage() {
                 gap: 5,
                 fontSize: 11.5,
                 fontWeight: 600,
-                color: "#166534",
-                background: "#F0FDF4",
-                border: "1px solid #BBF7D0",
+                color: "#92400E",
+                background: "#FEF3C7",
+                border: "1px solid #FDE68A",
                 padding: "2px 8px",
                 borderRadius: "var(--radius-pill)",
               }}
             >
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#16A34A" }} />
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#D97706" }} />
               Semester Aktif
             </span>
           </div>
@@ -300,9 +300,9 @@ export default function DashboardPage() {
                 </h2>
                 <span
                   style={{
-                    background: "#F0FDF4",
-                    color: "#166534",
-                    border: "1px solid #BBF7D0",
+                    background: "#FEF3C7",
+                    color: "#92400E",
+                    border: "1px solid #FDE68A",
                     padding: "2px 8px",
                     borderRadius: "var(--radius-pill)",
                     fontSize: 11,
@@ -348,7 +348,7 @@ export default function DashboardPage() {
               style={{
                 width: `${totalTasksCount > 0 ? (doneTasksCount / totalTasksCount) * 100 : 0}%`,
                 height: "100%",
-                background: "#15803D",
+                background: "#D97706",
                 borderRadius: 99,
                 transition: "width 0.4s ease",
               }}
@@ -451,7 +451,7 @@ export default function DashboardPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
             gap: 12,
           }}
         >
@@ -462,33 +462,34 @@ export default function DashboardPage() {
                   background: "#FFFFFF",
                   border: "1px solid rgba(0, 0, 0, 0.08)",
                   borderRadius: "var(--radius-lg)",
-                  padding: "16px 18px",
+                  padding: "15px 16px",
                   display: "flex",
                   alignItems: "center",
-                  gap: 14,
+                  gap: 12,
                   cursor: "pointer",
                   transition: "all 0.18s ease",
                   boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+                  height: "100%",
                 }}
                 className="dashboard-action-card"
               >
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: 38,
+                    height: 38,
                     borderRadius: 10,
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#FEF3C7",
+                    border: "1px solid #FDE68A",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
-                    color: "#334155",
+                    color: "#B45309",
                     transition: "all 0.18s ease",
                   }}
                   className="dashboard-action-icon"
                 >
-                  <item.icon size={18} strokeWidth={2} />
+                  <item.icon size={18} strokeWidth={2.2} />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div
@@ -498,16 +499,22 @@ export default function DashboardPage() {
                       color: "var(--text-primary)",
                       letterSpacing: "-0.01em",
                       lineHeight: 1.25,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                   >
                     {item.label}
                   </div>
                   <div
                     style={{
-                      fontSize: 11.5,
+                      fontSize: 11,
                       color: "var(--text-muted)",
                       marginTop: 3,
                       lineHeight: 1.3,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                   >
                     {item.sub}
