@@ -135,7 +135,27 @@ DATABASE_URL="postgresql://..." DIRECT_URL="postgresql://..." npm run db:push
 2. Pada bagian **Environment Variables** di Vercel, tambahkan variabel berikut:
    - `DATABASE_URL`: URI Transaction Pooler Supabase (port 6543, `?pgbouncer=true`)
    - `DIRECT_URL`: URI Direct/Session Supabase (port 5432)
+   - `HEALTH_CHECK_TOKEN`: Token rahasia untuk autentikasi endpoint `/api/health/database`
    - `NEXTAUTH_SECRET`: String acak panjang untuk enkripsi sesi
    - `AI_PROVIDER`: `google`
    - `GOOGLE_AI_API_KEY`: Kunci API Google Gemini (opsional, otomatis beralih ke mesin aturan jika dikosongkan)
 3. Klik **Deploy**. Skrip `npm run build` akan otomatis mengonfigurasi Prisma untuk PostgreSQL, membuat Prisma Client, dan mem-build aplikasi produksi dengan proteksi DevTools aktif.
+
+### 4. Verifikasi Health Check Database Production
+Setelah deployment selesai dan `HEALTH_CHECK_TOKEN` terpasang di Vercel Environment Variables, uji koneksi Prisma ORM ke Supabase PostgreSQL beserta pemeriksaan tabel `public.connection_test` secara *read-only*:
+```bash
+curl -s -H "Authorization: Bearer <ISI_HEALTH_CHECK_TOKEN>" https://stara-student-tracker.vercel.app/api/health/database
+```
+Respons sukses:
+```json
+{
+  "status": "success",
+  "database": "connected",
+  "provider": "postgresql",
+  "checks": {
+    "query": true,
+    "connection_test_table": true
+  }
+}
+```
+
