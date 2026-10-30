@@ -8,44 +8,51 @@ import {
   BookOpen,
   FileCheck,
   Cpu,
-  GraduationCap,
-  Users,
-  Map,
   CheckCircle2,
   AlertTriangle,
-  Clock,
-  Sparkles,
   Search,
-  Filter,
   Plus,
-  ArrowRight,
   ShieldAlert,
   ShieldCheck,
-  ChevronRight,
-  Activity,
-  Zap,
   RefreshCw,
   ExternalLink,
   Eye,
   EyeOff,
-  Check,
   X,
   Building2,
-  Layers,
-  FileText,
-  Briefcase,
-  Globe,
-  Settings,
-  HelpCircle,
-  Database,
-  Sliders,
-  Terminal,
-  Key,
   Info,
   LogOut,
+  Menu,
+  ArrowUpRight,
 } from "lucide-react";
 
 export type AdminTab = "overview" | "academics" | "templates" | "ai";
+
+const NAV_ITEMS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
+  { id: "overview", label: "Ringkasan Operasional", icon: LayoutDashboard },
+  { id: "templates", label: "Moderasi Template", icon: FileCheck },
+  { id: "academics", label: "Kurikulum & Akademik", icon: BookOpen },
+  { id: "ai", label: "Kinerja & Log AI", icon: Cpu },
+];
+
+const TAB_TITLES: Record<AdminTab, { title: string; subtitle: string }> = {
+  overview: {
+    title: "Ringkasan Operasional",
+    subtitle: "Antrian moderasi template komunitas, laporan pengguna, dan sebaran kurikulum aktif.",
+  },
+  templates: {
+    title: "Moderasi Template & Laporan",
+    subtitle: "Verifikasi pengajuan template roadmap mahasiswa dan tindak lanjuti laporan konten.",
+  },
+  academics: {
+    title: "Kurikulum & Data Akademik",
+    subtitle: "Kelola perguruan tinggi mitra, program studi, distribusi semester, dan katalog mata kuliah.",
+  },
+  ai: {
+    title: "Kinerja & Log Sistem AI",
+    subtitle: "Konfigurasi model Google Gemini API, pengujian latensi langsung, dan riwayat panggilan.",
+  },
+};
 
 function AdminDashboardContent() {
   const router = useRouter();
@@ -53,10 +60,11 @@ function AdminDashboardContent() {
   const currentTab = (searchParams.get("tab") as AdminTab) || "overview";
 
   const [activeTab, setActiveTab] = useState<AdminTab>(currentTab);
-  const [isPending, startTransition] = useTransition();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   // Admin User Info
-  const [adminUser, setAdminUser] = useState<any>(null);
+  const [adminUser, setAdminUser] = useState<{ id?: string; name?: string; email?: string; role?: string } | null>(null);
 
   // Overview Data
   const [overviewData, setOverviewData] = useState<any>(null);
@@ -96,13 +104,6 @@ function AdminDashboardContent() {
   const [aiData, setAiData] = useState<any>(null);
   const [isPingingAi, setIsPingingAi] = useState(false);
   const [pingResult, setPingResult] = useState<any | null>(null);
-  const [aiFeatureToggles, setAiFeatureToggles] = useState({
-    scenarioSimulation: true,
-    customPlanAdaptiveForm: true,
-    thesisTopicAdvisor: true,
-    thesisTitleReview: true,
-    staraAiChatbot: true,
-  });
 
   // Global Notification Toast
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
@@ -112,15 +113,14 @@ function AdminDashboardContent() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Switch tab with URL sync
   const switchTab = (tab: AdminTab) => {
     setActiveTab(tab);
+    setSidebarOpen(false);
     startTransition(() => {
       router.replace(`/admin?tab=${tab}`);
     });
   };
 
-  // Initial Data Fetching
   const fetchOverview = async () => {
     try {
       setIsLoadingOverview(true);
@@ -150,7 +150,9 @@ function AdminDashboardContent() {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch(`/api/admin/templates?status=${templateStatusFilter}&q=${encodeURIComponent(templateSearch)}`);
+      const res = await fetch(
+        `/api/admin/templates?status=${templateStatusFilter}&q=${encodeURIComponent(templateSearch)}`
+      );
       const data = await res.json();
       if (data.success) {
         setTemplatesList(data.templates);
@@ -178,9 +180,6 @@ function AdminDashboardContent() {
       const data = await res.json();
       if (data.success) {
         setAiData(data);
-        if (data.config?.featureToggles) {
-          setAiFeatureToggles(data.config.featureToggles);
-        }
       }
     } catch (e) {
       console.error(e);
@@ -188,9 +187,11 @@ function AdminDashboardContent() {
   };
 
   useEffect(() => {
-    // Only allow admin role to access admin dashboard
     const storedUser = typeof window !== "undefined" ? localStorage.getItem("stara_user") : null;
-    const token = typeof window !== "undefined" ? localStorage.getItem("stara_demo_token") : null;
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("stara_demo_token") || localStorage.getItem("stara_token")
+        : null;
 
     if (!token) {
       router.push("/login");
@@ -229,7 +230,6 @@ function AdminDashboardContent() {
     fetchReports();
   }, [reportStatusFilter]);
 
-  // Handle Add Course
   const handleAddCourseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCourseForm.code.trim() || !newCourseForm.name.trim()) {
@@ -240,7 +240,10 @@ function AdminDashboardContent() {
     try {
       setIsSavingCourse(true);
       const prerequisitesList = newCourseForm.prerequisites
-        ? newCourseForm.prerequisites.split(",").map((p) => p.trim()).filter(Boolean)
+        ? newCourseForm.prerequisites
+            .split(",")
+            .map((p) => p.trim())
+            .filter(Boolean)
         : [];
 
       const res = await fetch("/api/admin/academics", {
@@ -254,7 +257,7 @@ function AdminDashboardContent() {
 
       const result = await res.json();
       if (result.success) {
-        showToast("Mata kuliah berhasil ditambahkan ke kurikulum!");
+        showToast("Mata kuliah berhasil disimpan ke katalog kurikulum.");
         setIsAddCourseModalOpen(false);
         setNewCourseForm({
           code: "",
@@ -267,16 +270,15 @@ function AdminDashboardContent() {
         });
         fetchAcademics();
       } else {
-        showToast(result.error || "Gagal menyimpan mata kuliah", "error");
+        showToast(result.error || "Gagal menyimpan mata kuliah.", "error");
       }
-    } catch (err) {
-      showToast("Terjadi kesalahan jaringan", "error");
+    } catch {
+      showToast("Terjadi kesalahan jaringan saat menyimpan mata kuliah.", "error");
     } finally {
       setIsSavingCourse(false);
     }
   };
 
-  // Handle Verify Template
   const handleToggleVerifyTemplate = async (templateId: string, currentStatus: string) => {
     const newStatus = currentStatus === "terverifikasi" ? "komunitas" : "terverifikasi";
     try {
@@ -286,26 +288,26 @@ function AdminDashboardContent() {
         body: JSON.stringify({
           templateId,
           sourceType: newStatus,
+          ...(newStatus === "terverifikasi" ? { isHidden: false } : {}),
         }),
       });
       const result = await res.json();
       if (result.success) {
         showToast(
           newStatus === "terverifikasi"
-            ? "Template berhasil diverifikasi resmi! (Badge terverifikasi aktif)"
-            : "Verifikasi resmi template dicabut."
+            ? "Template diverifikasi resmi dan ditayangkan ke publik."
+            : "Status verifikasi resmi template dicabut."
         );
         fetchTemplates();
         fetchOverview();
       } else {
-        showToast(result.error || "Gagal mengubah status template", "error");
+        showToast(result.error || "Gagal mengubah status template.", "error");
       }
     } catch {
-      showToast("Gagal menghubungi server", "error");
+      showToast("Gagal menghubungi server.", "error");
     }
   };
 
-  // Handle Hide Template
   const handleToggleHideTemplate = async (templateId: string, currentHidden: boolean) => {
     try {
       const res = await fetch("/api/admin/templates", {
@@ -318,16 +320,19 @@ function AdminDashboardContent() {
       });
       const result = await res.json();
       if (result.success) {
-        showToast(!currentHidden ? "Template berhasil disembunyikan dari publik." : "Template kembali ditampilkan.");
+        showToast(
+          !currentHidden
+            ? "Template disembunyikan dari daftar publik."
+            : "Template ditampilkan kembali ke publik."
+        );
         fetchTemplates();
         fetchOverview();
       }
     } catch {
-      showToast("Gagal memperbarui visibilitas template", "error");
+      showToast("Gagal memperbarui visibilitas template.", "error");
     }
   };
 
-  // Handle Resolve Report
   const handleResolveReport = async (status: "resolved" | "reviewed") => {
     if (!selectedReportForAction) return;
     try {
@@ -338,27 +343,29 @@ function AdminDashboardContent() {
         body: JSON.stringify({
           reportId: selectedReportForAction.id,
           status,
-          moderatorNote: moderatorResolutionNote || "Ditindaklanjuti dan diselesaikan oleh Administrator STARA.",
+          moderatorNote:
+            moderatorResolutionNote || "Ditindaklanjuti dan diselesaikan oleh Administrator STARA.",
         }),
       });
       const result = await res.json();
       if (result.success) {
-        showToast(`Laporan berhasil ditandai sebagai ${status === "resolved" ? "Selesai (Resolved)" : "Ditelaah"}`);
+        showToast(
+          `Laporan ditandai sebagai ${status === "resolved" ? "Selesai" : "Sedang Ditinjau"}.`
+        );
         setSelectedReportForAction(null);
         setModeratorResolutionNote("");
         fetchReports();
         fetchOverview();
       } else {
-        showToast(result.error || "Gagal memperbarui status laporan", "error");
+        showToast(result.error || "Gagal memperbarui status laporan.", "error");
       }
     } catch {
-      showToast("Terjadi kesalahan jaringan", "error");
+      showToast("Terjadi kesalahan jaringan.", "error");
     } finally {
       setIsUpdatingModeration(false);
     }
   };
 
-  // Handle Test Ping AI
   const handleRunAiPing = async () => {
     try {
       setIsPingingAi(true);
@@ -367,30 +374,50 @@ function AdminDashboardContent() {
       const data = await res.json();
       setPingResult(data);
       if (data.success) {
-        showToast(`Ping berhasil! Latency: ${data.latencyMs}ms (${data.modelUsed})`);
+        showToast(`Koneksi AI aktif (${data.latencyMs} ms • ${data.modelUsed}).`);
       } else {
-        showToast(`Ping selesai dengan catatan fallback (${data.latencyMs}ms)`, "info");
+        showToast(`Respons fallback aktif (${data.latencyMs} ms).`, "info");
       }
       fetchAiMonitor();
     } catch {
-      showToast("Gagal melakukan ping ke AI provider", "error");
+      showToast("Gagal melakukan pengujian koneksi AI.", "error");
     } finally {
       setIsPingingAi(false);
     }
   };
 
-  // Filtered courses
+  const handleLogout = () => {
+    localStorage.removeItem("stara_demo_token");
+    localStorage.removeItem("stara_token");
+    localStorage.removeItem("stara_user");
+    router.push("/login");
+  };
+
   const filteredCourses = (academicsData?.courses || []).filter((c: any) => {
     const matchesSearch =
       c.code.toLowerCase().includes(courseSearch.toLowerCase()) ||
       c.name.toLowerCase().includes(courseSearch.toLowerCase());
-    const matchesSemester = courseSemesterFilter === "all" || c.semesterNum === Number(courseSemesterFilter);
-    const matchesCategory = courseCategoryFilter === "all" || c.category === courseCategoryFilter;
+    const matchesSemester =
+      courseSemesterFilter === "all" || c.semesterNum === Number(courseSemesterFilter);
+    const matchesCategory =
+      courseCategoryFilter === "all" || c.category === courseCategoryFilter;
     return matchesSearch && matchesSemester && matchesCategory;
   });
 
+  const openReportsCount =
+    overviewData?.metrics?.openReports ??
+    reportsList.filter((r) => r.status === "open").length;
+  const unverifiedTemplatesCount =
+    overviewData?.metrics?.communityTemplates ??
+    templatesList.filter((t) => t.sourceType !== "terverifikasi").length;
+  const moderationQueueCount = openReportsCount + unverifiedTemplatesCount;
+
+  const adminInitial = adminUser?.name
+    ? adminUser.name.trim().charAt(0).toUpperCase()
+    : "A";
+
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", background: "var(--bg-base)", color: "var(--text-primary)" }}>
+    <div className="app-shell">
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -399,1770 +426,1974 @@ function AdminDashboardContent() {
             bottom: 24,
             right: 24,
             zIndex: 9999,
-            background:
+            background: "#FFFFFF",
+            color: "#0F172A",
+            border:
               toastMessage.type === "error"
-                ? "rgba(255, 126, 138, 0.95)"
+                ? "1px solid #FECACA"
                 : toastMessage.type === "info"
-                ? "rgba(133, 136, 255, 0.95)"
-                : "rgba(245, 205, 71, 0.95)",
-            color: "#0B0D0C",
-            fontWeight: 700,
+                ? "1px solid #BFDBFE"
+                : "1px solid #FDE68A",
+            borderLeft:
+              toastMessage.type === "error"
+                ? "4px solid #DC2626"
+                : toastMessage.type === "info"
+                ? "4px solid #2563EB"
+                : "4px solid #D97706",
+            fontWeight: 600,
             fontSize: 13,
-            padding: "12px 20px",
-            borderRadius: "var(--radius-md)",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+            padding: "12px 16px",
+            borderRadius: "10px",
+            boxShadow: "0 10px 25px -5px rgba(15, 23, 42, 0.12)",
             display: "flex",
             alignItems: "center",
             gap: 10,
-            animation: "slideIn 0.3s ease",
           }}
         >
-          {toastMessage.type === "error" ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
+          {toastMessage.type === "error" ? (
+            <AlertTriangle size={17} color="#DC2626" />
+          ) : (
+            <CheckCircle2 size={17} color="#D97706" />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
 
-      {/* ─── SIDEBAR ADMIN ────────────────────────────────────────────────────────── */}
-      <aside
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.4)",
+            zIndex: 49,
+          }}
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ─── SIDEBAR (Matches AppShell.tsx) ─────────────────────────────────────── */}
+      <nav
+        className={`sidebar ${sidebarOpen ? "open" : ""}`}
+        aria-label="Navigasi panel administrator"
         style={{
-          width: 280,
-          height: "100vh",
-          background: "#F7F5F0",
-          borderRight: "1px solid rgba(0, 0, 0, 0.08)",
           display: "flex",
           flexDirection: "column",
-          flexShrink: 0,
-          zIndex: 30,
+          justifyContent: "space-between",
+          height: "100vh",
+          overflow: "hidden",
         }}
       >
-        {/* Brand & Admin Badge */}
-        <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid rgba(0, 0, 0, 0.08)", background: "rgba(245, 205, 71, 0.04)", flexShrink: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src="/blackstara.svg" alt="STARA" width={28} height={28} />
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: "-0.02em" }}>STARA ADMIN</div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 600 }}>Pusat Kontrol Sistem</div>
-            </div>
+        <div>
+          {/* Brand Header */}
+          <div
+            className="sidebar-logo"
+            style={{
+              padding: "18px 18px 16px",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              borderBottom: "1px solid var(--border-subtle)",
+            }}
+          >
+            <img
+              src="/blackstara.svg"
+              alt="Logo STARA"
+              width={24}
+              height={24}
+              style={{ width: 24, height: 24, objectFit: "contain", display: "block" }}
+            />
+            <span
+              style={{
+                fontWeight: 800,
+                fontSize: 16,
+                color: "var(--text-primary)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              STARA
+            </span>
+            <span
+              style={{
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: "#92400E",
+                background: "#FEF3C7",
+                border: "1px solid #FDE68A",
+                borderRadius: "6px",
+                padding: "1px 6px",
+                marginLeft: "auto",
+              }}
+            >
+              Admin
+            </span>
+          </div>
+
+          {/* Primary Navigation */}
+          <div
+            className="sidebar-nav"
+            role="list"
+            style={{
+              padding: "14px 10px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+            }}
+          >
+            {NAV_ITEMS.map((item) => {
+              const active = activeTab === item.id;
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="listitem"
+                  onClick={() => switchTab(item.id)}
+                  className={`sidebar-nav-item ${active ? "active" : ""}`}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    fontSize: 13.5,
+                    fontWeight: active ? 600 : 500,
+                    color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                    background: active ? "#FFFFFF" : "transparent",
+                    border: active ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
+                    boxShadow: active ? "0 1px 4px rgba(0, 0, 0, 0.04)" : "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <Icon
+                    size={16}
+                    color={active ? "var(--amber)" : "var(--text-muted)"}
+                    aria-hidden="true"
+                    style={{ flexShrink: 0 }}
+                  />
+                  <span style={{ flex: 1 }} className="truncate">
+                    {item.label}
+                  </span>
+                  {item.id === "templates" && moderationQueueCount > 0 && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        background: openReportsCount > 0 ? "#FEE2E2" : "#FEF3C7",
+                        color: openReportsCount > 0 ? "#B91C1C" : "#92400E",
+                        border: openReportsCount > 0 ? "1px solid #FECACA" : "1px solid #FDE68A",
+                        padding: "1px 6px",
+                        borderRadius: "999px",
+                      }}
+                    >
+                      {moderationQueueCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bottom Section: Link to Student App & Minimalist Profile Card */}
+        <div style={{ borderTop: "1px solid var(--border-subtle)" }}>
+          <div
+            style={{
+              padding: "8px 10px 6px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <Link
+              href="/app"
+              className="sidebar-nav-item"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                padding: "7px 12px",
+                borderRadius: "8px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--text-secondary)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <span>Workspace Mahasiswa</span>
+              <ArrowUpRight size={14} color="var(--text-muted)" />
+            </Link>
           </div>
 
           <div
             style={{
-              marginTop: 14,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "#FEF3C7",
-              border: "1px solid #FCD34D",
-              borderRadius: "var(--radius-pill)",
-              padding: "4px 10px",
-            }}
-          >
-            <ShieldCheck size={13} color="#92400E" />
-            <span style={{ fontSize: 11, fontWeight: 800, color: "#92400E", letterSpacing: "0.04em" }}>
-              ROLE: ADMINISTRATOR
-            </span>
-          </div>
-        </div>
-
-        {/* Navigation Tabs (Strictly matching user spec) */}
-        <nav style={{ padding: "16px 12px", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
-          {/* 1. Overview */}
-          <button
-            onClick={() => switchTab("overview")}
-            className={`admin-nav-item ${activeTab === "overview" ? "active" : ""}`}
-            style={{
+              margin: "4px 10px 10px",
+              padding: "8px 10px",
+              background: "#FAF9F5",
+              border: "1px solid var(--border)",
+              borderRadius: "10px",
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              padding: "12px 14px",
-              borderRadius: "var(--radius-md)",
-              background: activeTab === "overview" ? "#FFFFFF" : "transparent",
-              border: activeTab === "overview" ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
-              boxShadow: activeTab === "overview" ? "0 1px 3px rgba(0, 0, 0, 0.04)" : "none",
-              color: activeTab === "overview" ? "#0F172A" : "var(--text-secondary)",
-              fontWeight: activeTab === "overview" ? 700 : 500,
-              fontSize: 13.5,
-              cursor: "pointer",
-              textAlign: "left",
-              transition: "var(--transition)",
-            }}
-          >
-            <LayoutDashboard size={18} />
-            <span style={{ flex: 1 }}>📊 Ringkasan / Overview</span>
-          </button>
-
-          {/* 2. Data Akademik */}
-          <button
-            onClick={() => switchTab("academics")}
-            className={`admin-nav-item ${activeTab === "academics" ? "active" : ""}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 14px",
-              borderRadius: "var(--radius-md)",
-              background: activeTab === "academics" ? "#FFFFFF" : "transparent",
-              border: activeTab === "academics" ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
-              boxShadow: activeTab === "academics" ? "0 1px 3px rgba(0, 0, 0, 0.04)" : "none",
-              color: activeTab === "academics" ? "#0F172A" : "var(--text-secondary)",
-              fontWeight: activeTab === "academics" ? 700 : 500,
-              fontSize: 13.5,
-              cursor: "pointer",
-              textAlign: "left",
-              transition: "var(--transition)",
-            }}
-          >
-            <BookOpen size={18} />
-            <span style={{ flex: 1 }}>📚 Data Akademik</span>
-          </button>
-
-          {/* 3. Moderasi Template */}
-          <button
-            onClick={() => switchTab("templates")}
-            className={`admin-nav-item ${activeTab === "templates" ? "active" : ""}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 14px",
-              borderRadius: "var(--radius-md)",
-              background: activeTab === "templates" ? "#FFFFFF" : "transparent",
-              border: activeTab === "templates" ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
-              boxShadow: activeTab === "templates" ? "0 1px 3px rgba(0, 0, 0, 0.04)" : "none",
-              color: activeTab === "templates" ? "#0F172A" : "var(--text-secondary)",
-              fontWeight: activeTab === "templates" ? 700 : 500,
-              fontSize: 13.5,
-              cursor: "pointer",
-              textAlign: "left",
-              transition: "var(--transition)",
-            }}
-          >
-            <FileCheck size={18} />
-            <span style={{ flex: 1 }}>📑 Moderasi Template</span>
-            {overviewData?.metrics?.openReports > 0 && (
-              <span
-                style={{
-                  fontSize: 11,
-                  background: "var(--coral)",
-                  color: "#fff",
-                  padding: "2px 6px",
-                  borderRadius: "var(--radius-pill)",
-                  fontWeight: 800,
-                }}
-              >
-                {overviewData.metrics.openReports}
-              </span>
-            )}
-          </button>
-
-          {/* 4. Pengaturan & Monitor AI */}
-          <button
-            onClick={() => switchTab("ai")}
-            className={`admin-nav-item ${activeTab === "ai" ? "active" : ""}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "12px 14px",
-              borderRadius: "var(--radius-md)",
-              background: activeTab === "ai" ? "#FFFFFF" : "transparent",
-              border: activeTab === "ai" ? "1px solid rgba(0, 0, 0, 0.08)" : "1px solid transparent",
-              boxShadow: activeTab === "ai" ? "0 1px 3px rgba(0, 0, 0, 0.04)" : "none",
-              color: activeTab === "ai" ? "#0F172A" : "var(--text-secondary)",
-              fontWeight: activeTab === "ai" ? 700 : 500,
-              fontSize: 13.5,
-              cursor: "pointer",
-              textAlign: "left",
-              transition: "var(--transition)",
-            }}
-          >
-            <Cpu size={18} />
-            <span style={{ flex: 1 }}>🤖 Pengaturan & Monitor AI</span>
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: overviewData?.aiSystemStatus?.isKeyConfigured ? "#22C55E" : "var(--lime)",
-                boxShadow: overviewData?.aiSystemStatus?.isKeyConfigured ? "0 0 8px #22C55E" : "none",
-              }}
-            />
-          </button>
-        </nav>
-
-        {/* Logout Admin Button & Profile */}
-        <div style={{ padding: "16px", borderTop: "1px solid var(--border)", flexShrink: 0, marginTop: "auto", background: "var(--bg-elevated)" }}>
-          <button
-            onClick={() => {
-              localStorage.removeItem("stara_demo_token");
-              localStorage.removeItem("stara_user");
-              router.push("/login");
-            }}
-            id="btn-admin-logout"
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "space-between",
               gap: 8,
-              padding: "10px 12px",
-              borderRadius: "var(--radius-md)",
-              background: "rgba(255, 122, 69, 0.1)",
-              border: "1px solid rgba(255, 122, 69, 0.25)",
-              color: "#FF9E66",
-              fontSize: 12.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              marginBottom: 12,
-              transition: "var(--transition)",
             }}
           >
-            <LogOut size={15} />
-            <span>Keluar / Logout Admin</span>
-          </button>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: "#FEF3C7",
-                border: "1px solid #FCD34D",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#92400E",
-                fontWeight: 800,
-                fontSize: 12,
-                flexShrink: 0,
-              }}
-            >
-              {adminUser?.name ? adminUser.name.slice(0, 2).toUpperCase() : "AD"}
-            </div>
-            <div style={{ overflow: "hidden" }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {adminUser?.name || "Administrator STARA"}
+            <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0, flex: 1 }}>
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <div
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    background: "#FEF3C7",
+                    border: "1px solid #FDE68A",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#92400E",
+                  }}
+                >
+                  {adminInitial}
+                </div>
+                <span
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: "#16A34A",
+                    border: "1.5px solid #FFFFFF",
+                  }}
+                  title="Sesi Administrator Aktif"
+                />
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {adminUser?.email || "admin@stara.ac.id"}
+
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {adminUser?.name || "Administrator STARA"}
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-muted)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    marginTop: 2,
+                  }}
+                >
+                  {adminUser?.email || "admin@stara.ac.id"}
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* ─── MAIN CONTENT AREA ──────────────────────────────────────────────────────── */}
-      <main style={{ flex: 1, height: "100vh", display: "flex", flexDirection: "column", overflowY: "auto", minWidth: 0 }}>
-        {/* Topbar */}
-        <header
-          style={{
-            height: 64,
-            borderBottom: "1px solid var(--border)",
-            borderTop: "2.5px solid #F5CD47",
-            background: "var(--bg-elevated)",
-            padding: "0 28px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
-          }}
-        >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  color: "#92400E",
-                  background: "#FEF3C7",
-                  border: "1px solid #FCD34D",
-                  borderRadius: "var(--radius-pill)",
-                  padding: "1.5px 7px",
-                  letterSpacing: "0.04em",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <ShieldCheck size={11} color="#92400E" />
-                DASHBOARD ADMIN
-              </span>
-              <h1 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.01em", margin: 0 }}>
-                {activeTab === "overview" && "📊 Ringkasan Sistem"}
-                {activeTab === "academics" && "📚 Manajemen Akademik"}
-                {activeTab === "templates" && "📑 Moderasi Template"}
-                {activeTab === "ai" && "🤖 Monitor Sistem AI"}
-              </h1>
-            </div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-              {activeTab === "overview" && "Statistik mahasiswa, aktivasi roadmap akademik, dan status kesehatan AI"}
-              {activeTab === "academics" && "Kelola perguruan tinggi mitra, program studi, kurikulum, dan katalog mata kuliah"}
-              {activeTab === "templates" && "Verifikasi template resmi kampus & telusuri laporan/komplain mahasiswa"}
-              {activeTab === "ai" && "Konfigurasi Google Gemini GenAI, pengujian latensi langsung, dan log panggilan API"}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* AI Health Badge */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(34, 197, 94, 0.08)",
-                border: "1px solid rgba(34, 197, 94, 0.25)",
-                borderRadius: "var(--radius-pill)",
-                padding: "6px 12px",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#22C55E",
-              }}
-            >
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: "#22C55E",
-                  boxShadow: "0 0 8px #22C55E",
-                }}
-              />
-              <span>Google Gemini AI: Online</span>
             </div>
 
             <button
+              type="button"
+              id="btn-admin-logout"
+              onClick={handleLogout}
+              style={{
+                background: "transparent",
+                border: "none",
+                padding: "5px",
+                borderRadius: "6px",
+                color: "#64748B",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.15s ease",
+                flexShrink: 0,
+              }}
+              title="Keluar dari akun administrator"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#DC2626";
+                e.currentTarget.style.background = "#FEE2E2";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#64748B";
+                e.currentTarget.style.background = "transparent";
+              }}
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* ─── MAIN CONTENT AREA ──────────────────────────────────────────────────── */}
+      <div className="main-content">
+        {/* Topbar (Matches AppShell.tsx) */}
+        <header className="topbar">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="btn btn-ghost btn-sm"
+              style={{ display: "none" }}
+              aria-label="Buka menu navigasi"
+            >
+              <Menu size={20} />
+            </button>
+            <h1 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+              {TAB_TITLES[activeTab].title}
+            </h1>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                fontSize: 12,
+                color: "#92400E",
+                background: "rgba(245, 205, 71, 0.22)",
+                border: "1px solid rgba(217, 119, 6, 0.3)",
+                borderRadius: "var(--radius-pill)",
+                padding: "4px 12px",
+                fontWeight: 700,
+                letterSpacing: "0.02em",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <ShieldCheck size={13} color="#92400E" />
+              Admin Workspace
+            </span>
+
+            <button
+              type="button"
               onClick={() => {
                 fetchOverview();
                 fetchAcademics();
                 fetchTemplates();
                 fetchReports();
                 fetchAiMonitor();
-                showToast("Data dashboard admin berhasil disegarkan!");
+                showToast("Data berhasil diperbarui.");
               }}
               className="btn btn-secondary btn-sm"
-              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}
             >
-              <RefreshCw size={14} />
-              <span>Refresh</span>
+              <RefreshCw size={13} />
+              <span>Muat Ulang</span>
             </button>
           </div>
         </header>
 
-        {/* Tab Body */}
-        <div style={{ padding: "28px", flex: 1 }}>
-          {/* ══════════════════════════════════════════════════════════════════════════════
-              TAB 1: 📊 RINGKASAN / OVERVIEW
-              ══════════════════════════════════════════════════════════════════════════════ */}
-          {activeTab === "overview" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {/* Metric Cards Grid */}
-              <div
+        {/* Scrollable Page Content */}
+        <main className="main-scroll-area">
+          <div className="page-area">
+            {/* Page Subtitle Banner */}
+            <div style={{ marginBottom: 22 }}>
+              <h2
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: 16,
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: "#0F172A",
+                  letterSpacing: "-0.02em",
+                  marginBottom: 4,
                 }}
               >
-                {/* 1. Total Mahasiswa */}
+                {TAB_TITLES[activeTab].title}
+              </h2>
+              <p style={{ fontSize: 13.5, color: "#475569", margin: 0 }}>
+                {TAB_TITLES[activeTab].subtitle}
+              </p>
+            </div>
+
+            {/* ══════════════════════════════════════════════════════════════════════════
+                TAB 1: RINGKASAN OPERASIONAL (Decision-First Hierarchy)
+                ══════════════════════════════════════════════════════════════════════════ */}
+            {activeTab === "overview" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+                {/* Primary Decision Panel: Antrian Moderasi & Verifikasi */}
                 <div
                   style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "20px",
+                    background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "14px",
+                    padding: "20px 22px",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 16,
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-                      Total Mahasiswa Terdata
-                    </span>
+                  <div style={{ maxWidth: 640 }}>
                     <div
                       style={{
-                        padding: 8,
-                        borderRadius: "var(--radius-md)",
-                        background: "#FEF3C7",
-                        color: "#92400E",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: openReportsCount > 0 ? "#B91C1C" : "#92400E",
+                        marginBottom: 6,
                       }}
                     >
-                      <Users size={18} />
+                      <span
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: "50%",
+                          background: openReportsCount > 0 ? "#DC2626" : "#D97706",
+                        }}
+                      />
+                      Prioritas Moderasi Kurikulum & Komunitas
                     </div>
-                  </div>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: "var(--text-primary)", marginTop: 8 }}>
-                    {overviewData?.metrics?.totalStudents || 142}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#92400E", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                    <Sparkles size={12} />
-                    <span>Terdaftar & Sesi Demo Aktif</span>
-                  </div>
-                </div>
-
-                {/* 2. Aktivasi Roadmap */}
-                <div
-                  style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "20px",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-                      Roadmap Aktif
-                    </span>
-                    <div
-                      style={{
-                        padding: 8,
-                        borderRadius: "var(--radius-md)",
-                        background: "rgba(133, 136, 255, 0.1)",
-                        color: "var(--blue)",
-                      }}
-                    >
-                      <Map size={18} />
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: "var(--text-primary)", marginTop: 8 }}>
-                    {overviewData?.metrics?.totalRoadmaps || 124}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--blue)", marginTop: 4 }}>
-                    {overviewData?.metrics?.averagePlannedCreditsPerSem || 19.6} SKS rata-rata/semester
-                  </div>
-                </div>
-
-                {/* 3. Proyeksi Lulus */}
-                <div
-                  style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "20px",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-                      Kelulusan Tepat Waktu
-                    </span>
-                    <div
-                      style={{
-                        padding: 8,
-                        borderRadius: "var(--radius-md)",
-                        background: "rgba(34, 197, 94, 0.1)",
-                        color: "#22C55E",
-                      }}
-                    >
-                      <GraduationCap size={18} />
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: "var(--text-primary)", marginTop: 8 }}>
-                    {overviewData?.metrics?.onTimeGraduationRate || 89.2}%
-                  </div>
-                  <div style={{ fontSize: 12, color: "#22C55E", marginTop: 4 }}>
-                    Rata-rata IPK Mahasiswa: {overviewData?.metrics?.avgGpa || 3.54}
-                  </div>
-                </div>
-
-                {/* 4. Status Sistem AI */}
-                <div
-                  style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "20px",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-                      Status Sistem AI
-                    </span>
-                    <div
-                      style={{
-                        padding: 8,
-                        borderRadius: "var(--radius-md)",
-                        background: "#FEF3C7",
-                        color: "#92400E",
-                      }}
-                    >
-                      <Cpu size={18} />
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#22C55E", marginTop: 8 }}>
-                    {overviewData?.aiSystemStatus?.status || "ONLINE"}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
-                    Model: {overviewData?.aiSystemStatus?.primaryModel || "gemini-3.1-flash-lite"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 2: Popular Scenarios & Distributions */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                {/* Popular Scenarios */}
-                <div
-                  style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "22px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                    <div>
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
-                        🎯 Simulasi Skenario Paling Populer
-                      </h3>
-                      <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                        Pilihan skenario yang paling sering dieksplorasi mahasiswa
-                      </p>
-                    </div>
-                    <span style={{ fontSize: 12, color: "#92400E", fontWeight: 700 }}>
-                      Total {overviewData?.metrics?.totalSimulations || 115} Skenario
-                    </span>
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    {(overviewData?.popularScenarios || []).map((sc: any, idx: number) => (
-                      <div key={idx}>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-                          <span style={{ fontWeight: 600 }}>{sc.name}</span>
-                          <span style={{ color: "var(--text-muted)", fontWeight: 700 }}>
-                            {sc.count} mhs ({sc.percentage}%)
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            height: 7,
-                            background: "var(--bg-secondary)",
-                            borderRadius: "var(--radius-pill)",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: "100%",
-                              width: `${sc.percentage}%`,
-                              background:
-                                idx === 0
-                                  ? "var(--lime)"
-                                  : idx === 1
-                                  ? "var(--blue)"
-                                  : idx === 2
-                                  ? "var(--teal)"
-                                  : "var(--coral)",
-                              borderRadius: "var(--radius-pill)",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Campus & Major Distribution */}
-                <div
-                  style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "22px",
-                  }}
-                >
-                  <div style={{ marginBottom: 16 }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>
-                      🏫 Distribusi Perguruan Tinggi & Prodi
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0F172A", marginBottom: 4 }}>
+                      {unverifiedTemplatesCount} template komunitas menunggu verifikasi, dan{" "}
+                      {openReportsCount} laporan mahasiswa berstatus terbuka
                     </h3>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                      Sebaran mahasiswa aktif pada institusi mitra
+                    <p style={{ fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.5 }}>
+                      Template yang diajukan mahasiswa dari halaman Roadmap masuk ke antrian moderasi sebelum mendapat label Terverifikasi Resmi di galeri publik.
                     </p>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {(overviewData?.studentDistributions?.byCampus || []).map((camp: any, idx: number) => (
-                      <div
-                        key={idx}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "10px 14px",
-                          borderRadius: "var(--radius-md)",
-                          background: "var(--bg-secondary)",
-                          border: "1px solid var(--border)",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <Building2 size={16} color="#D97706" />
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>{camp.name}</span>
-                        </div>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "#92400E" }}>
-                          {camp.count} Mahasiswa ({camp.percentage}%)
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 3: Quick Action Banner */}
-              <div
-                style={{
-                  background: "linear-gradient(135deg, rgba(245, 205, 71, 0.08) 0%, rgba(133, 136, 255, 0.08) 100%)",
-                  border: "1px solid rgba(245, 205, 71, 0.25)",
-                  borderRadius: "var(--radius-lg)",
-                  padding: "22px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
-                    🛡️ Tindakan Cepat Moderator & Administrator
-                  </div>
-                  <div style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
-                    Terdapat {overviewData?.metrics?.openReports || 2} laporan mahasiswa yang perlu ditinjau, dan{" "}
-                    {overviewData?.metrics?.communityTemplates || 0} template komunitas yang menunggu verifikasi resmi.
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button
-                    onClick={() => switchTab("templates")}
-                    className="btn btn-primary btn-sm"
-                    style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700 }}
-                  >
-                    <FileCheck size={14} />
-                    <span>Buka Moderasi Template</span>
-                  </button>
-                  <button
-                    onClick={() => switchTab("ai")}
-                    className="btn btn-secondary btn-sm"
-                    style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}
-                  >
-                    <Cpu size={14} />
-                    <span>Pantau Kinerja AI</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════════════════════
-              TAB 2: 📚 DATA AKADEMIK
-              ══════════════════════════════════════════════════════════════════════════════ */}
-          {activeTab === "academics" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              {/* Sub-tab Navigation */}
-              <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--border)", paddingBottom: 12 }}>
-                {[
-                  { id: "kampus", label: "🏫 Kampus Mitra", count: academicsData?.campuses?.length || 5 },
-                  { id: "prodi", label: "🎓 Program Studi", count: academicsData?.programs?.length || 4 },
-                  { id: "kurikulum", label: "📅 Kurikulum Semester 1-8", count: 8 },
-                  { id: "matakuliah", label: "📖 Katalog Mata Kuliah", count: academicsData?.courses?.length || 44 },
-                ].map((st) => (
-                  <button
-                    key={st.id}
-                    onClick={() => setAcademicSubTab(st.id as any)}
-                    style={{
-                      background: academicSubTab === st.id ? "#FEF3C7" : "#FFFFFF",
-                      border: academicSubTab === st.id ? "1px solid #FCD34D" : "1px solid var(--border)",
-                      color: academicSubTab === st.id ? "#92400E" : "var(--text-secondary)",
-                      padding: "8px 16px",
-                      borderRadius: "var(--radius-pill)",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      boxShadow: academicSubTab === st.id ? "0 1px 3px rgba(0,0,0,0.04)" : "none",
-                      transition: "var(--transition)",
-                    }}
-                  >
-                    <span>{st.label}</span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        background: academicSubTab === st.id ? "#FCD34D" : "var(--border)",
-                        color: academicSubTab === st.id ? "#78350F" : "var(--text-muted)",
-                        padding: "1px 6px",
-                        borderRadius: "var(--radius-pill)",
-                      }}
-                    >
-                      {st.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Sub-Tab 1: Kampus Mitra */}
-              {academicSubTab === "kampus" && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
-                  {(academicsData?.campuses || []).map((campus: any) => (
-                    <div
-                      key={campus.id}
-                      style={{
-                        background: "var(--bg-elevated)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--radius-lg)",
-                        padding: "20px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                        <div>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>{campus.name}</div>
-                          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{campus.city}</div>
-                        </div>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            padding: "3px 8px",
-                            borderRadius: "var(--radius-pill)",
-                            fontWeight: 700,
-                            background: campus.type === "PTN" ? "rgba(133, 136, 255, 0.15)" : "#FEF3C7",
-                            color: campus.type === "PTN" ? "var(--blue)" : "#92400E",
-                            border: campus.type === "PTN" ? "1px solid rgba(133, 136, 255, 0.3)" : "1px solid #FCD34D",
-                          }}
-                        >
-                          {campus.type}
-                        </span>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: 10,
-                          background: "var(--bg-secondary)",
-                          padding: "12px",
-                          borderRadius: "var(--radius-md)",
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Mahasiswa Terdata</div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{campus.totalStudents} mhs</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Status Sinkronisasi</div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: "#22C55E" }}>✓ {campus.syncStatus}</div>
-                        </div>
-                      </div>
-
-                      <div style={{ fontSize: 11, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 6 }}>
-                        <Info size={13} color="var(--blue)" />
-                        <span>{campus.lastCurriculumUpdate}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Sub-Tab 2: Program Studi */}
-              {academicSubTab === "prodi" && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
-                  {(academicsData?.programs || []).map((prog: any) => (
-                    <div
-                      key={prog.id}
-                      style={{
-                        background: "var(--bg-elevated)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--radius-lg)",
-                        padding: "20px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                        <div>
-                          <span
-                            style={{
-                              fontSize: 10,
-                              fontWeight: 800,
-                              background: "rgba(133, 136, 255, 0.15)",
-                              color: "var(--blue)",
-                              padding: "2px 6px",
-                              borderRadius: "4px",
-                            }}
-                          >
-                            {prog.code} • {prog.level}
-                          </span>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
-                            {prog.name}
-                          </div>
-                          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{prog.campusName}</div>
-                        </div>
-
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 800,
-                            color: "#22C55E",
-                            background: "rgba(34, 197, 94, 0.1)",
-                            padding: "3px 8px",
-                            borderRadius: "var(--radius-pill)",
-                          }}
-                        >
-                          Akreditasi {prog.accreditation}
-                        </span>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          background: "var(--bg-secondary)",
-                          padding: "10px 14px",
-                          borderRadius: "var(--radius-md)",
-                          fontSize: 12,
-                        }}
-                      >
-                        <span style={{ color: "var(--text-muted)" }}>Total Beban Kelulusan:</span>
-                        <span style={{ fontWeight: 800, color: "#0F172A" }}>{prog.totalCredits} SKS</span>
-                      </div>
-
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                        Kurikulum Aktif: <strong>Tahun Ajaran {prog.activeCurriculumYear}</strong> ({prog.totalCourses} Mata Kuliah)
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Sub-Tab 3: Kurikulum Semester 1 - 8 */}
-              {academicSubTab === "kurikulum" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div
-                    style={{
-                      background: "#FFFBEB",
-                      border: "1px solid #FDE68A",
-                      borderRadius: "var(--radius-md)",
-                      padding: "14px 18px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                    }}
-                  >
-                    <Info size={18} color="#D97706" />
-                    <span style={{ fontSize: 13, color: "var(--text-primary)" }}>
-                      Distribusi beban SKS nasional & Telkom University: Setiap semester reguler (Semester 1–7)
-                      memiliki alokasi standar <strong>18–20 SKS</strong>, dan Semester 8 dialokasikan untuk <strong>8 SKS</strong> (Tugas Akhir & Publikasi).
-                    </span>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
-                    {(academicsData?.semesterSummary || []).map((sem: any) => (
-                      <div
-                        key={sem.semesterNum}
-                        style={{
-                          background: "var(--bg-elevated)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "var(--radius-md)",
-                          padding: "16px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 10,
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
-                            Semester {sem.semesterNum}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: 12,
-                              fontWeight: 800,
-                              background: "#FEF3C7",
-                              color: "#92400E",
-                              padding: "2px 8px",
-                              borderRadius: "var(--radius-pill)",
-                              border: "1px solid #FCD34D",
-                            }}
-                          >
-                            {sem.credits} SKS
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                          {sem.focus}
-                        </div>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: "auto" }}>
-                          {sem.courseCount} Mata Kuliah Standar
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Sub-Tab 4: Manajemen Mata Kuliah */}
-              {academicSubTab === "matakuliah" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {/* Filter & Action Toolbar */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 12,
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      background: "var(--bg-elevated)",
-                      padding: "16px",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--border)",
-                    }}
-                  >
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-                      {/* Search */}
-                      <div style={{ position: "relative", minWidth: 240 }}>
-                        <Search
-                          size={15}
-                          style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Cari kode atau nama MK..."
-                          value={courseSearch}
-                          onChange={(e) => setCourseSearch(e.target.value)}
-                          className="input input-sm"
-                          style={{ paddingLeft: 32, width: "100%", fontSize: 13 }}
-                        />
-                      </div>
-
-                      {/* Semester Filter */}
-                      <select
-                        value={courseSemesterFilter}
-                        onChange={(e) => setCourseSemesterFilter(e.target.value)}
-                        className="select select-sm"
-                        style={{ fontSize: 12 }}
-                      >
-                        <option value="all">Semua Semester (1–8)</option>
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                          <option key={s} value={s.toString()}>
-                            Semester {s}
-                          </option>
-                        ))}
-                      </select>
-
-                      {/* Category Filter */}
-                      <select
-                        value={courseCategoryFilter}
-                        onChange={(e) => setCourseCategoryFilter(e.target.value)}
-                        className="select select-sm"
-                        style={{ fontSize: 12 }}
-                      >
-                        <option value="all">Semua Kategori</option>
-                        <option value="akademik">Akademik</option>
-                        <option value="karier">Karier / Magang</option>
-                        <option value="skripsi">Skripsi / TA</option>
-                        <option value="tak">TAK</option>
-                      </select>
-                    </div>
-
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                     <button
-                      onClick={() => setIsAddCourseModalOpen(true)}
+                      type="button"
+                      onClick={() => {
+                        setTemplateSubTab("templates");
+                        setTemplateStatusFilter("unverified");
+                        switchTab("templates");
+                      }}
                       className="btn btn-primary btn-sm"
-                      style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700 }}
+                      style={{ fontWeight: 700 }}
                     >
-                      <Plus size={16} />
-                      <span>Tambah Mata Kuliah Baru</span>
+                      Tinjau Pengajuan Template ({unverifiedTemplatesCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTemplateSubTab("reports");
+                        setTemplateStatusFilter("all");
+                        switchTab("templates");
+                      }}
+                      className="btn btn-secondary btn-sm"
+                    >
+                      Buka Laporan ({openReportsCount})
                     </button>
                   </div>
-
-                  {/* Course Table */}
-                  <div
-                    style={{
-                      background: "var(--bg-elevated)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-lg)",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
-                      <thead>
-                        <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                          <th style={{ padding: "12px 16px" }}>Kode MK</th>
-                          <th style={{ padding: "12px 16px" }}>Nama Mata Kuliah</th>
-                          <th style={{ padding: "12px 16px" }}>Semester</th>
-                          <th style={{ padding: "12px 16px" }}>SKS</th>
-                          <th style={{ padding: "12px 16px" }}>Kategori</th>
-                          <th style={{ padding: "12px 16px" }}>Prasyarat</th>
-                          <th style={{ padding: "12px 16px", textAlign: "right" }}>Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredCourses.map((c: any, idx: number) => (
-                          <tr
-                            key={idx}
-                            style={{
-                              borderBottom: "1px solid var(--border-subtle)",
-                              transition: "background 0.15s ease",
-                            }}
-                          >
-                            <td style={{ padding: "12px 16px" }}>
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                  color: "#92400E",
-                                  background: "#FEF3C7",
-                                  border: "1px solid #FCD34D",
-                                  padding: "3px 8px",
-                                  borderRadius: "4px",
-                                }}
-                              >
-                                {c.code}
-                              </span>
-                            </td>
-                            <td style={{ padding: "12px 16px", fontWeight: 600, color: "var(--text-primary)" }}>
-                              <div>{c.name}</div>
-                              {c.description && (
-                                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{c.description}</div>
-                              )}
-                            </td>
-                            <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>
-                              Semester {c.semesterNum}
-                            </td>
-                            <td style={{ padding: "12px 16px", fontWeight: 700, color: "#0F172A" }}>
-                              {c.credits} SKS
-                            </td>
-                            <td style={{ padding: "12px 16px" }}>
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  padding: "2px 8px",
-                                  borderRadius: "var(--radius-pill)",
-                                  textTransform: "capitalize",
-                                  fontWeight: 600,
-                                  background:
-                                    c.category === "skripsi"
-                                      ? "rgba(255, 126, 138, 0.15)"
-                                      : c.category === "karier"
-                                      ? "rgba(133, 136, 255, 0.15)"
-                                      : "rgba(117, 189, 165, 0.15)",
-                                  color:
-                                    c.category === "skripsi"
-                                      ? "var(--coral)"
-                                      : c.category === "karier"
-                                      ? "var(--blue)"
-                                      : "var(--teal)",
-                                }}
-                              >
-                                {c.category}
-                              </span>
-                            </td>
-                            <td style={{ padding: "12px 16px", color: "var(--text-muted)", fontSize: 12 }}>
-                              {c.prerequisites && c.prerequisites.length > 0 ? c.prerequisites.join(", ") : "—"}
-                            </td>
-                            <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                              <button
-                                onClick={() => showToast(`Mata kuliah ${c.code} aktif di kurikulum.`)}
-                                className="btn btn-ghost btn-sm"
-                                style={{ fontSize: 11, color: "#92400E" }}
-                              >
-                                Detail
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* ══════════════════════════════════════════════════════════════════════════════
-              TAB 3: 📑 MODERASI TEMPLATE
-              ══════════════════════════════════════════════════════════════════════════════ */}
-          {activeTab === "templates" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              {/* Sub-tab Navigation */}
-              <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--border)", paddingBottom: 12 }}>
-                <button
-                  onClick={() => setTemplateSubTab("templates")}
+                {/* Structured Operational Summary Strip */}
+                <div
                   style={{
-                    background: templateSubTab === "templates" ? "#FEF3C7" : "#FFFFFF",
-                    border: templateSubTab === "templates" ? "1px solid #FCD34D" : "1px solid var(--border)",
-                    color: templateSubTab === "templates" ? "#92400E" : "var(--text-secondary)",
-                    padding: "8px 18px",
-                    borderRadius: "var(--radius-pill)",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    boxShadow: templateSubTab === "templates" ? "0 1px 3px rgba(0,0,0,0.04)" : "none",
+                    background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "14px",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                   }}
                 >
-                  <FileCheck size={16} />
-                  <span>Verifikasi Template Publik</span>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      background: templateSubTab === "templates" ? "#FCD34D" : "var(--border)",
-                      color: templateSubTab === "templates" ? "#78350F" : "var(--text-muted)",
-                      padding: "1px 6px",
-                      borderRadius: "var(--radius-pill)",
-                    }}
-                  >
-                    {templatesList.length}
-                  </span>
-                </button>
+                  {[
+                    {
+                      label: "Mahasiswa & Sesi Aktif",
+                      value: isLoadingOverview ? "..." : overviewData?.metrics?.totalStudents ?? 0,
+                      detail: `${overviewData?.metrics?.registeredUsers ?? 0} akun terdaftar, ${overviewData?.metrics?.activeSessions ?? 0} sesi aktif`,
+                    },
+                    {
+                      label: "Roadmap Studi Aktif",
+                      value: isLoadingOverview ? "..." : overviewData?.metrics?.totalRoadmaps ?? 0,
+                      detail: `Rata-rata ${overviewData?.metrics?.averagePlannedCreditsPerSem ?? 19.6} SKS direncanakan per semester`,
+                    },
+                    {
+                      label: "Template Terverifikasi",
+                      value: isLoadingOverview
+                        ? "..."
+                        : `${overviewData?.metrics?.verifiedTemplates ?? 0} / ${overviewData?.metrics?.totalTemplates ?? 0}`,
+                      detail: `${overviewData?.metrics?.hiddenTemplates ?? 0} template disembunyikan / draf pengajuan`,
+                    },
+                    {
+                      label: "Layanan Gemini AI",
+                      value: overviewData?.aiSystemStatus?.isKeyConfigured ? "Aktif" : "Fallback",
+                      detail: `Model utama: ${overviewData?.aiSystemStatus?.primaryModel || "gemini-3.1-flash-lite"}`,
+                    },
+                  ].map((item, idx) => (
+                    <div
+                      key={item.label}
+                      style={{
+                        padding: "18px 20px",
+                        borderRight: idx < 3 ? "1px solid #F1F5F9" : "none",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          color: "#64748B",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.03em",
+                        }}
+                      >
+                        {item.label}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 24,
+                          fontWeight: 800,
+                          color: "#0F172A",
+                          marginTop: 6,
+                          letterSpacing: "-0.02em",
+                        }}
+                      >
+                        {item.value}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>
+                        {item.detail}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-                <button
-                  onClick={() => setTemplateSubTab("reports")}
+                {/* Two-Column Breakdown: Sebaran Kampus & Tren Simulasi */}
+                <div
                   style={{
-                    background: templateSubTab === "reports" ? "rgba(255, 126, 138, 0.15)" : "var(--bg-secondary)",
-                    border: templateSubTab === "reports" ? "1px solid var(--coral)" : "1px solid var(--border)",
-                    color: templateSubTab === "reports" ? "var(--coral)" : "var(--text-secondary)",
-                    padding: "8px 18px",
-                    borderRadius: "var(--radius-pill)",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+                    gap: 18,
                   }}
                 >
-                  <ShieldAlert size={16} />
-                  <span>Daftar Laporan & Pelanggaran</span>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      background: "var(--coral)",
-                      color: "#fff",
-                      padding: "1px 6px",
-                      borderRadius: "var(--radius-pill)",
-                    }}
-                  >
-                    {reportsList.filter((r) => r.status === "open").length} Baru
-                  </span>
-                </button>
-              </div>
-
-              {/* Sub-Tab 1: Verifikasi Template */}
-              {templateSubTab === "templates" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {/* Toolbar */}
+                  {/* Sebaran Perguruan Tinggi */}
                   <div
                     style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 12,
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      background: "var(--bg-elevated)",
-                      padding: "14px",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--border)",
+                      background: "#FFFFFF",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "14px",
+                      padding: "20px",
                     }}
                   >
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <div style={{ position: "relative", minWidth: 260 }}>
-                        <Search
-                          size={15}
-                          style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Cari judul template atau penulis..."
-                          value={templateSearch}
-                          onChange={(e) => setTemplateSearch(e.target.value)}
-                          className="input input-sm"
-                          style={{ paddingLeft: 32, fontSize: 13 }}
-                        />
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 14,
+                      }}
+                    >
+                      <div>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0F172A", margin: 0 }}>
+                          Sebaran Mahasiswa per Institusi Mitra
+                        </h3>
+                        <p style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>
+                          Proporsi pengguna berdasarkan perguruan tinggi asal
+                        </p>
                       </div>
-
-                      <select
-                        value={templateStatusFilter}
-                        onChange={(e) => setTemplateStatusFilter(e.target.value)}
-                        className="select select-sm"
-                        style={{ fontSize: 12 }}
+                      <button
+                        type="button"
+                        onClick={() => switchTab("academics")}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "#B45309",
+                          cursor: "pointer",
+                        }}
                       >
-                        <option value="all">Semua Status</option>
-                        <option value="verified">Hanya Terverifikasi Resmi</option>
-                        <option value="unverified">Belum Diverifikasi</option>
-                        <option value="hidden">Disembunyikan</option>
-                      </select>
+                        Kelola Kampus
+                      </button>
                     </div>
 
-                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                      Menampilkan <strong>{templatesList.length}</strong> template
-                    </div>
-                  </div>
-
-                  {/* Template Cards Grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
-                    {templatesList.map((tpl: any) => {
-                      const isVerified = tpl.sourceType === "terverifikasi";
-                      const isHidden = tpl.isHidden;
-
-                      return (
-                        <div
-                          key={tpl.id}
-                          style={{
-                            background: "var(--bg-elevated)",
-                            border: isVerified ? "1px solid rgba(245, 205, 71, 0.4)" : "1px solid var(--border)",
-                            borderRadius: "var(--radius-lg)",
-                            padding: "20px",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 14,
-                            position: "relative",
-                          }}
-                        >
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                            <div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                                <span
-                                  style={{
-                                    fontSize: 10,
-                                    fontWeight: 800,
-                                    textTransform: "uppercase",
-                                    color: "var(--blue)",
-                                    background: "rgba(133, 136, 255, 0.12)",
-                                    padding: "2px 6px",
-                                    borderRadius: "4px",
-                                  }}
-                                >
-                                  {tpl.category}
-                                </span>
-                                {isVerified && (
-                                  <span
-                                    style={{
-                                      fontSize: 10,
-                                      fontWeight: 800,
-                                      color: "#15803D",
-                                      background: "#DCFCE7",
-                                      border: "1px solid #86EFAC",
-                                      padding: "2px 8px",
-                                      borderRadius: "var(--radius-pill)",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: 3,
-                                    }}
-                                  >
-                                    <Sparkles size={10} color="#15803D" /> Terverifikasi Resmi
-                                  </span>
-                                )}
-                                {isHidden && (
-                                  <span
-                                    style={{
-                                      fontSize: 10,
-                                      fontWeight: 800,
-                                      color: "var(--coral)",
-                                      background: "rgba(255, 126, 138, 0.15)",
-                                      padding: "2px 6px",
-                                      borderRadius: "4px",
-                                    }}
-                                  >
-                                    Disembunyikan
-                                  </span>
-                                )}
-                              </div>
-
-                              <h4 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
-                                {tpl.title}
-                              </h4>
-                            </div>
-                          </div>
-
-                          <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4, margin: 0 }}>
-                            {tpl.description}
-                          </p>
-
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {(overviewData?.studentDistributions?.byCampus || []).map(
+                        (camp: any, idx: number) => (
                           <div
+                            key={idx}
                             style={{
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
-                              fontSize: 11,
-                              color: "var(--text-muted)",
-                              borderTop: "1px solid var(--border-subtle)",
-                              paddingTop: 10,
-                              marginTop: "auto",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              background: "#F8FAFC",
+                              border: "1px solid #E2E8F0",
                             }}
                           >
-                            <span>Oleh: {tpl.authorDisplayName || "Alumni / Komunitas"}</span>
-                            <span>{tpl.institutionName || "Telkom University"}</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <Building2 size={15} color="#64748B" />
+                              <span style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>
+                                {camp.name}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>
+                              {camp.count} mhs ({camp.percentage}%)
+                            </span>
                           </div>
-
-                          {/* Action Buttons */}
-                          <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
-                            <button
-                              onClick={() => handleToggleVerifyTemplate(tpl.id, tpl.sourceType)}
-                              className={`btn btn-sm ${isVerified ? "btn-secondary" : "btn-primary"}`}
-                              style={{ flex: 1, fontSize: 11, fontWeight: 700 }}
-                            >
-                              {isVerified ? "Cabut Verifikasi" : "✓ Beri Verifikasi Resmi"}
-                            </button>
-
-                            <button
-                              onClick={() => handleToggleHideTemplate(tpl.id, isHidden)}
-                              className="btn btn-secondary btn-sm"
-                              style={{
-                                padding: "0 10px",
-                                color: isHidden ? "#15803D" : "var(--coral)",
-                              }}
-                              title={isHidden ? "Tampilkan kembali" : "Sembunyikan template"}
-                            >
-                              {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
-                            </button>
-
-                            <button
-                              onClick={() => setSelectedTemplateForPreview(tpl)}
-                              className="btn btn-secondary btn-sm"
-                              style={{ padding: "0 10px" }}
-                              title="Lihat rincian langkah"
-                            >
-                              <ExternalLink size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        )
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
 
-              {/* Sub-Tab 2: Daftar Laporan / Report */}
-              {templateSubTab === "reports" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {/* Filter Toolbar */}
+                  {/* Skenario Studi yang Paling Sering Disimulasikan */}
                   <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      background: "var(--bg-elevated)",
-                      padding: "12px 16px",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--border)",
+                      background: "#FFFFFF",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "14px",
+                      padding: "20px",
                     }}
                   >
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <span style={{ fontSize: 13, fontWeight: 700 }}>Filter Status Laporan:</span>
-                      <select
-                        value={reportStatusFilter}
-                        onChange={(e) => setReportStatusFilter(e.target.value)}
-                        className="select select-sm"
-                        style={{ fontSize: 12 }}
-                      >
-                        <option value="all">Semua Laporan</option>
-                        <option value="open">Menunggu Tindakan (Open)</option>
-                        <option value="reviewed">Sedang Ditinjau (Reviewed)</option>
-                        <option value="resolved">Selesai (Resolved)</option>
-                      </select>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 14,
+                      }}
+                    >
+                      <div>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0F172A", margin: 0 }}>
+                          Tren Simulasi Skenario Mahasiswa
+                        </h3>
+                        <p style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>
+                          Skenario akademik yang paling banyak diuji pada fitur What-If
+                        </p>
+                      </div>
+                      <span style={{ fontSize: 12, color: "#64748B", fontWeight: 600 }}>
+                        {overviewData?.metrics?.totalSimulations || 0} simulasi
+                      </span>
                     </div>
 
-                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                      Total <strong>{reportsList.length}</strong> laporan tercatat
-                    </div>
-                  </div>
-
-                  {/* Reports List */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {reportsList.map((rep: any) => (
-                      <div
-                        key={rep.id}
-                        style={{
-                          background: "var(--bg-elevated)",
-                          border: rep.status === "open" ? "1px solid rgba(255, 126, 138, 0.4)" : "1px solid var(--border)",
-                          borderRadius: "var(--radius-lg)",
-                          padding: "18px 20px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          gap: 16,
-                        }}
-                      >
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <span
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 800,
-                                padding: "2px 8px",
-                                borderRadius: "var(--radius-pill)",
-                                textTransform: "uppercase",
-                                background:
-                                  rep.status === "open"
-                                    ? "rgba(255, 126, 138, 0.2)"
-                                    : rep.status === "reviewed"
-                                    ? "rgba(245, 205, 71, 0.2)"
-                                    : "rgba(34, 197, 94, 0.2)",
-                                color:
-                                  rep.status === "open"
-                                    ? "var(--coral)"
-                                    : rep.status === "reviewed"
-                                    ? "var(--lime)"
-                                    : "#22C55E",
-                              }}
-                            >
-                              Status: {rep.status}
-                            </span>
-                            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                              Dilaporkan pada {new Date(rep.createdAt).toLocaleDateString("id-ID")}
-                            </span>
-                          </div>
-
-                          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>
-                            Template Terkait: {rep.template?.title || "Template Mahasiswa"}
-                          </div>
-
+                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                      {(overviewData?.popularScenarios || []).map((sc: any, idx: number) => (
+                        <div key={idx}>
                           <div
                             style={{
-                              background: "var(--bg-secondary)",
-                              padding: "10px 14px",
-                              borderRadius: "var(--radius-md)",
-                              borderLeft: "3px solid var(--coral)",
+                              display: "flex",
+                              justifyContent: "space-between",
                               fontSize: 13,
-                              color: "var(--text-primary)",
-                              lineHeight: 1.4,
+                              marginBottom: 6,
                             }}
                           >
-                            <strong>Alasan / Catatan Pelapor:</strong> &ldquo;{rep.reason}&rdquo;
+                            <span style={{ fontWeight: 600, color: "#0F172A" }}>{sc.name}</span>
+                            <span style={{ color: "#475569", fontWeight: 700, fontSize: 12 }}>
+                              {sc.count} mhs ({sc.percentage}%)
+                            </span>
                           </div>
+                          <div
+                            style={{
+                              height: 6,
+                              background: "#F1F5F9",
+                              borderRadius: "999px",
+                              overflow: "hidden",
+                            }}
+                          >
+                            <div
+                              style={{
+                                height: "100%",
+                                width: `${sc.percentage}%`,
+                                background: idx === 0 ? "#D97706" : "#64748B",
+                                borderRadius: "999px",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
-                          {rep.moderatorNote && (
-                            <div style={{ fontSize: 12, color: "#92400E", display: "flex", alignItems: "center", gap: 6 }}>
-                              <ShieldCheck size={14} color="#92400E" />
-                              <span>Catatan Moderator: {rep.moderatorNote}</span>
+            {/* ══════════════════════════════════════════════════════════════════════════
+                TAB 2: KURIKULUM & DATA AKADEMIK
+                ══════════════════════════════════════════════════════════════════════════ */}
+            {activeTab === "academics" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                {/* Segmented Sub-tab Control */}
+                <div
+                  style={{
+                    display: "inline-flex",
+                    flexWrap: "wrap",
+                    gap: 4,
+                    background: "#F1F5F9",
+                    padding: 4,
+                    borderRadius: "10px",
+                    border: "1px solid #E2E8F0",
+                     alignSelf: "flex-start",
+                  }}
+                >
+                  {[
+                    { id: "kampus", label: "Perguruan Tinggi Mitra", count: academicsData?.campuses?.length || 5 },
+                    { id: "prodi", label: "Program Studi", count: academicsData?.programs?.length || 4 },
+                    { id: "kurikulum", label: "Struktur Semester 1-8", count: 8 },
+                    { id: "matakuliah", label: "Katalog Mata Kuliah", count: academicsData?.courses?.length || 44 },
+                  ].map((st) => {
+                    const active = academicSubTab === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => setAcademicSubTab(st.id as any)}
+                        style={{
+                          background: active ? "#FFFFFF" : "transparent",
+                          border: "none",
+                          color: active ? "#0F172A" : "#475569",
+                          padding: "7px 14px",
+                          borderRadius: "7px",
+                          fontSize: 12.5,
+                          fontWeight: active ? 700 : 600,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          boxShadow: active ? "0 1px 2px rgba(15, 23, 42, 0.06)" : "none",
+                        }}
+                      >
+                        <span>{st.label}</span>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            background: active ? "#FEF3C7" : "#E2E8F0",
+                            color: active ? "#92400E" : "#475569",
+                            padding: "1px 6px",
+                            borderRadius: "999px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {st.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Sub-Tab 1: Kampus Mitra */}
+                {academicSubTab === "kampus" && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                      gap: 16,
+                    }}
+                  >
+                    {(academicsData?.campuses || []).map((campus: any) => (
+                      <div
+                        key={campus.id}
+                        style={{
+                          background: "#FFFFFF",
+                          border: "1px solid #E2E8F0",
+                          borderRadius: "14px",
+                          padding: "18px 20px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <div>
+                            <div style={{ fontSize: 15.5, fontWeight: 800, color: "#0F172A" }}>
+                              {campus.name}
                             </div>
-                          )}
+                            <div style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>
+                              {campus.city}
+                            </div>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              padding: "2px 8px",
+                              borderRadius: "6px",
+                              fontWeight: 700,
+                              background: campus.type === "PTN" ? "#F1F5F9" : "#FEF3C7",
+                              color: campus.type === "PTN" ? "#334155" : "#92400E",
+                              border: campus.type === "PTN" ? "1px solid #CBD5E1" : "1px solid #FDE68A",
+                            }}
+                          >
+                            {campus.type}
+                          </span>
+                        </div>
 
-                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                            Pelapor: {rep.reporter?.name || "Mahasiswa"} ({rep.reporter?.email || "anonim"})
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            gap: 10,
+                            background: "#F8FAFC",
+                            border: "1px solid #E2E8F0",
+                            padding: "10px 12px",
+                            borderRadius: "10px",
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 11, color: "#64748B" }}>Mahasiswa Terdata</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", marginTop: 2 }}>
+                              {campus.totalStudents} mhs
+                            </div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 11, color: "#64748B" }}>Status Kurikulum</div>
+                            <div
+                              style={{
+                                fontSize: 12.5,
+                                fontWeight: 700,
+                                color: campus.syncStatus === "Tersinkronisasi" ? "#15803D" : "#B45309",
+                                marginTop: 2,
+                              }}
+                            >
+                              {campus.syncStatus}
+                            </div>
                           </div>
                         </div>
 
-                        {/* Action */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#475569",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <Info size={13} color="#64748B" />
+                          <span>{campus.lastCurriculumUpdate}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Sub-Tab 2: Program Studi */}
+                {academicSubTab === "prodi" && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                      gap: 16,
+                    }}
+                  >
+                    {(academicsData?.programs || []).map((prog: any) => (
+                      <div
+                        key={prog.id}
+                        style={{
+                          background: "#FFFFFF",
+                          border: "1px solid #E2E8F0",
+                          borderRadius: "14px",
+                          padding: "18px 20px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <div>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                background: "#F1F5F9",
+                                color: "#334155",
+                                border: "1px solid #E2E8F0",
+                                padding: "2px 7px",
+                                borderRadius: "5px",
+                              }}
+                            >
+                              {prog.code} • {prog.level}
+                            </span>
+                            <div
+                              style={{
+                                fontSize: 15.5,
+                                fontWeight: 800,
+                                color: "#0F172A",
+                                marginTop: 6,
+                              }}
+                            >
+                              {prog.name}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#64748B" }}>{prog.campusName}</div>
+                          </div>
+
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: "#15803D",
+                              background: "#DCFCE7",
+                              border: "1px solid #BBF7D0",
+                              padding: "2px 8px",
+                              borderRadius: "999px",
+                            }}
+                          >
+                            Akreditasi {prog.accreditation}
+                          </span>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            background: "#F8FAFC",
+                            border: "1px solid #E2E8F0",
+                            padding: "10px 12px",
+                            borderRadius: "10px",
+                            fontSize: 12.5,
+                          }}
+                        >
+                          <span style={{ color: "#475569" }}>Beban Lulus Standar</span>
+                          <span style={{ fontWeight: 800, color: "#0F172A" }}>
+                            {prog.totalCredits} SKS
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: 12, color: "#64748B" }}>
+                          Kurikulum Aktif: <strong style={{ color: "#334155" }}>{prog.activeCurriculumYear}</strong> ({prog.totalCourses} Mata Kuliah)
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Sub-Tab 3: Struktur Semester 1 - 8 */}
+                {academicSubTab === "kurikulum" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div
+                      style={{
+                        background: "#FFFBEB",
+                        border: "1px solid #FDE68A",
+                        borderRadius: "12px",
+                        padding: "12px 16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        color: "#92400E",
+                      }}
+                    >
+                      <Info size={16} color="#D97706" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 13 }}>
+                        Distribusi beban SKS standar program sarjana (144 SKS): Semester 1 sampai 7 memiliki beban reguler <strong>18-20 SKS</strong>, dan Semester 8 dialokasikan <strong>8 SKS</strong> untuk Tugas Akhir & Sidang.
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                        gap: 14,
+                      }}
+                    >
+                      {(academicsData?.semesterSummary || []).map((sem: any) => (
+                        <div
+                          key={sem.semesterNum}
+                          style={{
+                            background: "#FFFFFF",
+                            border: "1px solid #E2E8F0",
+                            borderRadius: "12px",
+                            padding: "16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 8,
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: "#0F172A" }}>
+                              Semester {sem.semesterNum}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                background: "#FEF3C7",
+                                color: "#92400E",
+                                padding: "2px 8px",
+                                borderRadius: "999px",
+                                border: "1px solid #FDE68A",
+                              }}
+                            >
+                              {sem.credits} SKS
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 12.5, color: "#475569", lineHeight: 1.45 }}>
+                            {sem.focus}
+                          </div>
+                          <div style={{ fontSize: 11.5, color: "#64748B", marginTop: "auto" }}>
+                            {sem.courseCount} mata kuliah terjadwal
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sub-Tab 4: Katalog Mata Kuliah */}
+                {academicSubTab === "matakuliah" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 10,
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        background: "#FFFFFF",
+                        padding: "14px 16px",
+                        borderRadius: "12px",
+                        border: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+                        <div style={{ position: "relative", minWidth: 240 }}>
+                          <Search
+                            size={15}
+                            style={{
+                              position: "absolute",
+                              left: 11,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              color: "#64748B",
+                            }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Cari kode atau nama mata kuliah..."
+                            value={courseSearch}
+                            onChange={(e) => setCourseSearch(e.target.value)}
+                            className="form-input"
+                            style={{ paddingLeft: 34, height: 36, fontSize: 13 }}
+                          />
+                        </div>
+
+                        <select
+                          value={courseSemesterFilter}
+                          onChange={(e) => setCourseSemesterFilter(e.target.value)}
+                          className="form-input"
+                          style={{ width: "auto", height: 36, fontSize: 12.5, padding: "0 12px" }}
+                        >
+                          <option value="all">Semua Semester (1-8)</option>
+                          {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                            <option key={s} value={s.toString()}>
+                              Semester {s}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          value={courseCategoryFilter}
+                          onChange={(e) => setCourseCategoryFilter(e.target.value)}
+                          className="form-input"
+                          style={{ width: "auto", height: 36, fontSize: 12.5, padding: "0 12px" }}
+                        >
+                          <option value="all">Semua Kategori</option>
+                          <option value="akademik">Akademik</option>
+                          <option value="karier">Karier / Magang</option>
+                          <option value="skripsi">Skripsi / TA</option>
+                        </select>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsAddCourseModalOpen(true)}
+                        className="btn btn-primary btn-sm"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 700 }}
+                      >
+                        <Plus size={15} />
+                        <span>Tambah Mata Kuliah</span>
+                      </button>
+                    </div>
+
+                    <div
+                      style={{
+                        background: "#FFFFFF",
+                        border: "1px solid #E2E8F0",
+                        borderRadius: "14px",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+                        <thead>
+                          <tr
+                            style={{
+                              background: "#F8FAFC",
+                              borderBottom: "1px solid #E2E8F0",
+                              color: "#475569",
+                              fontSize: 12,
+                            }}
+                          >
+                            <th style={{ padding: "11px 16px", fontWeight: 700 }}>Kode MK</th>
+                            <th style={{ padding: "11px 16px", fontWeight: 700 }}>Mata Kuliah</th>
+                            <th style={{ padding: "11px 16px", fontWeight: 700 }}>Semester</th>
+                            <th style={{ padding: "11px 16px", fontWeight: 700 }}>Beban</th>
+                            <th style={{ padding: "11px 16px", fontWeight: 700 }}>Kategori</th>
+                            <th style={{ padding: "11px 16px", fontWeight: 700 }}>Prasyarat</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredCourses.map((c: any, idx: number) => (
+                            <tr
+                              key={idx}
+                              style={{
+                                borderBottom: "1px solid #F1F5F9",
+                              }}
+                            >
+                              <td style={{ padding: "12px 16px" }}>
+                                <span
+                                  style={{
+                                    fontSize: 11.5,
+                                    fontWeight: 700,
+                                    color: "#92400E",
+                                    background: "#FEF3C7",
+                                    border: "1px solid #FDE68A",
+                                    padding: "2px 8px",
+                                    borderRadius: "5px",
+                                  }}
+                                >
+                                  {c.code}
+                                </span>
+                              </td>
+                              <td style={{ padding: "12px 16px", fontWeight: 600, color: "#0F172A" }}>
+                                <div>{c.name}</div>
+                                {c.description && (
+                                  <div style={{ fontSize: 11.5, color: "#64748B", fontWeight: 400, marginTop: 2 }}>
+                                    {c.description}
+                                  </div>
+                                )}
+                              </td>
+                              <td style={{ padding: "12px 16px", color: "#475569" }}>
+                                Semester {c.semesterNum}
+                              </td>
+                              <td style={{ padding: "12px 16px", fontWeight: 700, color: "#0F172A" }}>
+                                {c.credits} SKS
+                              </td>
+                              <td style={{ padding: "12px 16px" }}>
+                                <span
+                                  style={{
+                                    fontSize: 11.5,
+                                    padding: "2px 8px",
+                                    borderRadius: "999px",
+                                    textTransform: "capitalize",
+                                    fontWeight: 600,
+                                    background: "#F1F5F9",
+                                    color: "#334155",
+                                    border: "1px solid #E2E8F0",
+                                  }}
+                                >
+                                  {c.category}
+                                </span>
+                              </td>
+                              <td style={{ padding: "12px 16px", color: "#64748B", fontSize: 12 }}>
+                                {c.prerequisites && c.prerequisites.length > 0
+                                  ? c.prerequisites.join(", ")
+                                  : "-"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════════════════════
+                TAB 3: MODERASI TEMPLATE & LAPORAN
+                ══════════════════════════════════════════════════════════════════════════ */}
+            {activeTab === "templates" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                {/* Segmented Sub-tab Control */}
+                <div
+                  style={{
+                    display: "inline-flex",
+                    gap: 4,
+                    background: "#F1F5F9",
+                    padding: 4,
+                    borderRadius: "10px",
+                    border: "1px solid #E2E8F0",
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setTemplateSubTab("templates")}
+                    style={{
+                      background: templateSubTab === "templates" ? "#FFFFFF" : "transparent",
+                      border: "none",
+                      color: templateSubTab === "templates" ? "#0F172A" : "#475569",
+                      padding: "7px 14px",
+                      borderRadius: "7px",
+                      fontSize: 12.5,
+                      fontWeight: templateSubTab === "templates" ? 700 : 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      boxShadow:
+                        templateSubTab === "templates"
+                          ? "0 1px 2px rgba(15, 23, 42, 0.06)"
+                          : "none",
+                    }}
+                  >
+                    <FileCheck size={15} />
+                    <span>Verifikasi Template Publik</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        background: templateSubTab === "templates" ? "#FEF3C7" : "#E2E8F0",
+                        color: templateSubTab === "templates" ? "#92400E" : "#475569",
+                        padding: "1px 6px",
+                        borderRadius: "999px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {templatesList.length}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTemplateSubTab("reports")}
+                    style={{
+                      background: templateSubTab === "reports" ? "#FFFFFF" : "transparent",
+                      border: "none",
+                      color: templateSubTab === "reports" ? "#0F172A" : "#475569",
+                      padding: "7px 14px",
+                      borderRadius: "7px",
+                      fontSize: 12.5,
+                      fontWeight: templateSubTab === "reports" ? 700 : 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      boxShadow:
+                        templateSubTab === "reports"
+                          ? "0 1px 2px rgba(15, 23, 42, 0.06)"
+                          : "none",
+                    }}
+                  >
+                    <ShieldAlert size={15} />
+                    <span>Laporan Pengguna</span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        background: openReportsCount > 0 ? "#FEE2E2" : "#E2E8F0",
+                        color: openReportsCount > 0 ? "#B91C1C" : "#475569",
+                        padding: "1px 6px",
+                        borderRadius: "999px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {openReportsCount} terbuka
+                    </span>
+                  </button>
+                </div>
+
+                {/* Sub-Tab 1: Verifikasi Template */}
+                {templateSubTab === "templates" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 10,
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        background: "#FFFFFF",
+                        padding: "14px 16px",
+                        borderRadius: "12px",
+                        border: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+                        <div style={{ position: "relative", minWidth: 260 }}>
+                          <Search
+                            size={15}
+                            style={{
+                              position: "absolute",
+                              left: 11,
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              color: "#64748B",
+                            }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Cari judul template, kampus, atau pembuat..."
+                            value={templateSearch}
+                            onChange={(e) => setTemplateSearch(e.target.value)}
+                            className="form-input"
+                            style={{ paddingLeft: 34, height: 36, fontSize: 13 }}
+                          />
+                        </div>
+
+                        <select
+                          value={templateStatusFilter}
+                          onChange={(e) => setTemplateStatusFilter(e.target.value)}
+                          className="form-input"
+                          style={{ width: "auto", height: 36, fontSize: 12.5, padding: "0 12px" }}
+                        >
+                          <option value="all">Semua Status Template</option>
+                          <option value="unverified">Menunggu Verifikasi (Komunitas)</option>
+                          <option value="verified">Terverifikasi Resmi</option>
+                          <option value="hidden">Disembunyikan / Belum Tayang</option>
+                        </select>
+                      </div>
+
+                      <div style={{ fontSize: 12.5, color: "#64748B" }}>
+                        Menampilkan <strong style={{ color: "#0F172A" }}>{templatesList.length}</strong> template
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))",
+                        gap: 16,
+                      }}
+                    >
+                      {templatesList.map((tpl: any) => {
+                        const isVerified = tpl.sourceType === "terverifikasi";
+                        const isHidden = Boolean(tpl.isHidden);
+
+                        return (
+                          <div
+                            key={tpl.id}
+                            style={{
+                              background: "#FFFFFF",
+                              border: isVerified ? "1px solid #BBF7D0" : "1px solid #E2E8F0",
+                              borderRadius: "14px",
+                              padding: "18px 20px",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 12,
+                            }}
+                          >
+                            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  textTransform: "uppercase",
+                                  color: "#475569",
+                                  background: "#F1F5F9",
+                                  border: "1px solid #E2E8F0",
+                                  padding: "2px 7px",
+                                  borderRadius: "5px",
+                                }}
+                              >
+                                {tpl.category}
+                              </span>
+
+                              {isVerified ? (
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: "#15803D",
+                                    background: "#DCFCE7",
+                                    border: "1px solid #BBF7D0",
+                                    padding: "2px 8px",
+                                    borderRadius: "999px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                  }}
+                                >
+                                  <ShieldCheck size={12} /> Terverifikasi Resmi
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: "#92400E",
+                                    background: "#FEF3C7",
+                                    border: "1px solid #FDE68A",
+                                    padding: "2px 8px",
+                                    borderRadius: "999px",
+                                  }}
+                                >
+                                  Pengajuan Komunitas
+                                </span>
+                              )}
+
+                              {isHidden && (
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: "#B91C1C",
+                                    background: "#FEE2E2",
+                                    border: "1px solid #FECACA",
+                                    padding: "2px 7px",
+                                    borderRadius: "5px",
+                                  }}
+                                >
+                                  Belum Tayang
+                                </span>
+                              )}
+                            </div>
+
+                            <div>
+                              <h4
+                                style={{
+                                  fontSize: 15,
+                                  fontWeight: 700,
+                                  color: "#0F172A",
+                                  lineHeight: 1.35,
+                                  margin: 0,
+                                }}
+                              >
+                                {tpl.title}
+                              </h4>
+                              <p
+                                style={{
+                                  fontSize: 12.5,
+                                  color: "#475569",
+                                  lineHeight: 1.5,
+                                  marginTop: 6,
+                                  marginBottom: 0,
+                                }}
+                              >
+                                {tpl.description}
+                              </p>
+                            </div>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                fontSize: 11.5,
+                                color: "#64748B",
+                                borderTop: "1px solid #F1F5F9",
+                                paddingTop: 10,
+                                marginTop: "auto",
+                              }}
+                            >
+                              <span>Pembuat: {tpl.authorDisplayName || "Mahasiswa / Alumni"}</span>
+                              <span>{tpl.institutionName || "Telkom University"}</span>
+                            </div>
+
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleVerifyTemplate(tpl.id, tpl.sourceType)}
+                                className={`btn btn-sm ${isVerified ? "btn-secondary" : "btn-primary"}`}
+                                style={{ flex: 1, fontSize: 12, fontWeight: 700 }}
+                              >
+                                {isVerified ? "Cabut Verifikasi" : "Verifikasi & Tayangkan"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleToggleHideTemplate(tpl.id, isHidden)}
+                                className="btn btn-secondary btn-sm"
+                                style={{
+                                  padding: "0 10px",
+                                  color: isHidden ? "#15803D" : "#B91C1C",
+                                }}
+                                title={isHidden ? "Tampilkan ke publik" : "Sembunyikan dari publik"}
+                              >
+                                {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setSelectedTemplateForPreview(tpl)}
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: "0 10px" }}
+                                title="Tinjau rincian semester"
+                              >
+                                <ExternalLink size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sub-Tab 2: Daftar Laporan */}
+                {templateSubTab === "reports" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        background: "#FFFFFF",
+                        padding: "12px 16px",
+                        borderRadius: "12px",
+                        border: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
+                          Filter Status Laporan:
+                        </span>
+                        <select
+                          value={reportStatusFilter}
+                          onChange={(e) => setReportStatusFilter(e.target.value)}
+                          className="form-input"
+                          style={{ width: "auto", height: 34, fontSize: 12.5, padding: "0 12px" }}
+                        >
+                          <option value="all">Semua Laporan</option>
+                          <option value="open">Menunggu Tindakan (Open)</option>
+                          <option value="reviewed">Sedang Ditinjau (Reviewed)</option>
+                          <option value="resolved">Selesai (Resolved)</option>
+                        </select>
+                      </div>
+
+                      <div style={{ fontSize: 12.5, color: "#64748B" }}>
+                        Total <strong style={{ color: "#0F172A" }}>{reportsList.length}</strong> laporan
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {reportsList.map((rep: any) => (
+                        <div
+                          key={rep.id}
+                          style={{
+                            background: "#FFFFFF",
+                            border: rep.status === "open" ? "1px solid #FECACA" : "1px solid #E2E8F0",
+                            borderRadius: "14px",
+                            padding: "18px 20px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            gap: 16,
+                          }}
+                        >
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  padding: "2px 8px",
+                                  borderRadius: "999px",
+                                  textTransform: "uppercase",
+                                  background:
+                                    rep.status === "open"
+                                      ? "#FEE2E2"
+                                      : rep.status === "reviewed"
+                                      ? "#FEF3C7"
+                                      : "#DCFCE7",
+                                  color:
+                                    rep.status === "open"
+                                      ? "#B91C1C"
+                                      : rep.status === "reviewed"
+                                      ? "#92400E"
+                                      : "#15803D",
+                                  border:
+                                    rep.status === "open"
+                                      ? "1px solid #FECACA"
+                                      : rep.status === "reviewed"
+                                      ? "1px solid #FDE68A"
+                                      : "1px solid #BBF7D0",
+                                }}
+                              >
+                                {rep.status}
+                              </span>
+                              <span style={{ fontSize: 12, color: "#64748B" }}>
+                                Dilaporkan pada {new Date(rep.createdAt).toLocaleDateString("id-ID")}
+                              </span>
+                            </div>
+
+                            <div style={{ fontSize: 14.5, fontWeight: 700, color: "#0F172A" }}>
+                              Template Terkait: {rep.template?.title || "Template Mahasiswa"}
+                            </div>
+
+                            <div
+                              style={{
+                                background: "#F8FAFC",
+                                border: "1px solid #E2E8F0",
+                                padding: "10px 14px",
+                                borderRadius: "10px",
+                                fontSize: 13,
+                                color: "#334155",
+                                lineHeight: 1.45,
+                              }}
+                            >
+                              <strong>Catatan Pelapor:</strong> &ldquo;{rep.reason}&rdquo;
+                            </div>
+
+                            {rep.moderatorNote && (
+                              <div
+                                style={{
+                                  fontSize: 12.5,
+                                  color: "#92400E",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                }}
+                              >
+                                <ShieldCheck size={14} color="#D97706" />
+                                <span>Catatan Moderator: {rep.moderatorNote}</span>
+                              </div>
+                            )}
+
+                            <div style={{ fontSize: 12, color: "#64748B" }}>
+                              Pelapor: {rep.reporter?.name || "Mahasiswa"} ({rep.reporter?.email || "anonim"})
+                            </div>
+                          </div>
+
                           <button
+                            type="button"
                             onClick={() => {
                               setSelectedReportForAction(rep);
                               setModeratorResolutionNote(rep.moderatorNote || "");
                             }}
                             className="btn btn-primary btn-sm"
-                            style={{ fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}
+                            style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}
                           >
                             Tindak Lanjuti
                           </button>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
-          {/* ══════════════════════════════════════════════════════════════════════════════
-              TAB 4: 🤖 PENGATURAN & MONITOR AI
-              ══════════════════════════════════════════════════════════════════════════════ */}
-          {activeTab === "ai" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-              {/* Top Row: Provider & Key Status Card + Live Ping Tester */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20 }}>
-                {/* Provider Config Card */}
+            {/* ══════════════════════════════════════════════════════════════════════════
+                TAB 4: KINERJA & LOG SISTEM AI
+                ══════════════════════════════════════════════════════════════════════════ */}
+            {activeTab === "ai" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 <div
                   style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "22px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 16,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                    gap: 18,
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div
+                  {/* Provider Config Card */}
+                  <div
+                    style={{
+                      background: "#FFFFFF",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "14px",
+                      padding: "20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 14,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <h3 style={{ fontSize: 15.5, fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                          Konfigurasi Layanan Google Gemini
+                        </h3>
+                        <div style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>
+                          SDK Resmi @google/genai
+                        </div>
+                      </div>
+
+                      <span
                         style={{
-                          padding: 10,
-                          borderRadius: "var(--radius-md)",
-                          background: "rgba(34, 197, 94, 0.12)",
-                          color: "#22C55E",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#15803D",
+                          background: "#DCFCE7",
+                          border: "1px solid #BBF7D0",
+                          padding: "3px 10px",
+                          borderRadius: "999px",
                         }}
                       >
-                        <Cpu size={22} />
-                      </div>
-                      <div>
-                        <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>Google Gemini GenAI</h3>
-                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>SDK Resmi @google/genai</div>
-                      </div>
+                        Aktif & Siap
+                      </span>
                     </div>
 
-                    <span
+                    <div
                       style={{
-                        fontSize: 11,
-                        fontWeight: 800,
-                        color: "#22C55E",
-                        background: "rgba(34, 197, 94, 0.15)",
-                        border: "1px solid rgba(34, 197, 94, 0.3)",
-                        padding: "4px 10px",
-                        borderRadius: "var(--radius-pill)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 12,
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
+                        padding: "14px",
+                        borderRadius: "10px",
                       }}
                     >
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E" }} />
-                      ONLINE & READY
-                    </span>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#64748B" }}>Kunci API Server</div>
+                        <div
+                          style={{
+                            fontSize: 12.5,
+                            fontWeight: 700,
+                            fontFamily: "var(--font-mono)",
+                            color: "#0F172A",
+                            marginTop: 2,
+                          }}
+                        >
+                          {aiData?.config?.maskedKey || "Terkonfigurasi"}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#64748B" }}>Model Utama</div>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F172A", marginTop: 2 }}>
+                          {aiData?.config?.modelPrimary || "gemini-3.1-flash-lite"}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#64748B" }}>Batas Laju (RPM)</div>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F172A", marginTop: 2 }}>
+                          15 request / menit
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#64748B" }}>Kuota Harian (RPD)</div>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F172A", marginTop: 2 }}>
+                          1.500 request / hari
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live Ping & Latency Checker Card */}
+                  <div
+                    style={{
+                      background: "#FFFFFF",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "14px",
+                      padding: "20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      gap: 14,
+                    }}
+                  >
+                    <div>
+                      <h3 style={{ fontSize: 15.5, fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                        Uji Koneksi & Latensi Langsung
+                      </h3>
+                      <p style={{ fontSize: 12.5, color: "#475569", marginTop: 4, marginBottom: 0 }}>
+                        Kirim permintaan verifikasi ke endpoint Google Gemini API untuk memeriksa waktu respons saat ini.
+                      </p>
+                    </div>
+
+                    {pingResult && (
+                      <div
+                        style={{
+                          padding: "12px",
+                          borderRadius: "10px",
+                          background: pingResult.success ? "#DCFCE7" : "#FFFBEB",
+                          border: pingResult.success ? "1px solid #BBF7D0" : "1px solid #FDE68A",
+                          fontSize: 12.5,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            fontWeight: 700,
+                            marginBottom: 4,
+                          }}
+                        >
+                          <span style={{ color: pingResult.success ? "#15803D" : "#92400E" }}>
+                            {pingResult.success ? "Koneksi Stabil" : "Fallback Deterministik Aktif"}
+                          </span>
+                          <span style={{ color: "#0F172A" }}>{pingResult.latencyMs} ms</span>
+                        </div>
+                        <div style={{ color: "#475569", fontSize: 11.5 }}>
+                          Model: {pingResult.modelUsed} • Respons: &ldquo;{pingResult.reply || "OK"}&rdquo;
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleRunAiPing}
+                      disabled={isPingingAi}
+                      className="btn btn-primary btn-sm"
+                      style={{ fontWeight: 700, alignSelf: "flex-start" }}
+                    >
+                      {isPingingAi ? "Mengukur Latensi..." : "Jalankan Uji Koneksi AI"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Multi-Model Fallback Sequence */}
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "14px",
+                    padding: "20px",
+                  }}
+                >
+                  <div style={{ marginBottom: 14 }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                      Urutan Fallback Model Otomatis
+                    </h3>
+                    <p style={{ fontSize: 12.5, color: "#475569", marginTop: 4, marginBottom: 0 }}>
+                      Apabila model utama mencapai batas kuota (HTTP 429/503), sistem beralih secara berurutan ke model cadangan di bawah ini.
+                    </p>
                   </div>
 
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
                       gap: 12,
-                      background: "var(--bg-secondary)",
-                      padding: "14px",
-                      borderRadius: "var(--radius-md)",
                     }}
                   >
-                    <div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Kunci API Server:</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, fontFamily: "monospace", color: "#0F172A" }}>
-                        {aiData?.config?.maskedKey || "AQ.Ab8RN6...5vRA"}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Model Default:</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
-                        {aiData?.config?.modelPrimary || "gemini-3.1-flash-lite"}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Batas Kecepatan (RPM):</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
-                        15 Requests/menit
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Batas Harian (RPD):</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
-                        1,500 Requests/hari
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Live Ping & Latency Checker Card */}
-                <div
-                  style={{
-                    background: "var(--bg-elevated)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-lg)",
-                    padding: "22px",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <div>
-                    <h3 style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>
-                      ⚡ Live Latency & Health Check
-                    </h3>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
-                      Kirim request verifikasi ping langsung ke Google Gemini API untuk mengukur kecepatan respons riil.
-                    </p>
-                  </div>
-
-                  {pingResult && (
-                    <div
-                      style={{
-                        margin: "12px 0",
-                        padding: "12px",
-                        borderRadius: "var(--radius-md)",
-                        background: pingResult.success ? "rgba(34, 197, 94, 0.08)" : "#FFFBEB",
-                        border: pingResult.success ? "1px solid rgba(34, 197, 94, 0.25)" : "1px solid #FDE68A",
-                        fontSize: 12,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, marginBottom: 4 }}>
-                        <span style={{ color: pingResult.success ? "#22C55E" : "#92400E" }}>
-                          {pingResult.success ? "Koneksi Cepat & Stabil" : "Fallback Siap Digunakan"}
-                        </span>
-                        <span style={{ color: "var(--text-primary)" }}>{pingResult.latencyMs} ms</span>
-                      </div>
-                      <div style={{ color: "var(--text-muted)", fontSize: 11 }}>
-                        Model: {pingResult.modelUsed} • Balasan: &quot;{pingResult.reply || "PONG"}&quot;
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleRunAiPing}
-                    disabled={isPingingAi}
-                    className="btn btn-primary btn-sm"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                      fontWeight: 700,
-                      marginTop: 10,
-                    }}
-                  >
-                    <Zap size={15} />
-                    <span>{isPingingAi ? "Sedang Mengukur Latency..." : "Jalankan Test Ping AI"}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Multi-Model Fallback Sequence */}
-              <div
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-lg)",
-                  padding: "22px",
-                }}
-              >
-                <div style={{ marginBottom: 16 }}>
-                  <h3 style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>
-                    🛡️ Arsitektur Multi-Model Fallback Otomatis
-                  </h3>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                    Jika model utama mencapai batas laju request (Error 429 atau 503), STARA AI secara otomatis
-                    beralih ke tingkat model berikutnya tanpa menghentikan pengalaman mahasiswa.
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                    gap: 12,
-                  }}
-                >
-                  {(aiData?.config?.modelFallbackSequence || []).map((fb: any, idx: number) => (
-                    <div
-                      key={idx}
-                      style={{
-                        background: idx === 0 ? "#FEF3C7" : "var(--bg-secondary)",
-                        border: idx === 0 ? "1px solid #FCD34D" : "1px solid var(--border)",
-                        borderRadius: "var(--radius-md)",
-                        padding: "14px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 800,
-                            color: idx === 0 ? "#92400E" : "var(--text-muted)",
-                          }}
-                        >
-                          {fb.tier}
-                        </span>
-                        {idx === 0 && <span style={{ fontSize: 10, color: "#92400E", fontWeight: 800 }}>★ DEFAULT</span>}
-                      </div>
-
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{fb.model}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.3 }}>{fb.description}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Log Request AI */}
-              <div
-                style={{
-                  background: "var(--bg-elevated)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-lg)",
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    padding: "16px 20px",
-                    borderBottom: "1px solid var(--border)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div>
-                    <h3 style={{ fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>
-                      📜 Log Request AI Real-Time
-                    </h3>
-                    <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                      Riwayat eksekusi prompt, latency respons, dan penggunaan token
-                    </p>
-                  </div>
-
-                  <span style={{ fontSize: 12, color: "#92400E", fontWeight: 700 }}>
-                    {aiData?.recentLogs?.length || 6} Request Tercatat
-                  </span>
-                </div>
-
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }}>
-                      <th style={{ padding: "12px 18px" }}>Waktu</th>
-                      <th style={{ padding: "12px 18px" }}>Fitur AI</th>
-                      <th style={{ padding: "12px 18px" }}>Model Digunakan</th>
-                      <th style={{ padding: "12px 18px" }}>Latency</th>
-                      <th style={{ padding: "12px 18px" }}>Token (In / Out)</th>
-                      <th style={{ padding: "12px 18px" }}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(aiData?.recentLogs || []).map((log: any) => (
-                      <tr key={log.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                        <td style={{ padding: "12px 18px", color: "var(--text-muted)", fontSize: 12 }}>
-                          {new Date(log.timestamp).toLocaleTimeString("id-ID")}
-                        </td>
-                        <td style={{ padding: "12px 18px", fontWeight: 700, color: "var(--text-primary)" }}>
-                          {log.feature}
-                        </td>
-                        <td style={{ padding: "12px 18px", fontFamily: "monospace", fontSize: 12, color: "#0F172A" }}>
-                          {log.modelUsed}
-                        </td>
-                        <td style={{ padding: "12px 18px", fontWeight: 700, color: "var(--text-primary)" }}>
-                          {log.latencyMs} ms
-                        </td>
-                        <td style={{ padding: "12px 18px", color: "var(--text-secondary)", fontSize: 12 }}>
-                          {log.tokensUsed?.prompt || 0} / {log.tokensUsed?.completion || 0} ({log.tokensUsed?.total || 0})
-                        </td>
-                        <td style={{ padding: "12px 18px" }}>
+                    {(aiData?.config?.modelFallbackSequence || []).map((fb: any, idx: number) => (
+                      <div
+                        key={idx}
+                        style={{
+                          background: idx === 0 ? "#FFFBEB" : "#F8FAFC",
+                          border: idx === 0 ? "1px solid #FDE68A" : "1px solid #E2E8F0",
+                          borderRadius: "10px",
+                          padding: "14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 4,
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span
                             style={{
-                              fontSize: 11,
+                              fontSize: 10.5,
                               fontWeight: 700,
-                              color: log.status.includes("OK") ? "#22C55E" : "#92400E",
-                              background: log.status.includes("OK") ? "rgba(34, 197, 94, 0.1)" : "#FEF3C7",
-                              border: log.status.includes("OK") ? "1px solid rgba(34, 197, 94, 0.25)" : "1px solid #FCD34D",
-                              padding: "2px 8px",
-                              borderRadius: "var(--radius-pill)",
+                              color: idx === 0 ? "#92400E" : "#64748B",
                             }}
                           >
-                            {log.status}
+                            {fb.tier}
                           </span>
-                        </td>
-                      </tr>
+                          {idx === 0 && (
+                            <span style={{ fontSize: 10.5, color: "#92400E", fontWeight: 700 }}>
+                              Utama
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
+                          {fb.model}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: "#475569", lineHeight: 1.35 }}>
+                          {fb.description}
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                </div>
+
+                {/* Log Request AI */}
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "14px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "16px 20px",
+                      borderBottom: "1px solid #E2E8F0",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <h3 style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                        Riwayat Panggilan API Terbaru
+                      </h3>
+                      <p style={{ fontSize: 12, color: "#64748B", marginTop: 2, marginBottom: 0 }}>
+                        Catatan waktu respons dan penggunaan token pada fitur AI
+                      </p>
+                    </div>
+
+                    <span style={{ fontSize: 12, color: "#475569", fontWeight: 700 }}>
+                      {aiData?.recentLogs?.length || 0} log tercatat
+                    </span>
+                  </div>
+
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
+                    <thead>
+                      <tr
+                        style={{
+                          background: "#F8FAFC",
+                          borderBottom: "1px solid #E2E8F0",
+                          color: "#475569",
+                          fontSize: 12,
+                        }}
+                      >
+                        <th style={{ padding: "11px 18px", fontWeight: 700 }}>Waktu</th>
+                        <th style={{ padding: "11px 18px", fontWeight: 700 }}>Fitur</th>
+                        <th style={{ padding: "11px 18px", fontWeight: 700 }}>Model</th>
+                        <th style={{ padding: "11px 18px", fontWeight: 700 }}>Latensi</th>
+                        <th style={{ padding: "11px 18px", fontWeight: 700 }}>Token (Input / Output)</th>
+                        <th style={{ padding: "11px 18px", fontWeight: 700 }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(aiData?.recentLogs || []).map((log: any) => (
+                        <tr key={log.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                          <td style={{ padding: "12px 18px", color: "#64748B", fontSize: 12 }}>
+                            {new Date(log.timestamp).toLocaleTimeString("id-ID")}
+                          </td>
+                          <td style={{ padding: "12px 18px", fontWeight: 600, color: "#0F172A" }}>
+                            {log.feature}
+                          </td>
+                          <td
+                            style={{
+                              padding: "12px 18px",
+                              fontFamily: "var(--font-mono)",
+                              fontSize: 12,
+                              color: "#334155",
+                            }}
+                          >
+                            {log.modelUsed}
+                          </td>
+                          <td style={{ padding: "12px 18px", fontWeight: 700, color: "#0F172A" }}>
+                            {log.latencyMs} ms
+                          </td>
+                          <td style={{ padding: "12px 18px", color: "#475569", fontSize: 12 }}>
+                            {log.tokensUsed?.prompt || 0} / {log.tokensUsed?.completion || 0} (
+                            {log.tokensUsed?.total || 0})
+                          </td>
+                          <td style={{ padding: "12px 18px" }}>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: log.status.includes("OK") ? "#15803D" : "#92400E",
+                                background: log.status.includes("OK") ? "#DCFCE7" : "#FEF3C7",
+                                border: log.status.includes("OK")
+                                  ? "1px solid #BBF7D0"
+                                  : "1px solid #FDE68A",
+                                padding: "2px 8px",
+                                borderRadius: "999px",
+                              }}
+                            >
+                              {log.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </main>
+            )}
+          </div>
+        </main>
+      </div>
 
       {/* ─── MODAL: TAMBAH MATA KULIAH ────────────────────────────────────────────── */}
       {isAddCourseModalOpen && (
@@ -2171,8 +2402,7 @@ function AdminDashboardContent() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.75)",
-            backdropFilter: "blur(4px)",
+            background: "rgba(15, 23, 42, 0.45)",
             zIndex: 999,
             display: "flex",
             alignItems: "center",
@@ -2185,21 +2415,29 @@ function AdminDashboardContent() {
         >
           <div
             style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-lg)",
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              borderRadius: "16px",
               width: "100%",
               maxWidth: 520,
               padding: 24,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+              boxShadow: "0 20px 25px -5px rgba(15, 23, 42, 0.12)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-              <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)" }}>
-                ➕ Tambah Mata Kuliah Baru
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 18,
+              }}
+            >
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                Tambah Mata Kuliah Baru
               </h3>
               <button
+                type="button"
                 onClick={() => setIsAddCourseModalOpen(false)}
                 className="btn btn-ghost btn-sm"
                 style={{ padding: 4 }}
@@ -2211,30 +2449,46 @@ function AdminDashboardContent() {
             <form onSubmit={handleAddCourseSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#334155",
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Kode MK *
                   </label>
                   <input
                     type="text"
-                    placeholder="Contoh: IF3107"
+                    placeholder="Misal: IF3107"
                     value={newCourseForm.code}
-                    onChange={(e) => setNewCourseForm({ ...newCourseForm, code: e.target.value.toUpperCase() })}
-                    className="input input-sm"
-                    style={{ width: "100%", fontWeight: 700 }}
+                    onChange={(e) =>
+                      setNewCourseForm({ ...newCourseForm, code: e.target.value.toUpperCase() })
+                    }
+                    className="form-input"
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#334155",
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Nama Mata Kuliah *
                   </label>
                   <input
                     type="text"
-                    placeholder="Contoh: Pemrograman Mobile Lanjut"
+                    placeholder="Misal: Pemrograman Perangkat Bergerak"
                     value={newCourseForm.name}
                     onChange={(e) => setNewCourseForm({ ...newCourseForm, name: e.target.value })}
-                    className="input input-sm"
-                    style={{ width: "100%" }}
+                    className="form-input"
                     required
                   />
                 </div>
@@ -2242,7 +2496,15 @@ function AdminDashboardContent() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#334155",
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Jumlah SKS
                   </label>
                   <input
@@ -2250,20 +2512,30 @@ function AdminDashboardContent() {
                     min={1}
                     max={20}
                     value={newCourseForm.credits}
-                    onChange={(e) => setNewCourseForm({ ...newCourseForm, credits: Number(e.target.value) })}
-                    className="input input-sm"
-                    style={{ width: "100%" }}
+                    onChange={(e) =>
+                      setNewCourseForm({ ...newCourseForm, credits: Number(e.target.value) })
+                    }
+                    className="form-input"
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#334155",
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Semester
                   </label>
                   <select
                     value={newCourseForm.semesterNum}
-                    onChange={(e) => setNewCourseForm({ ...newCourseForm, semesterNum: Number(e.target.value) })}
-                    className="select select-sm"
-                    style={{ width: "100%" }}
+                    onChange={(e) =>
+                      setNewCourseForm({ ...newCourseForm, semesterNum: Number(e.target.value) })
+                    }
+                    className="form-input"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
                       <option key={s} value={s}>
@@ -2273,52 +2545,77 @@ function AdminDashboardContent() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#334155",
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
                     Kategori
                   </label>
                   <select
                     value={newCourseForm.category}
                     onChange={(e) => setNewCourseForm({ ...newCourseForm, category: e.target.value })}
-                    className="select select-sm"
-                    style={{ width: "100%" }}
+                    className="form-input"
                   >
                     <option value="akademik">Akademik</option>
-                    <option value="karier">Karier/Magang</option>
+                    <option value="karier">Karier / Magang</option>
                     <option value="skripsi">Skripsi</option>
-                    <option value="tak">TAK</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
-                  Prasyarat (Opsional, pisahkan koma)
+                <label
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#334155",
+                    display: "block",
+                    marginBottom: 4,
+                  }}
+                >
+                  Kode Prasyarat (Opsional, pisahkan dengan koma)
                 </label>
                 <input
                   type="text"
-                  placeholder="Contoh: IF1201, IF2101"
+                  placeholder="Misal: IF1201, IF2101"
                   value={newCourseForm.prerequisites}
-                  onChange={(e) => setNewCourseForm({ ...newCourseForm, prerequisites: e.target.value })}
-                  className="input input-sm"
-                  style={{ width: "100%" }}
+                  onChange={(e) =>
+                    setNewCourseForm({ ...newCourseForm, prerequisites: e.target.value })
+                  }
+                  className="form-input"
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
-                  Deskripsi / Silabus Singkat
+                <label
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#334155",
+                    display: "block",
+                    marginBottom: 4,
+                  }}
+                >
+                  Deskripsi Singkat
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="Ringkasan kompetensi capaian pembelajaran..."
+                  placeholder="Ringkasan materi dan kompetensi mata kuliah..."
                   value={newCourseForm.description}
-                  onChange={(e) => setNewCourseForm({ ...newCourseForm, description: e.target.value })}
-                  className="input input-sm"
-                  style={{ width: "100%", height: "auto" }}
+                  onChange={(e) =>
+                    setNewCourseForm({ ...newCourseForm, description: e.target.value })
+                  }
+                  className="form-input"
+                  style={{ height: "auto" }}
                 />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 10 }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
                 <button
                   type="button"
                   onClick={() => setIsAddCourseModalOpen(false)}
@@ -2332,7 +2629,7 @@ function AdminDashboardContent() {
                   className="btn btn-primary btn-sm"
                   style={{ fontWeight: 700 }}
                 >
-                  {isSavingCourse ? "Menyimpan..." : "Simpan ke Kurikulum"}
+                  {isSavingCourse ? "Menyimpan..." : "Simpan ke Katalog"}
                 </button>
               </div>
             </form>
@@ -2347,8 +2644,7 @@ function AdminDashboardContent() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.75)",
-            backdropFilter: "blur(4px)",
+            background: "rgba(15, 23, 42, 0.45)",
             zIndex: 999,
             display: "flex",
             alignItems: "center",
@@ -2361,45 +2657,61 @@ function AdminDashboardContent() {
         >
           <div
             style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-lg)",
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              borderRadius: "16px",
               width: "100%",
               maxWidth: 600,
               maxHeight: "85vh",
               overflowY: "auto",
               padding: 24,
+              boxShadow: "0 20px 25px -5px rgba(15, 23, 42, 0.12)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: 14,
+              }}
+            >
               <div>
-                <span style={{ fontSize: 11, fontWeight: 800, color: "#92400E", textTransform: "uppercase" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#92400E", textTransform: "uppercase" }}>
                   {selectedTemplateForPreview.category} • {selectedTemplateForPreview.institutionName}
                 </span>
-                <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0F172A", marginTop: 4 }}>
                   {selectedTemplateForPreview.title}
                 </h3>
               </div>
-              <button onClick={() => setSelectedTemplateForPreview(null)} className="btn btn-ghost btn-sm">
+              <button
+                type="button"
+                onClick={() => setSelectedTemplateForPreview(null)}
+                className="btn btn-ghost btn-sm"
+              >
                 <X size={18} />
               </button>
             </div>
 
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+            <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.5 }}>
               {selectedTemplateForPreview.description}
             </p>
 
             <div style={{ marginTop: 16 }}>
-              <h4 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginBottom: 10 }}>
-                Rincian Langkah Semester:
+              <h4 style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", marginBottom: 10 }}>
+                Rincian Langkah Semester
               </h4>
 
               {(() => {
                 try {
                   const steps = JSON.parse(selectedTemplateForPreview.semesterSteps || "[]");
                   if (steps.length === 0) {
-                    return <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Belum ada rincian langkah khusus.</div>;
+                    return (
+                      <div style={{ fontSize: 12.5, color: "#64748B" }}>
+                        Belum ada rincian langkah semester pada template ini.
+                      </div>
+                    );
                   }
                   return (
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -2407,30 +2719,42 @@ function AdminDashboardContent() {
                         <div
                           key={i}
                           style={{
-                            background: "var(--bg-secondary)",
+                            background: "#F8FAFC",
                             padding: "10px 14px",
-                            borderRadius: "var(--radius-md)",
-                            border: "1px solid var(--border-subtle)",
-                            fontSize: 12,
+                            borderRadius: "10px",
+                            border: "1px solid #E2E8F0",
+                            fontSize: 12.5,
                           }}
                         >
-                          <div style={{ fontWeight: 700, color: "#92400E", marginBottom: 2 }}>
-                            {st.title || `Semester ${st.semesterNum || i + 1}`}
+                          <div style={{ fontWeight: 700, color: "#0F172A", marginBottom: 2 }}>
+                            {st.title || `Semester ${st.semesterNum || st.semester || i + 1}`}
                           </div>
-                          <div style={{ color: "var(--text-secondary)" }}>{st.focus || st.strategyTip || "Strategi standar"}</div>
+                          <div style={{ color: "#475569" }}>
+                            {st.focus ||
+                              st.strategyTip ||
+                              (Array.isArray(st.highlights) ? st.highlights.join(", ") : "Strategi kurikulum standar")}
+                          </div>
                         </div>
                       ))}
                     </div>
                   );
                 } catch {
-                  return <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Format data tidak valid.</div>;
+                  return (
+                    <div style={{ fontSize: 12.5, color: "#64748B" }}>
+                      Format rincian semester tidak dapat dibaca.
+                    </div>
+                  );
                 }
               })()}
             </div>
 
             <div style={{ marginTop: 20, display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={() => setSelectedTemplateForPreview(null)} className="btn btn-secondary btn-sm">
-                Tutup Preview
+              <button
+                type="button"
+                onClick={() => setSelectedTemplateForPreview(null)}
+                className="btn btn-secondary btn-sm"
+              >
+                Tutup
               </button>
             </div>
           </div>
@@ -2444,8 +2768,7 @@ function AdminDashboardContent() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.75)",
-            backdropFilter: "blur(4px)",
+            background: "rgba(15, 23, 42, 0.45)",
             zIndex: 999,
             display: "flex",
             alignItems: "center",
@@ -2458,48 +2781,69 @@ function AdminDashboardContent() {
         >
           <div
             style={{
-              background: "var(--bg-elevated)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-lg)",
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              borderRadius: "16px",
               width: "100%",
               maxWidth: 520,
               padding: 24,
+              boxShadow: "0 20px 25px -5px rgba(15, 23, 42, 0.12)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
-                🛡️ Resolusi Laporan Pengguna
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 14,
+              }}
+            >
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                Resolusi Laporan Pengguna
               </h3>
-              <button onClick={() => setSelectedReportForAction(null)} className="btn btn-ghost btn-sm">
+              <button
+                type="button"
+                onClick={() => setSelectedReportForAction(null)}
+                className="btn btn-ghost btn-sm"
+              >
                 <X size={18} />
               </button>
             </div>
 
             <div
               style={{
-                background: "var(--bg-secondary)",
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
                 padding: "12px",
-                borderRadius: "var(--radius-md)",
-                fontSize: 12,
-                color: "var(--text-secondary)",
+                borderRadius: "10px",
+                fontSize: 12.5,
+                color: "#334155",
                 marginBottom: 16,
               }}
             >
-              <strong>Keluhan:</strong> &ldquo;{selectedReportForAction.reason}&rdquo;
+              <strong>Catatan Laporan:</strong> &ldquo;{selectedReportForAction.reason}&rdquo;
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "block", marginBottom: 4 }}>
+              <label
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#334155",
+                  display: "block",
+                  marginBottom: 4,
+                }}
+              >
                 Catatan Tindakan Moderator
               </label>
               <textarea
                 rows={3}
-                placeholder="Misal: Sudah disesuaikan dengan kurikulum 2024 / Isi template valid..."
+                placeholder="Tuliskan hasil verifikasi atau tindak lanjut atas laporan ini..."
                 value={moderatorResolutionNote}
                 onChange={(e) => setModeratorResolutionNote(e.target.value)}
-                className="input input-sm"
-                style={{ width: "100%", height: "auto" }}
+                className="form-input"
+                style={{ height: "auto" }}
               />
             </div>
 
@@ -2527,7 +2871,7 @@ function AdminDashboardContent() {
                 className="btn btn-primary btn-sm"
                 style={{ fontWeight: 700 }}
               >
-                Tandai Selesai (Resolved)
+                Tandai Selesai
               </button>
             </div>
           </div>
@@ -2541,10 +2885,19 @@ export default function AdminDashboardPage() {
   return (
     <Suspense
       fallback={
-        <div style={{ minHeight: "100vh", backgroundColor: "#FAF9F5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          style={{
+            minHeight: "100vh",
+            backgroundColor: "#FAF9F5",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <div style={{ textAlign: "center" }}>
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800 mx-auto mb-3" />
-            <p style={{ color: "#78716C", fontSize: "14px" }}>Memuat Dashboard Admin...</p>
+            <p style={{ color: "#475569", fontSize: "14px", fontWeight: 600 }}>
+              Memuat Panel Administrator...
+            </p>
           </div>
         </div>
       }

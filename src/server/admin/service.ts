@@ -799,7 +799,7 @@ export async function updateTemplateStatus(
 ) {
   return await prisma.template.update({
     where: { id },
-    data: updates,
+    data: { ...updates, ...("sourceType" in updates && updates.sourceType === "terverifikasi" && !("isHidden" in updates && updates.isHidden !== undefined) ? { isHidden: false } : {}) },
   });
 }
 
@@ -809,7 +809,7 @@ export async function updateModerationReport(
 ) {
   return await prisma.report.update({
     where: { id },
-    data: updates,
+    data: { ...updates, ...("sourceType" in updates && updates.sourceType === "terverifikasi" && !("isHidden" in updates && updates.isHidden !== undefined) ? { isHidden: false } : {}) },
   });
 }
 
