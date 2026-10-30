@@ -115,6 +115,9 @@ export function PublishTemplateModal({
           borderRadius: "16px",
           width: "100%",
           maxWidth: "540px",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
           boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
           border: "1px solid var(--border)",
           overflow: "hidden",
@@ -124,12 +127,13 @@ export function PublishTemplateModal({
         {/* Header */}
         <div
           style={{
-            padding: "18px 22px",
+            padding: "16px 20px",
             borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             background: "#FAF9F5",
+            flexShrink: 0,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -144,15 +148,16 @@ export function PublishTemplateModal({
                 alignItems: "center",
                 justifyContent: "center",
                 color: "#B45309",
+                flexShrink: 0,
               }}
             >
               <UploadCloud size={20} strokeWidth={2.2} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "var(--text-primary)" }}>
                 Bagikan Roadmap ke Komunitas
               </h3>
-              <p style={{ margin: 0, fontSize: 12, color: "var(--text-secondary)" }}>
+              <p style={{ margin: 0, fontSize: 11.5, color: "var(--text-secondary)" }}>
                 Jadikan template publik yang dapat di-clone mahasiswa lain setelah diverifikasi admin
               </p>
             </div>
@@ -167,8 +172,8 @@ export function PublishTemplateModal({
           </button>
         </div>
 
-        {/* Content */}
-        <div style={{ padding: "20px 22px" }}>
+        {/* Content Body - Scrollable */}
+        <div style={{ padding: "18px 20px", overflowY: "auto", flex: 1 }}>
           {isSuccess ? (
             <div style={{ textAlign: "center", padding: "16px 0" }}>
               <div
@@ -204,7 +209,7 @@ export function PublishTemplateModal({
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {errorMsg && (
                 <div
                   style={{
@@ -230,22 +235,22 @@ export function PublishTemplateModal({
                   background: "#F8FAFC",
                   border: "1px solid #E2E8F0",
                   borderRadius: "10px",
-                  padding: "10px 14px",
+                  padding: "9px 13px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  fontSize: 12,
+                  fontSize: 11.5,
                   color: "#334155",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Building2 size={14} color="#64748B" />
+                <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                  <Building2 size={13} color="#64748B" />
                   <span>{defaultData?.institutionName || "Telkom University"}</span>
                   <span>•</span>
-                  <GraduationCap size={14} color="#64748B" />
+                  <GraduationCap size={13} color="#64748B" />
                   <span style={{ fontWeight: 600 }}>{defaultData?.programName || "Teknik Informatika"}</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 700, color: "#92400E" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 700, color: "#92400E", flexShrink: 0 }}>
                   <Layers size={13} color="#D97706" />
                   <span>{defaultData?.totalCredits ? `${defaultData.totalCredits} SKS` : "Roadmap Aktif"}</span>
                 </div>
@@ -259,7 +264,7 @@ export function PublishTemplateModal({
                 <input
                   type="text"
                   className="form-input"
-                  style={{ fontSize: 13 }}
+                  style={{ fontSize: 13, padding: "7px 12px" }}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Contoh: Roadmap 8 Semester Lulus Tepat Waktu (Fokus AI)"
@@ -274,7 +279,7 @@ export function PublishTemplateModal({
                 </label>
                 <select
                   className="form-input"
-                  style={{ fontSize: 13 }}
+                  style={{ fontSize: 13, padding: "7px 12px" }}
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                 >
@@ -294,7 +299,7 @@ export function PublishTemplateModal({
                 <textarea
                   className="form-input"
                   rows={2}
-                  style={{ fontSize: 12.5, resize: "vertical" }}
+                  style={{ fontSize: 12, resize: "vertical", padding: "7px 12px" }}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Jelaskan untuk siapa template ini cocok dan apa keunggulan distribusinya..."
@@ -310,7 +315,7 @@ export function PublishTemplateModal({
                 <input
                   type="text"
                   className="form-input"
-                  style={{ fontSize: 12.5 }}
+                  style={{ fontSize: 12, padding: "7px 12px" }}
                   value={strategyTip}
                   onChange={(e) => setStrategyTip(e.target.value)}
                   placeholder="Contoh: Ambil matkul tingkat atas saat semester genap..."
@@ -318,14 +323,14 @@ export function PublishTemplateModal({
               </div>
 
               {/* Identitas Penulis */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 2 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 2 }}>
                 <label
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
                     cursor: "pointer",
-                    fontSize: 12.5,
+                    fontSize: 12,
                     color: "var(--text-primary)",
                   }}
                 >
@@ -343,7 +348,7 @@ export function PublishTemplateModal({
                     <input
                       type="text"
                       className="form-input"
-                      style={{ fontSize: 12, padding: "5px 10px" }}
+                      style={{ fontSize: 12, padding: "6px 10px" }}
                       value={authorName}
                       onChange={(e) => setAuthorName(e.target.value)}
                       placeholder="Nama tampilan kontributor"
@@ -374,7 +379,16 @@ export function PublishTemplateModal({
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 10,
+                  marginTop: 4,
+                  paddingTop: 8,
+                  borderTop: "1px solid #F1F5F9",
+                }}
+              >
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
