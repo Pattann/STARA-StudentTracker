@@ -264,7 +264,7 @@ export function PublishTemplateModal({
                 <input
                   type="text"
                   className="form-input"
-                  style={{ fontSize: 13, padding: "7px 12px" }}
+                  style={{ fontSize: 13, padding: "7px 38px 7px 12px" }}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Contoh: Roadmap 8 Semester Lulus Tepat Waktu (Fokus AI)"
@@ -279,7 +279,7 @@ export function PublishTemplateModal({
                 </label>
                 <select
                   className="form-input"
-                  style={{ fontSize: 13, padding: "7px 12px" }}
+                  style={{ fontSize: 13, padding: "7px 38px 7px 12px" }}
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                 >

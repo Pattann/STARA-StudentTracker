@@ -2301,7 +2301,7 @@ export default function ThesisPage() {
                         onChange={(e) => handleStageStatusChange(stage.id, e.target.value as StageStatus)}
                         style={{
                           fontSize: 11.5,
-                          padding: "4px 8px",
+                          padding: "5px 34px 5px 10px",
                           height: "auto",
                           cursor: unlocked ? "pointer" : "not-allowed",
                           borderColor: isAcc ? "var(--lime)" : "var(--border-subtle)",

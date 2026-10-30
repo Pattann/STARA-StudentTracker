@@ -1410,7 +1410,15 @@ function AdminDashboardContent() {
                           value={courseSemesterFilter}
                           onChange={(e) => setCourseSemesterFilter(e.target.value)}
                           className="form-input"
-                          style={{ width: "auto", height: 36, fontSize: 12.5, padding: "0 12px" }}
+                          style={{
+                            width: "auto",
+                            minWidth: 185,
+                            height: 36,
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            padding: "0 38px 0 14px",
+                            borderRadius: "10px",
+                          }}
                         >
                           <option value="all">Semua Semester (1-8)</option>
                           {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
@@ -1424,7 +1432,15 @@ function AdminDashboardContent() {
                           value={courseCategoryFilter}
                           onChange={(e) => setCourseCategoryFilter(e.target.value)}
                           className="form-input"
-                          style={{ width: "auto", height: 36, fontSize: 12.5, padding: "0 12px" }}
+                          style={{
+                            width: "auto",
+                            minWidth: 165,
+                            height: 36,
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            padding: "0 38px 0 14px",
+                            borderRadius: "10px",
+                          }}
                         >
                           <option value="all">Semua Kategori</option>
                           <option value="akademik">Akademik</option>
@@ -1583,7 +1599,15 @@ function AdminDashboardContent() {
                           value={templateStatusFilter}
                           onChange={(e) => setTemplateStatusFilter(e.target.value)}
                           className="form-input"
-                          style={{ width: "auto", height: 36, fontSize: 12.5, padding: "0 12px" }}
+                          style={{
+                            width: "auto",
+                            minWidth: 210,
+                            height: 36,
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            padding: "0 38px 0 14px",
+                            borderRadius: "10px",
+                          }}
                         >
                           <option value="all">Semua Status Template</option>
                           <option value="unverified">Menunggu Verifikasi (Komunitas)</option>

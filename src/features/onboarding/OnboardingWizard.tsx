@@ -503,7 +503,7 @@ export function OnboardingWizard() {
                     className="form-input"
                     style={{
                       width: "100%",
-                      padding: "11px 14px",
+                      padding: "11px 38px 11px 14px",
                       borderRadius: 10,
                       background: "#FFFFFF",
                       border: "1px solid #CBD5E1",
@@ -527,7 +527,7 @@ export function OnboardingWizard() {
                     className="form-input"
                     style={{
                       width: "100%",
-                      padding: "11px 14px",
+                      padding: "11px 38px 11px 14px",
                       borderRadius: 10,
                       background: "#FFFFFF",
                       border: "1px solid #CBD5E1",
@@ -550,7 +550,7 @@ export function OnboardingWizard() {
                     className="form-input"
                     style={{
                       width: "100%",
-                      padding: "11px 14px",
+                      padding: "11px 38px 11px 14px",
                       borderRadius: 10,
                       background: "#FFFFFF",
                       border: "1px solid #CBD5E1",
@@ -578,7 +578,7 @@ export function OnboardingWizard() {
                     className="form-input"
                     style={{
                       width: "100%",
-                      padding: "11px 14px",
+                      padding: "11px 38px 11px 14px",
                       borderRadius: 10,
                       background: "#FFFFFF",
                       border: "1px solid #CBD5E1",
