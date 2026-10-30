@@ -208,8 +208,8 @@ export default function RoadmapPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // View Switcher: "visual" (Roadmap Visual) vs "timeline" (Timeline List) vs "split" (Keduanya Berdampingan)
-  const [activeView, setActiveView] = useState<"visual" | "timeline" | "split">("visual");
+  // View Switcher: "visual" (Peta Alur Visual) vs "timeline" (Daftar Semester)
+  const [activeView, setActiveView] = useState<"visual" | "timeline">("timeline");
 
   // Mode Switcher: Mode 1: "view" (Lihat Roadmap) vs Mode 2: "edit" (Sesuaikan Roadmap)
   const [activeMode, setActiveMode] = useState<"view" | "edit">("view");
@@ -1534,107 +1534,87 @@ export default function RoadmapPage() {
         )}
       </div>
 
-      {/* ── Minimalist Segmented View Switcher & Helper ── */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-          flexWrap: "wrap",
-          gap: 12,
-        }}
-      >
+      {/* ── Full-Width Highlighted View Switcher (Peta Alur Visual vs Daftar Semester) ── */}
+      <div style={{ width: "100%", marginBottom: 20 }}>
         <div
           style={{
-            display: "inline-flex",
-            background: "#EAE6DF",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 8,
+            width: "100%",
+            background: "#F4EFE6",
             border: "1px solid rgba(0, 0, 0, 0.08)",
-            borderRadius: "var(--radius-pill)",
-            padding: "4px",
-            gap: 3,
+            borderRadius: 14,
+            padding: 6,
+            boxShadow: "0 1px 4px rgba(0, 0, 0, 0.02)",
           }}
         >
+          {/* Tab 1: Peta Alur Visual */}
           <button
+            type="button"
             onClick={() => setActiveView("visual")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 14px",
-              borderRadius: "var(--radius-pill)",
-              fontSize: 12,
-              fontWeight: activeView === "visual" ? 700 : 600,
-              border: "none",
-              cursor: "pointer",
-              background: activeView === "visual" ? "#FFFFFF" : "transparent",
-              color: activeView === "visual" ? "#0F172A" : "#64748B",
-              boxShadow: activeView === "visual" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-              transition: "all 0.15s ease",
-            }}
             id="tab-view-visual"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              padding: "12px 20px",
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 800,
+              cursor: "pointer",
+              border: activeView === "visual" ? "1.5px solid #B45309" : "1.5px solid transparent",
+              background: activeView === "visual" ? "#D97706" : "transparent",
+              color: activeView === "visual" ? "#FFFFFF" : "#52525B",
+              boxShadow: activeView === "visual" ? "0 4px 14px rgba(217, 119, 6, 0.35)" : "none",
+              transition: "all 0.18s ease",
+            }}
           >
-            <GitBranch size={13} color={activeView === "visual" ? "#0F172A" : "#64748B"} />
+            <GitBranch size={16} strokeWidth={activeView === "visual" ? 2.5 : 2} color={activeView === "visual" ? "#FFFFFF" : "#71717A"} />
             <span>Peta Alur Visual</span>
           </button>
 
+          {/* Tab 2: Daftar Semester */}
           <button
+            type="button"
             onClick={() => setActiveView("timeline")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 14px",
-              borderRadius: "var(--radius-pill)",
-              fontSize: 12,
-              fontWeight: activeView === "timeline" ? 700 : 600,
-              border: "none",
-              cursor: "pointer",
-              background: activeView === "timeline" ? "#FFFFFF" : "transparent",
-              color: activeView === "timeline" ? "#0F172A" : "#64748B",
-              boxShadow: activeView === "timeline" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-              transition: "all 0.15s ease",
-            }}
             id="tab-view-timeline"
-          >
-            <Calendar size={13} color={activeView === "timeline" ? "#0F172A" : "#64748B"} />
-            <span>Daftar Semester</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView("split")}
             style={{
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: 6,
-              padding: "6px 14px",
-              borderRadius: "var(--radius-pill)",
-              fontSize: 12,
-              fontWeight: activeView === "split" ? 700 : 600,
-              border: "none",
+              justifyContent: "center",
+              gap: 10,
+              padding: "12px 20px",
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: 800,
               cursor: "pointer",
-              background: activeView === "split" ? "#FFFFFF" : "transparent",
-              color: activeView === "split" ? "#0F172A" : "#64748B",
-              boxShadow: activeView === "split" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-              transition: "all 0.15s ease",
+              border: activeView === "timeline" ? "1.5px solid #B45309" : "1.5px solid transparent",
+              background: activeView === "timeline" ? "#D97706" : "transparent",
+              color: activeView === "timeline" ? "#FFFFFF" : "#52525B",
+              boxShadow: activeView === "timeline" ? "0 4px 14px rgba(217, 119, 6, 0.35)" : "none",
+              transition: "all 0.18s ease",
             }}
-            id="tab-view-split"
           >
-            <Columns2 size={13} color={activeView === "split" ? "#0F172A" : "#64748B"} />
-            <span>Berdampingan</span>
+            <Calendar size={16} strokeWidth={activeView === "timeline" ? 2.5 : 2} color={activeView === "timeline" ? "#FFFFFF" : "#71717A"} />
+            <span>Daftar Semester</span>
           </button>
         </div>
 
-        {/* Mode Indicator */}
+        {/* Mode Indicator or Helper Note */}
         {activeMode === "edit" ? (
-          <div style={{ fontSize: 12, color: "#92400E", display: "flex", alignItems: "center", gap: 7, fontWeight: 600, background: "#FEF3C7", padding: "5px 12px", borderRadius: "var(--radius-pill)", border: "1px solid #FCD34D" }}>
+          <div style={{ marginTop: 10, fontSize: 12, color: "#92400E", display: "flex", alignItems: "center", gap: 7, fontWeight: 600, background: "#FEF3C7", padding: "6px 14px", borderRadius: 10, border: "1px solid #FCD34D" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#D97706" }} />
             <span>Mode penyesuaian aktif: klik matkul atau tombol tambah untuk mengubah susunan</span>
           </div>
         ) : (
-          <div style={{ fontSize: 12, color: "#64748B" }}>
-            {activeView === "visual" && "Geser horizontal untuk melihat alur 8 semester"}
-          </div>
+          activeView === "visual" && (
+            <div style={{ marginTop: 8, fontSize: 12, color: "#64748B", display: "flex", alignItems: "center", gap: 6 }}>
+              <Info size={14} color="#94A3B8" />
+              <span>Geser horizontal untuk melihat visualisasi alur antar semester</span>
+            </div>
+          )
         )}
       </div>
 
@@ -1761,123 +1741,6 @@ export default function RoadmapPage() {
           onUpdateTarget={handleUpdateSemesterTarget}
         />
       )}
-
-      {/* ── VIEW 3: SPLIT / BERDAMPINGAN VIEW ── */}
-      {activeView === "split" && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(440px, 1fr))",
-            gap: 20,
-            alignItems: "start",
-          }}
-        >
-          {/* Column 1: Timeline View */}
-          <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 12,
-                paddingBottom: 8,
-                borderBottom: "1px solid var(--border-subtle)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <FileText size={15} color="var(--text-secondary)" />
-                <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-                  Daftar Semester
-                </h2>
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button className="btn btn-ghost btn-sm" onClick={expandAll} style={{ fontSize: 11, padding: "2px 8px" }}>
-                  Buka Semua
-                </button>
-                <button className="btn btn-ghost btn-sm" onClick={collapseAll} style={{ fontSize: 11, padding: "2px 8px" }}>
-                  Tutup Semua
-                </button>
-              </div>
-            </div>
-
-            <div className="roadmap-timeline" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {semesterPlans.map((plan) => (
-                <SemesterCardItem
-                  key={plan.semesterNum}
-                  plan={plan}
-                  displayTasks={plan.tasks}
-                  profile={profile}
-                  mode={activeMode}
-                  isExpanded={expandedSemesters.has(plan.semesterNum)}
-                  onToggle={() => toggleSemester(plan.semesterNum)}
-                  editingTaskId={editingTaskId}
-                  onEditTaskId={setEditingTaskId}
-                  onUpdateTask={handleUpdateTask}
-                  onMoveTask={handleMoveTask}
-                  onDeleteTask={handleDeleteTask}
-                  onUpdateTarget={handleUpdateSemesterTarget}
-                  onOpenAddItem={(tab) => openAddItemModal(plan.semesterNum, tab)}
-                  onOpenAddCourse={() => {
-                    setAddCourseSemester(plan.semesterNum);
-                    setShowAddCourseModal(true);
-                  }}
-                  onOpenAddMilestone={() => {
-                    setAddMilestoneSemester(plan.semesterNum);
-                    setShowAddMilestoneModal(true);
-                  }}
-                  onOpenTemplate={() => {
-                    setTargetSemesterForApply(plan.semesterNum);
-                    setSelectedTemplateForApply(null);
-                    setShowTemplatePicker(true);
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Column 2: Visual Roadmap Canvas */}
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 12,
-                paddingBottom: 8,
-                borderBottom: "1px solid var(--border-subtle)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <GitBranch size={15} color="var(--text-secondary)" />
-                <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-                  Peta Alur Visual
-                </h2>
-              </div>
-            </div>
-
-              <InteractiveVisualRoadmap
-                semesterPlans={semesterPlans}
-                profile={profile}
-                mode={activeMode}
-                editingTaskId={editingTaskId}
-                onEditTaskId={setEditingTaskId}
-                onUpdateTask={handleUpdateTask}
-                onMoveTask={handleMoveTask}
-                onDeleteTask={handleDeleteTask}
-                onOpenAddItem={(semNum, tab) => openAddItemModal(semNum, tab)}
-                onOpenAddCourse={(semNum) => {
-                  setAddCourseSemester(semNum);
-                  setShowAddCourseModal(true);
-                }}
-                onOpenAddMilestone={(semNum) => {
-                  setAddMilestoneSemester(semNum);
-                  setShowAddMilestoneModal(true);
-                }}
-                onUpdateTarget={handleUpdateSemesterTarget}
-              />
-            </div>
-          </div>
-        )}
 
       {/* ── Modal: Tambah Item Roadmap (COURSE, ACTIVITY, MILESTONE) ── */}
       {showAddItemModal && (

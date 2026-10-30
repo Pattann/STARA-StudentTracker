@@ -9,133 +9,105 @@ export interface DefaultTaskItem {
 }
 
 /**
- * Menyediakan daftar mata kuliah dan kegiatan realistis standar kurikulum nasional / Telkom University
- * Setiap semester reguler memiliki beban 18–20 SKS akademik (5–7 mata kuliah),
- * sedangkan semester akhir (Semester 8) berfokus pada Skripsi & Kolokium (8 SKS).
+ * Menyediakan daftar kelompok mata kuliah kurikulum standar (Wajib / Inti, Pilihan, Prasyarat, Praktikum)
+ * bukan nama mata kuliah spesifik, agar fleksibel dan berlaku untuk semua program studi mahasiswa.
  */
 export function getDefaultTasksForSemester(
   semesterNum: number,
-  programName = "Teknik Informatika",
+  _programName = "Program Studi",
   isCurrent = false
 ): DefaultTaskItem[] {
-  const isInf =
-    programName.toLowerCase().includes("informatika") ||
-    programName.toLowerCase().includes("komputer") ||
-    programName.toLowerCase().includes("software") ||
-    programName.toLowerCase().includes("sistem informasi");
-
   const defaultStatus = isCurrent ? "in_progress" : "planned";
 
-  if (isInf) {
-    switch (semesterNum) {
-      case 1:
-        return [
-          { title: "Dasar Pemrograman (Python)", category: "akademik", credits: 4, courseCode: "IF1101", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Matematika Diskrit I", category: "akademik", credits: 3, courseCode: "MA1101", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Kalkulus I", category: "akademik", credits: 3, courseCode: "MA1102", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pengantar Rekayasa & Komputasi", category: "akademik", credits: 2, courseCode: "IF1102", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Bahasa Inggris Akademik", category: "akademik", credits: 2, courseCode: "KU1101", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Tata Tulis Karya Ilmiah & Bahasa Indonesia", category: "akademik", credits: 2, courseCode: "KU1102", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pendidikan Agama & Etika", category: "akademik", credits: 3, courseCode: "KU1103", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pengenalan Kehidupan Kampus Mahasiswa Baru (PKKMB)", category: "tak", credits: 0, status: "done", certaintyLevel: "pasti" },
-        ]; // Total: 19 SKS
-      case 2:
-        return [
-          { title: "Algoritma & Struktur Data", category: "akademik", credits: 4, courseCode: "IF1201", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Organisasi & Arsitektur Komputer", category: "akademik", credits: 3, courseCode: "IF1202", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Aljabar Linier & Matriks", category: "akademik", credits: 3, courseCode: "MA1201", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Kalkulus II", category: "akademik", credits: 3, courseCode: "MA1202", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Sistem Basis Data Dasar", category: "akademik", credits: 3, courseCode: "IF1203", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Kewirausahaan Dasar", category: "akademik", credits: 2, courseCode: "KU1201", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Literasi TIK & Data", category: "akademik", credits: 1, courseCode: "KU1202", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Partisipasi Organisasi Kemahasiswaan & UKM", category: "tak", credits: 0, status: defaultStatus, certaintyLevel: "pasti" },
-        ]; // Total: 19 SKS
-      case 3:
-        return [
-          { title: "Pemrograman Berorientasi Objek (OOP)", category: "akademik", credits: 3, courseCode: "IF2101", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Basis Data & Perancangan Relasional", category: "akademik", credits: 4, courseCode: "IF2102", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Sistem Operasi", category: "akademik", credits: 3, courseCode: "IF2103", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Strategi Algoritma", category: "akademik", credits: 3, courseCode: "IF2104", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Matematika Diskrit II & Teori Graf", category: "akademik", credits: 3, courseCode: "MA2101", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pemodelan Perangkat Lunak (UML)", category: "akademik", credits: 3, courseCode: "IF2105", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pengumpulan Poin TAK Ekstrakurikuler (Target 30 Poin)", category: "tak", credits: 0, status: defaultStatus, certaintyLevel: "pasti" },
-        ]; // Total: 19 SKS
-      case 4:
-        return [
-          { title: "Rekayasa Perangkat Lunak (RPL)", category: "akademik", credits: 3, courseCode: "IF2201", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Jaringan Komputer & Komunikasi Data", category: "akademik", credits: 3, courseCode: "IF2202", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Probabilitas & Statistika Komputasi", category: "akademik", credits: 3, courseCode: "IF2203", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Interaksi Manusia & Komputer (UI/UX)", category: "akademik", credits: 3, courseCode: "IF2204", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Teori Bahasa & Otomata", category: "akademik", credits: 3, courseCode: "IF2205", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pemrograman Berorientasi Objek Lanjut", category: "akademik", credits: 3, courseCode: "IF2206", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pancasila & Kewarganegaraan", category: "akademik", credits: 2, courseCode: "KU2001", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Konsultasi Rencana Studi Dosen Wali", category: "akademik", credits: 0, status: "done", certaintyLevel: "pasti" },
-        ]; // Total: 20 SKS
-      case 5:
-        return [
-          { title: "Kecerdasan Buatan & Pembelajaran Mesin", category: "akademik", credits: 4, courseCode: "IF3101", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pengembangan Aplikasi Web & Cloud", category: "akademik", credits: 3, courseCode: "IF3102", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Keamanan Informasi & Kriptografi", category: "akademik", credits: 3, courseCode: "IF3103", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Basis Data Terdistribusi & Big Data", category: "akademik", credits: 3, courseCode: "IF3104", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Sistem Operasi Lanjut & Virtualisasi", category: "akademik", credits: 3, courseCode: "IF3105", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Analisis & Desain Algoritma Kompleks", category: "akademik", credits: 3, courseCode: "IF3106", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pengumpulan Poin TAK Ekstrakurikuler (Target 40 Poin)", category: "tak", credits: 0, status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Persiapan Portofolio Magang & Review CV ATS", category: "karier", credits: 0, status: defaultStatus, certaintyLevel: "estimasi" },
-        ]; // Total: 19 SKS
-      case 6:
-        return [
-          { title: "Sistem Terdistribusi & Cloud Architecture", category: "akademik", credits: 3, courseCode: "IF3201", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pra-Tugas Akhir & Metodologi Penelitian", category: "skripsi", credits: 2, courseCode: "IF3202", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Pemrosesan Bahasa Alami (NLP)", category: "akademik", credits: 3, courseCode: "IF3203", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Kerja Praktik / Magang Industri (KP)", category: "karier", credits: 3, courseCode: "IF3204", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Rekayasa Kebutuhan & Kualitas Perangkat Lunak", category: "akademik", credits: 3, courseCode: "IF3205", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Internet of Things (IoT) & Embedded System", category: "akademik", credits: 3, courseCode: "IF3206", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Kapita Selekta Informatika I", category: "akademik", credits: 2, courseCode: "IF3207", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Eksplorasi Topik Skripsi & Calon Pembimbing", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi" },
-        ]; // Total: 19 SKS
-      case 7:
-        return [
-          { title: "Proyek Capstone Rekayasa Terpadu", category: "akademik", credits: 4, courseCode: "IF4101", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Seminar Proposal Tugas Akhir", category: "skripsi", credits: 2, courseCode: "IF4102", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Etika Profesi & Hukum Teknologi", category: "akademik", credits: 2, courseCode: "IF4103", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Tata Kelola TI & Manajemen Proyek", category: "akademik", credits: 3, courseCode: "IF4104", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Peminatan: Cloud Architecture & DevOps", category: "akademik", credits: 3, courseCode: "IF4105", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Peminatan: Computer Vision & AI Terapan", category: "akademik", credits: 3, courseCode: "IF4106", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Technopreneurship & Inovasi Bisnis Digital", category: "akademik", credits: 2, courseCode: "IF4107", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Bimbingan Intensif Draf Proposal Skripsi", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi" },
-        ]; // Total: 19 SKS
-      case 8:
-        return [
-          { title: "Tugas Akhir / Skripsi", category: "skripsi", credits: 6, courseCode: "IF4201", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Kolokium & Publikasi Ilmiah", category: "skripsi", credits: 2, courseCode: "IF4202", status: defaultStatus, certaintyLevel: "pasti" },
-          { title: "Bimbingan Rutin & Pengujian Sistem Skripsi", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi" },
-          { title: "Sidang Tugas Akhir & Yudisium Sarjana", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi" },
-        ]; // Total: 8 SKS
-      default:
-        return [
-          { title: `Mata Kuliah Peminatan Lanjut Semester ${semesterNum}`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "estimasi" },
-          { title: `Pengembangan Kompetensi Profesional ${semesterNum}`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "estimasi" },
-        ];
-    }
-  }
+  switch (semesterNum) {
+    case 1:
+      return [
+        { title: "Mata Kuliah Wajib / Inti I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Wajib / Inti II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Prasyarat & Fondasi I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Syarat Matkul Lanjutan" },
+        { title: "Mata Kuliah Prasyarat & Fondasi II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Syarat Matkul Lanjutan" },
+        { title: "Praktikum & Tugas Terapan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Keterampilan Terapan" },
+        { title: "Mata Kuliah Umum & Karakter", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Wajib Institusi" },
+        { title: "Orientasi Akademik & Perencanaan Studi", category: "akademik", credits: 0, status: isCurrent ? "done" : defaultStatus, certaintyLevel: "pasti", notes: "Milestone Akademik" },
+      ]; // Total: 18 SKS
 
-  // Fallback adaptif untuk Program Studi Umum (Non-Informatika)
-  if (semesterNum === 8) {
-    return [
-      { title: `Tugas Akhir / Skripsi ${programName}`, category: "skripsi", credits: 6, status: defaultStatus, certaintyLevel: "pasti" },
-      { title: "Kolokium & Ujian Komprehensif Kelulusan", category: "skripsi", credits: 2, status: defaultStatus, certaintyLevel: "pasti" },
-      { title: "Bimbingan Naskah & Sidang Sarjana", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi" },
-    ]; // Total: 8 SKS
-  }
+    case 2:
+      return [
+        { title: "Mata Kuliah Wajib / Inti I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Wajib / Inti II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Wajib / Inti III", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Prasyarat & Fondasi", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Syarat Matkul Lanjutan" },
+        { title: "Praktikum & Tugas Terapan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Keterampilan Terapan" },
+        { title: "Mata Kuliah Umum & Literasi Digital", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Wajib Institusi" },
+        { title: "Evaluasi KHS & Konsultasi Akademik", category: "akademik", credits: 0, status: defaultStatus, certaintyLevel: "pasti", notes: "Milestone Akademik" },
+      ]; // Total: 18 SKS
 
-  return [
-    { title: `Mata Kuliah Keahlian Inti ${programName} I`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti" },
-    { title: `Mata Kuliah Keahlian Inti ${programName} II`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti" },
-    { title: `Mata Kuliah Teori & Analisis Terapan`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti" },
-    { title: `Metodologi Penelitian & Praktikum Terpadu`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti" },
-    { title: `Mata Kuliah Peminatan Khusus ${programName}`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti" },
-    { title: `Praktik Lapangan / Kerja Magang Profesi`, category: "karier", credits: 3, status: defaultStatus, certaintyLevel: "pasti" },
-    { title: "Pendidikan Karakter & Etika Profesi", category: "akademik", credits: 2, status: defaultStatus, certaintyLevel: "pasti" },
-    { title: "Konsultasi Rencana Studi Dosen Pembimbing", category: "akademik", credits: 0, status: defaultStatus, certaintyLevel: "pasti" },
-  ]; // Total: 20 SKS
+    case 3:
+      return [
+        { title: "Mata Kuliah Wajib / Inti I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Wajib / Inti II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Wajib / Inti III", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Prasyarat Lanjutan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Syarat Matkul Lanjutan" },
+        { title: "Praktikum & Tugas Terapan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Keterampilan Terapan" },
+        { title: "Mata Kuliah Pilihan I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Peminatan & Elektif Bebas" },
+        { title: "Konsultasi Rencana Studi Dosen Wali", category: "akademik", credits: 0, status: defaultStatus, certaintyLevel: "pasti", notes: "Milestone Akademik" },
+      ]; // Total: 18 SKS
+
+    case 4:
+      return [
+        { title: "Mata Kuliah Wajib / Inti I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Wajib / Inti II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Wajib / Inti III", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Prasyarat Lanjutan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Syarat Matkul Lanjutan" },
+        { title: "Praktikum & Tugas Terapan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Keterampilan Terapan" },
+        { title: "Mata Kuliah Pilihan II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Peminatan & Elektif Bebas" },
+        { title: "Evaluasi Capaian Tengah Studi & Penentuan Minat", category: "akademik", credits: 0, status: isCurrent ? "done" : defaultStatus, certaintyLevel: "pasti", notes: "Milestone Akademik" },
+      ]; // Total: 18 SKS
+
+    case 5:
+      return [
+        { title: "Mata Kuliah Wajib / Inti Lanjutan I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Wajib / Inti Lanjutan II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Pilihan Peminatan I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Peminatan & Elektif Bebas" },
+        { title: "Mata Kuliah Pilihan Peminatan II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Peminatan & Elektif Bebas" },
+        { title: "Praktikum & Analisis Terapan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Keterampilan Lanjutan" },
+        { title: "Pra-Tugas Akhir & Metodologi Penelitian", category: "skripsi", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Persiapan Skripsi" },
+        { title: "Persiapan Portofolio & Eksplorasi Topik Skripsi", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi", notes: "Milestone Akademik" },
+      ]; // Total: 18 SKS
+
+    case 6:
+      return [
+        { title: "Mata Kuliah Wajib / Inti Lanjutan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Pilihan Peminatan I", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Peminatan & Elektif Bebas" },
+        { title: "Mata Kuliah Pilihan Peminatan II", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Peminatan & Elektif Bebas" },
+        { title: "Praktik Kerja Lapangan / Magang Industri", category: "karier", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Pengalaman Lapangan" },
+        { title: "Pra-Tugas Akhir & Penyusunan Proposal", category: "skripsi", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Persiapan Skripsi" },
+        { title: "Pengayaan Keahlian Spesifik", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Peminatan Spesifik" },
+        { title: "Konsultasi Penetapan Dosen Pembimbing Skripsi", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi", notes: "Milestone Akademik" },
+      ]; // Total: 18 SKS
+
+    case 7:
+      return [
+        { title: "Proyek Capstone Terpadu", category: "akademik", credits: 4, status: defaultStatus, certaintyLevel: "pasti", notes: "Kurikulum Pokok" },
+        { title: "Mata Kuliah Pilihan Peminatan Lanjut", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Peminatan Lanjut" },
+        { title: "Seminar Proposal Tugas Akhir", category: "skripsi", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Ujian Seminar Proposal" },
+        { title: "Etika Profesi & Keahlian Terapan", category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Wajib Institusi" },
+        { title: "Magang Lanjut / Pengayaan MBKM", category: "karier", credits: 3, status: defaultStatus, certaintyLevel: "pasti", notes: "Pengalaman Profesional" },
+        { title: "Bimbingan Intensif Draf Proposal Skripsi", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi", notes: "Milestone Akademik" },
+      ]; // Total: 16 SKS
+
+    case 8:
+      return [
+        { title: "Tugas Akhir / Skripsi", category: "skripsi", credits: 6, status: defaultStatus, certaintyLevel: "pasti", notes: "Sidang Kelulusan" },
+        { title: "Kolokium & Publikasi Ilmiah", category: "skripsi", credits: 2, status: defaultStatus, certaintyLevel: "pasti", notes: "Publikasi Naskah" },
+        { title: "Sidang Tugas Akhir & Yudisium Kelulusan", category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi", notes: "Milestone Kelulusan" },
+      ]; // Total: 8 SKS
+
+    default:
+      return [
+        { title: `Mata Kuliah Wajib / Inti Semester ${semesterNum}`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "estimasi", notes: "Kurikulum Pokok" },
+        { title: `Mata Kuliah Pilihan Semester ${semesterNum}`, category: "akademik", credits: 3, status: defaultStatus, certaintyLevel: "estimasi", notes: "Peminatan" },
+        { title: `Evaluasi Kelulusan & Penyelesaian Tugas Akhir`, category: "skripsi", credits: 0, status: defaultStatus, certaintyLevel: "estimasi", notes: "Milestone Akademik" },
+      ];
+  }
 }
