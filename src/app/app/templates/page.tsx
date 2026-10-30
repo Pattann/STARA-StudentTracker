@@ -45,7 +45,41 @@ const MAJORS = [
   "Semua Program Studi",
 ];
 
-const YEARS = ["Semua Tahun", "2025", "2024", "2023"];
+function getTemplateSemesterLabel(t: {
+  semesterBreakdown?: Array<{ semesterNum: number }>;
+  items?: Array<{ targetSemesterNum: number }>;
+}): string {
+  const sems: number[] = [];
+  if (Array.isArray(t.semesterBreakdown)) {
+    t.semesterBreakdown.forEach((s) => {
+      if (s.semesterNum) sems.push(s.semesterNum);
+    });
+  }
+  if (Array.isArray(t.items)) {
+    t.items.forEach((i) => {
+      if (i.targetSemesterNum) sems.push(i.targetSemesterNum);
+    });
+  }
+  const unique = Array.from(new Set(sems)).filter(Boolean).sort((a, b) => a - b);
+  if (unique.length === 0) return "Semua Semester";
+  if (unique.length === 1) return `Semester ${unique[0]}`;
+  if (unique[unique.length - 1] - unique[0] === unique.length - 1) {
+    return `Semester ${unique[0]}–${unique[unique.length - 1]}`;
+  }
+  return `Semester ${unique.join(", ")}`;
+}
+
+const SEMESTERS = [
+  "Semua Semester",
+  "Semester 1",
+  "Semester 2",
+  "Semester 3",
+  "Semester 4",
+  "Semester 5",
+  "Semester 6",
+  "Semester 7",
+  "Semester 8",
+];
 
 const categoryIcons: Record<string, React.ReactNode> = {
   semester: <Layers size={13} />,
@@ -82,7 +116,7 @@ export default function TemplatesPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [filterInstitution, setFilterInstitution] = useState("Semua Kampus");
   const [filterMajor, setFilterMajor] = useState("Semua Jurusan");
-  const [filterYear, setFilterYear] = useState("Semua Tahun");
+  const [filterSemester, setFilterSemester] = useState("Semua Semester");
   const [filterCategory, setFilterCategory] = useState("");
   const [autoFilteredFromOnboarding, setAutoFilteredFromOnboarding] = useState(false);
 
@@ -101,7 +135,7 @@ export default function TemplatesPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const paramKampus = urlParams.get("kampus");
     const paramJurusan = urlParams.get("jurusan");
-    const paramTahun = urlParams.get("tahun");
+    const paramSemester = urlParams.get("semester") || urlParams.get("sem");
 
     let savedProfile: {
       institutionName?: string;
@@ -140,7 +174,7 @@ export default function TemplatesPage() {
     // Filter hanya diaplikasikan jika secara eksplisit diberikan melalui URL search params (?kampus=... / ?jurusan=...)
     const targetKampus = paramKampus;
     const targetJurusan = paramJurusan;
-    const targetTahun = paramTahun;
+    const targetSemester = paramSemester;
 
     let appliedAny = false;
 
@@ -166,8 +200,8 @@ export default function TemplatesPage() {
       appliedAny = true;
     }
 
-    if (targetTahun && YEARS.includes(targetTahun)) {
-      setFilterYear(targetTahun);
+    if (targetSemester && SEMESTERS.includes(targetSemester)) {
+      setFilterSemester(targetSemester);
       appliedAny = true;
     }
 
@@ -300,14 +334,14 @@ export default function TemplatesPage() {
   const activeFilterCount = [
     filterInstitution !== "Semua Kampus",
     filterMajor !== "Semua Jurusan",
-    filterYear !== "Semua Tahun",
+    filterSemester !== "Semua Semester",
     filterCategory !== "",
   ].filter(Boolean).length;
 
   const resetFilters = () => {
     setFilterInstitution("Semua Kampus");
     setFilterMajor("Semua Jurusan");
-    setFilterYear("Semua Tahun");
+    setFilterSemester("Semua Semester");
     setFilterCategory("");
   };
 
@@ -365,7 +399,16 @@ export default function TemplatesPage() {
       if (!matchMajor) return false;
     }
 
-    if (filterYear !== "Semua Tahun" && t.year !== filterYear) return false;
+    if (filterSemester !== "Semua Semester") {
+      const semNumMatch = filterSemester.match(/\d+/);
+      const targetNum = semNumMatch ? parseInt(semNumMatch[0], 10) : null;
+      if (targetNum !== null) {
+        const hasSem =
+          (t.semesterBreakdown && t.semesterBreakdown.some((s) => s.semesterNum === targetNum)) ||
+          (t.items && t.items.some((i) => i.targetSemesterNum === targetNum));
+        if (!hasSem) return false;
+      }
+    }
     if (filterCategory && t.category !== filterCategory) return false;
     return true;
   });
@@ -593,6 +636,36 @@ export default function TemplatesPage() {
                 ))}
               </select>
             </div>
+            <div className="form-group">
+              <label
+                className="form-label"
+                htmlFor="filter-semester"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <Layers size={13} style={{ color: "var(--text-muted)" }} />
+                Target Semester
+              </label>
+              <select
+                id="filter-semester"
+                className="form-input"
+                style={{ fontSize: 13, background: "var(--bg-tertiary)", borderColor: "var(--border)" }}
+                value={filterSemester}
+                onChange={(e) => setFilterSemester(e.target.value)}
+              >
+                {SEMESTERS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       )}
@@ -770,7 +843,7 @@ export default function TemplatesPage() {
                   {" "}di <strong style={{ color: "var(--text-primary)" }}>{filterInstitution}</strong>
                 </>
               ) : null}
-              {filterYear !== "Semua Tahun" ? ` (${filterYear})` : ""}.
+              {filterSemester !== "Semua Semester" ? ` (${filterSemester})` : ""}.
             </span>
           </div>
           <button
@@ -1070,6 +1143,23 @@ export default function TemplatesPage() {
                     {TEMPLATE_CATEGORIES[
                       previewTemplate.category as keyof typeof TEMPLATE_CATEGORIES
                     ] ?? previewTemplate.category}
+                  </span>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "3px 9px",
+                      borderRadius: "var(--radius-pill)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      background: "#FEF3C7",
+                      color: "#92400E",
+                      border: "1px solid #FDE68A",
+                    }}
+                  >
+                    <Layers size={11} color="#D97706" />
+                    {getTemplateSemesterLabel(previewTemplate)}
                   </span>
                 </div>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)", lineHeight: 1.35 }}>
@@ -1864,6 +1954,24 @@ function TemplateCard({
             >
               {categoryIcons[t.category]}
               {TEMPLATE_CATEGORIES[t.category as keyof typeof TEMPLATE_CATEGORIES] ?? t.category}
+            </span>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "3px 8px",
+                borderRadius: "var(--radius-pill)",
+                fontSize: 10.5,
+                fontWeight: 600,
+                background: "#FEF3C7",
+                color: "#92400E",
+                border: "1px solid #FDE68A",
+              }}
+              title="Cakupan Target Semester"
+            >
+              <Layers size={10} color="#D97706" />
+              {getTemplateSemesterLabel(t)}
             </span>
           </div>
 
