@@ -999,8 +999,8 @@ export async function seedInitialRoadmapForSession(
         c.semesterNum < profile.currentSemester
           ? "done"
           : c.semesterNum === profile.currentSemester
-          ? "in_progress"
-          : "planned";
+            ? "in_progress"
+            : "planned";
 
       tasksToCreate.push({
         semesterPlanId: spId,

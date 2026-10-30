@@ -4,6 +4,12 @@ Platform web perencanaan studi bagi mahasiswa perguruan tinggi di Indonesia untu
 
 ---
 
+# Link Deploy (VERCEL)
+https://stara-student-tracker.vercel.app/
+
+
+---
+
 ## Fitur Utama
 
 1. **Onboarding & Profil Akademik Terukur**
