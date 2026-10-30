@@ -55,6 +55,11 @@ export async function POST(req: NextRequest) {
     if (currSem > targetSem) targetSem = currSem + 1;
 
     const roadmap = await prisma.$transaction(async (tx) => {
+      await tx.guestSession.update({
+        where: { id: session.id },
+        data: { isReset: false },
+      });
+
       await tx.roadmap.deleteMany({ where: { guestSessionId: session.id } });
 
       const createdRoadmap = await tx.roadmap.create({
@@ -71,6 +76,7 @@ export async function POST(req: NextRequest) {
           versionNum: 1,
           label: "Roadmap Auto-Generated Onboarding",
           isBaseline: true,
+          isDraft: false,
         },
       });
 
@@ -79,8 +85,9 @@ export async function POST(req: NextRequest) {
         data: { currentVersionId: version.id },
       });
 
-      for (let sem = currSem; sem <= targetSem; sem++) {
+      for (let sem = 1; sem <= targetSem; sem++) {
         const isCurrent = sem === currSem;
+        const isPast = sem < currSem;
         const defaultTasks = getDefaultTasksForSemester(sem, profile.programName, isCurrent);
         const academicCredits = defaultTasks.reduce((sum, t) => sum + (t.credits || 0), 0);
 
@@ -100,11 +107,12 @@ export async function POST(req: NextRequest) {
             semesterPlanId: plan.id,
             title: t.title,
             category: t.category,
+            itemType: t.credits > 0 ? "COURSE" : "ACTIVITY",
             credits: t.credits,
-            status: t.status,
+            status: isPast ? "done" : t.status,
             courseCode: t.courseCode || null,
             notes: t.notes || (t.credits > 0 ? "Kurikulum reguler" : "Milestone akademik"),
-            certaintyLevel: t.certaintyLevel,
+            certaintyLevel: isPast ? "fixed" : t.certaintyLevel,
           })),
         });
       }

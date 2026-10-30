@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning style={{ backgroundColor: "#FAF9F5", colorScheme: "light" }}>
+    <html lang="id" data-scroll-behavior="smooth" suppressHydrationWarning style={{ backgroundColor: "#FAF9F5", colorScheme: "light" }}>
       <body
         className={`${inter.variable} ${fraunces.variable}`}
         style={{

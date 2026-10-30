@@ -195,54 +195,56 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               <span>Riwayat Check-in</span>
             </Link>
 
-            <Link
-              href="/admin"
-              className={`sidebar-nav-item ${isActive("/admin") ? "active" : ""}`}
-              onClick={() => onClose()}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                padding: "8px 12px",
-                borderRadius: "8px",
-                fontSize: 13,
-                fontWeight: isActive("/admin") ? 600 : 500,
-                color: isActive("/admin") ? "var(--text-primary)" : "var(--text-secondary)",
-                background: isActive("/admin")
-                  ? "#FFFFFF"
-                  : "rgba(245, 205, 71, 0.06)",
-                border: isActive("/admin")
-                  ? "1px solid rgba(0, 0, 0, 0.08)"
-                  : "1px solid rgba(217, 119, 6, 0.16)",
-                boxShadow: isActive("/admin") ? "0 1px 4px rgba(0, 0, 0, 0.04)" : "none",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <ShieldCheck
-                  size={15}
-                  color={isActive("/admin") ? "var(--amber-deep)" : "#B45309"}
-                  aria-hidden="true"
-                  style={{ flexShrink: 0 }}
-                />
-                <span style={{ fontWeight: 550 }}>Dashboard Admin</span>
-              </div>
-              <span
+            {user?.role === "admin" && (
+              <Link
+                href="/admin"
+                className={`sidebar-nav-item ${isActive("/admin") ? "active" : ""}`}
+                onClick={() => onClose()}
                 style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: "#92400E",
-                  background: "#FEF3C7",
-                  border: "1px solid #FDE68A",
-                  borderRadius: "var(--radius-pill)",
-                  padding: "1px 6px",
-                  letterSpacing: "0.02em",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  fontSize: 13,
+                  fontWeight: isActive("/admin") ? 600 : 500,
+                  color: isActive("/admin") ? "var(--text-primary)" : "var(--text-secondary)",
+                  background: isActive("/admin")
+                    ? "#FFFFFF"
+                    : "rgba(245, 205, 71, 0.06)",
+                  border: isActive("/admin")
+                    ? "1px solid rgba(0, 0, 0, 0.08)"
+                    : "1px solid rgba(217, 119, 6, 0.16)",
+                  boxShadow: isActive("/admin") ? "0 1px 4px rgba(0, 0, 0, 0.04)" : "none",
+                  transition: "all 0.15s ease",
                 }}
               >
-                ADMIN
-              </span>
-            </Link>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <ShieldCheck
+                    size={15}
+                    color={isActive("/admin") ? "var(--amber-deep)" : "#B45309"}
+                    aria-hidden="true"
+                    style={{ flexShrink: 0 }}
+                  />
+                  <span style={{ fontWeight: 550 }}>Dashboard Admin</span>
+                </div>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "#92400E",
+                    background: "#FEF3C7",
+                    border: "1px solid #FDE68A",
+                    borderRadius: "var(--radius-pill)",
+                    padding: "1px 6px",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  ADMIN
+                </span>
+              </Link>
+            )}
 
             <button
               className="sidebar-nav-item"

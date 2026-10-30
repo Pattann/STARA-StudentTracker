@@ -12,7 +12,7 @@ export function ModalScrollLock() {
   useEffect(() => {
     if (typeof window === "undefined" || typeof document === "undefined") return;
 
-    const MODAL_SELECTOR = '.dialog-overlay, [data-modal-overlay="true"], .modal-overlay, [role="dialog"][aria-modal="true"]';
+    const MODAL_SELECTOR = '.dialog-overlay, [data-modal-overlay="true"], .modal-overlay, .mobile-menu-overlay';
 
     let isLocked = false;
     let originalBodyOverflow = "";

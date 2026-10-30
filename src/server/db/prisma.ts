@@ -16,6 +16,6 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 if (!globalForPrisma.sqliteConfigured) {
   globalForPrisma.sqliteConfigured = true;
   prisma.$queryRawUnsafe("PRAGMA journal_mode = WAL;").catch(() => {});
-  prisma.$executeRawUnsafe("PRAGMA synchronous = NORMAL;").catch(() => {});
-  prisma.$executeRawUnsafe("PRAGMA busy_timeout = 5000;").catch(() => {});
+  prisma.$queryRawUnsafe("PRAGMA synchronous = NORMAL;").catch(() => {});
+  prisma.$queryRawUnsafe("PRAGMA busy_timeout = 5000;").catch(() => {});
 }
