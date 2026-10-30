@@ -15,9 +15,10 @@ import {
   CheckCircle2, GraduationCap, Globe, RotateCcw, TrendingUp,
   Bookmark, BookOpen, Briefcase, Layers, FileText, Plus,
   ArrowRight, Check, Award, Compass, HelpCircle,
-  FileCheck, Calendar, ShieldCheck, Target, Sparkles,
+  FileCheck, Calendar, ShieldCheck, Target, Sparkles, UploadCloud,
 } from "lucide-react";
 import Link from "next/link";
+import { PublishTemplateModal } from "@/features/templates/PublishTemplateModal";
 
 // ─── Filter Options ───────────────────────────────────────────────────────────
 const INSTITUTIONS = [
@@ -129,6 +130,7 @@ export default function TemplatesPage() {
     goals?: string;
   } | null>(null);
   const [isGeneratingFromProfile, setIsGeneratingFromProfile] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -451,7 +453,27 @@ export default function TemplatesPage() {
             Temukan blueprint akademik dan alur studi terstruktur dari mahasiswa berprestasi dan kurikulum resmi institusi.
           </p>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <button
+            onClick={() => setShowPublishModal(true)}
+            className="btn btn-primary btn-sm"
+            style={{
+              gap: 7,
+              padding: "8px 14px",
+              fontSize: 13,
+              fontWeight: 700,
+              borderRadius: "var(--radius-md)",
+              background: "#D97706",
+              borderColor: "#D97706",
+              color: "#FFFFFF",
+              boxShadow: "0 2px 6px rgba(217, 119, 6, 0.2)",
+            }}
+            title="Upload roadmap saya menjadi template baru untuk diverifikasi admin"
+          >
+            <UploadCloud size={15} />
+            <span>+ Jadikan Template</span>
+          </button>
+
           <Link
             href="/app/roadmap"
             className="btn btn-secondary btn-sm"
@@ -1859,6 +1881,19 @@ export default function TemplatesPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Publish Roadmap ke Template Komunitas */}
+      <PublishTemplateModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        defaultData={{
+          institutionName: onboardingProfile?.institutionName || "Telkom University",
+          programName: onboardingProfile?.programName || "Teknik Informatika",
+        }}
+        onSuccess={() => {
+          showToast("✓ Berhasil mengajukan template! Admin STARA akan memverifikasi sebelum ditayangkan.");
+        }}
+      />
 
       {/* ── Toast ── */}
       {toast && (

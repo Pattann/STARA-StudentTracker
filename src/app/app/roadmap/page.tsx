@@ -47,6 +47,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   MoreHorizontal,
+  UploadCloud,
   Info,
   LayoutDashboard,
 } from "lucide-react";
@@ -54,6 +55,7 @@ import { TASK_CATEGORIES, TASK_STATUSES, TEMPLATE_CATEGORIES } from "@/lib/const
 import { semesterLabel } from "@/lib/utils";
 import { MOCK_TEMPLATES, MockTemplate } from "@/features/templates/data";
 import { CURRICULUM_CATALOG, MILESTONE_TEMPLATES, CatalogCourse } from "@/features/curriculum/catalog";
+import { PublishTemplateModal } from "@/features/templates/PublishTemplateModal";
 import Link from "next/link";
 
 type Task = {
@@ -217,6 +219,7 @@ export default function RoadmapPage() {
 
   // Secondary Menu Dropdown (Template, Riwayat, Kosongkan)
   const [showSecondaryMenu, setShowSecondaryMenu] = useState(false);
+  const [showPublishTemplateModal, setShowPublishTemplateModal] = useState(false);
 
   // Panel Validasi Akademik: Toggle Detail
   const [showValidationDetails, setShowValidationDetails] = useState(false);
@@ -1066,6 +1069,32 @@ export default function RoadmapPage() {
                       <span>Edit Roadmap</span>
                     </button>
                   )}
+
+                  <button
+                    onClick={() => {
+                      setShowSecondaryMenu(false);
+                      setShowPublishTemplateModal(true);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 10px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--text-primary)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      width: "100%",
+                    }}
+                    title="Upload roadmap aktif ke komunitas untuk diverifikasi admin"
+                  >
+                    <UploadCloud size={14} color="#D97706" />
+                    <span>Upload ke Template Komunitas</span>
+                  </button>
 
                   <button
                     onClick={() => {
