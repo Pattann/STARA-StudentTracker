@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { z } from "zod";
+import { THESIS_REQUIRED_MESSAGE, validateThesisField, validateThesisStage } from "@/lib/thesis-validation";
 
 async function resolveSession(req: NextRequest) {
   const token = req.headers.get("x-demo-token") ?? req.nextUrl.searchParams.get("token");
@@ -57,6 +58,37 @@ const ProgressPayloadSchema = z.object({
   activeStageNumber: z.number().default(1),
 });
 
+/**
+ * Menolak payload yang melanggar aturan tracker:
+ * - isian yang diketik harus bermakna (tidak asal-asalan),
+ * - tahap hanya boleh ACC bila seluruh kolom wajibnya valid,
+ * - tahap hanya boleh ACC bila tahap sebelumnya sudah ACC.
+ */
+function validateProgressStages(stages: z.infer<typeof StageDataSchema>[]): string | null {
+  const accepted = new Set<number>();
+  const ordered = [...stages].sort((a, b) => a.id - b.id);
+
+  for (const stage of ordered) {
+    const issues = validateThesisStage(stage.id, stage.fields);
+    const invalidInput = issues.find((issue) => issue.message !== THESIS_REQUIRED_MESSAGE);
+    if (invalidInput) {
+      return `Tahap ${stage.id}: ${invalidInput.message}`;
+    }
+
+    if (stage.status === "acc_dospem") {
+      if (issues.length > 0) {
+        return `Tahap ${stage.id} belum bisa ditandai selesai karena formulirnya belum lengkap dan valid.`;
+      }
+      if (stage.id > 1 && !accepted.has(stage.id - 1)) {
+        return `Tahap ${stage.id} belum bisa ditandai selesai sebelum Tahap ${stage.id - 1} selesai.`;
+      }
+      accepted.add(stage.id);
+    }
+  }
+
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const session = await resolveSession(req);
   if (!session) return NextResponse.json({ error: "Sesi tidak valid." }, { status: 401 });
@@ -66,6 +98,23 @@ export async function POST(req: NextRequest) {
     const parsed = ProgressPayloadSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Data progres tidak valid.", details: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const rejection = validateProgressStages(parsed.data.stages);
+    if (rejection) {
+      return NextResponse.json({ error: rejection }, { status: 422 });
+    }
+
+    const headerFields: Array<[string, string | undefined]> = [
+      ["approvedTitle", parsed.data.approvedTitle],
+      ["supervisor1", parsed.data.supervisor1],
+      ["supervisor2", parsed.data.supervisor2],
+    ];
+    for (const [key, value] of headerFields) {
+      const message = value ? validateThesisField(key, value) : null;
+      if (message) {
+        return NextResponse.json({ error: message }, { status: 422 });
+      }
     }
 
     const payloadString = JSON.stringify(parsed.data);

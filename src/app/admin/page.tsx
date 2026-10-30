@@ -22,7 +22,6 @@ import {
   Info,
   LogOut,
   Menu,
-  ArrowUpRight,
 } from "lucide-react";
 
 export type AdminTab = "overview" | "academics" | "templates" | "ai";
@@ -465,37 +464,8 @@ function AdminDashboardContent() {
           </div>
         </div>
 
-        {/* Bottom Section: Link to Student App & Minimalist Profile Card */}
-        <div style={{ borderTop: "1px solid var(--border-subtle)" }}>
-          <div
-            style={{
-              padding: "8px 10px 6px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
-            <Link
-              href="/app"
-              className="sidebar-nav-item"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                padding: "7px 12px",
-                borderRadius: "8px",
-                fontSize: 13,
-                fontWeight: 500,
-                color: "var(--text-secondary)",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <span>Workspace Mahasiswa</span>
-              <ArrowUpRight size={14} color="var(--text-muted)" />
-            </Link>
-          </div>
-
+        {/* Bottom Section: Minimalist Profile Card */}
+        <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 4 }}>
           <div
             style={{
               margin: "4px 10px 10px",

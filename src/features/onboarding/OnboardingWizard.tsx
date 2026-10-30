@@ -155,9 +155,9 @@ export function OnboardingWizard() {
 
   const validateStep = (s: Step): string | null => {
     if (s === 0) {
-      if (!form.institutionName.trim()) return "Isi nama kampus dulu ya.";
-      if (!form.programName.trim()) return "Isi program studi dulu ya.";
-      if (!form.entryYear.trim()) return "Isi tahun angkatan dulu ya.";
+      if (!form.institutionName.trim()) return "Isi nama kampus terlebih dahulu ya.";
+      if (!form.programName.trim()) return "Isi program studi terlebih dahulu ya.";
+      if (!form.entryYear.trim()) return "Isi tahun angkatan terlebih dahulu ya.";
     }
     if (s === 1) {
       if (!form.currentSemester) return "Pilih semester aktifmu saat ini terlebih dahulu.";
@@ -229,14 +229,14 @@ export function OnboardingWizard() {
           semNum === 1
             ? 0
             : Number.isNaN(parsedCompleted)
-            ? 0
-            : Math.min(totalCreditsNum, Math.max(0, parsedCompleted)),
+              ? 0
+              : Math.min(totalCreditsNum, Math.max(0, parsedCompleted)),
         gpa:
           semNum === 1
             ? 0
             : Number.isNaN(parsedGpa)
-            ? 0
-            : Math.min(4.0, Math.max(0.0, parsedGpa)),
+              ? 0
+              : Math.min(4.0, Math.max(0.0, parsedGpa)),
         goals: form.goals,
         interests: form.interests,
         weeklyHours: parseInt(form.weeklyHours, 10) || 20,
@@ -362,8 +362,8 @@ export function OnboardingWizard() {
                       background: isDone
                         ? "#D97706"
                         : isActive
-                        ? "#0F172A"
-                        : "#F1F5F9",
+                          ? "#0F172A"
+                          : "#F1F5F9",
                       color: isDone || isActive ? "#FFFFFF" : "#64748B",
                       border: `1.5px solid ${isDone ? "#B45309" : isActive ? "#0F172A" : "#CBD5E1"}`,
                       fontSize: 12,
@@ -374,8 +374,8 @@ export function OnboardingWizard() {
                       boxShadow: isDone
                         ? "0 2px 6px rgba(217, 119, 6, 0.3)"
                         : isActive
-                        ? "0 2px 8px rgba(15, 23, 42, 0.12)"
-                        : "none",
+                          ? "0 2px 8px rgba(15, 23, 42, 0.12)"
+                          : "none",
                     }}
                   >
                     {isDone ? <CheckCircle2 size={15} strokeWidth={2.5} /> : idx + 1}
@@ -703,7 +703,7 @@ export function OnboardingWizard() {
                         }}
                         placeholder={
                           !hasSelectedSemester
-                            ? "Pilih semester dulu"
+                            ? "Pilih semester terlebih dahulu"
                             : `${sksBounds.min} - ${sksBounds.max}`
                         }
                         className="form-input"
@@ -715,8 +715,8 @@ export function OnboardingWizard() {
                             isFirstSemester || !hasSelectedSemester
                               ? "#F1F5F9"
                               : isSksOutOfRange
-                              ? "#FEF2F2"
-                              : "#FFFFFF",
+                                ? "#FEF2F2"
+                                : "#FFFFFF",
                           border: isSksOutOfRange ? "1.5px solid #DC2626" : "1px solid #CBD5E1",
                           color: isFirstSemester || !hasSelectedSemester ? "#475569" : "#0F172A",
                           fontSize: 16,
@@ -748,8 +748,8 @@ export function OnboardingWizard() {
                         color: isSksOutOfRange
                           ? "#B91C1C"
                           : hasSelectedSemester && !isFirstSemester && parsedTypedSks !== null
-                          ? "#15803D"
-                          : "#475569",
+                            ? "#15803D"
+                            : "#475569",
                         fontWeight: isSksOutOfRange ? 700 : 500,
                         display: "block",
                         marginTop: 4,
@@ -759,12 +759,12 @@ export function OnboardingWizard() {
                       {!hasSelectedSemester
                         ? "Pilih semester aktif di atas terlebih dahulu untuk menentukan rentang SKS."
                         : isFirstSemester
-                        ? "Terkunci otomatis 0 SKS karena kamu baru memulai Semester 1."
-                        : isSksOutOfRange
-                        ? `Harus di rentang ${sksBounds.min} - ${sksBounds.max} SKS untuk Semester ${currentSem} (17-24 SKS/semester).`
-                        : parsedTypedSks !== null
-                        ? `Sesuai rentang Semester ${currentSem} (${sksBounds.min} - ${sksBounds.max} SKS).`
-                        : `Wajib diisi minimal ${sksBounds.min} dan maksimal ${sksBounds.max} SKS (${sksBounds.completedSemesters} semester lulus).`}
+                          ? "Terkunci otomatis 0 SKS karena kamu baru memulai Semester 1."
+                          : isSksOutOfRange
+                            ? `Harus di rentang ${sksBounds.min} - ${sksBounds.max} SKS untuk Semester ${currentSem} (17-24 SKS/semester).`
+                            : parsedTypedSks !== null
+                              ? `Sesuai rentang Semester ${currentSem} (${sksBounds.min} - ${sksBounds.max} SKS).`
+                              : `Wajib diisi minimal ${sksBounds.min} dan maksimal ${sksBounds.max} SKS (${sksBounds.completedSemesters} semester lulus).`}
                     </span>
                   </div>
 
@@ -889,7 +889,7 @@ export function OnboardingWizard() {
                         update("gpa", clamped.toFixed(2));
                       }
                     }}
-                    placeholder={!hasSelectedSemester ? "Pilih semester dulu" : "3.50"}
+                    placeholder={!hasSelectedSemester ? "Pilih semester terlebih dahulu" : "3.50"}
                     className="form-input"
                     style={{
                       width: "100%",
@@ -922,8 +922,8 @@ export function OnboardingWizard() {
                   {!hasSelectedSemester
                     ? "Pilih semester aktif di atas terlebih dahulu."
                     : isFirstSemester
-                    ? "Terkunci otomatis 0.00 karena nilai KHS belum terbit di Semester 1."
-                    : "Skala standar perguruan tinggi (0.00 - 4.00)"}
+                      ? "Terkunci otomatis 0.00 karena nilai KHS belum terbit di Semester 1."
+                      : "Skala standar perguruan tinggi (0.00 - 4.00)"}
                 </div>
               </div>
             </div>
@@ -1113,10 +1113,10 @@ export function OnboardingWizard() {
                       form.goals === "fast"
                         ? "Lulus Cepat (3.5 Thn)"
                         : form.goals === "active"
-                        ? "Fokus MBKM"
-                        : form.goals === "relaxed"
-                        ? "Fleksibel & Terkendali"
-                        : "Seimbang (4 Thn)",
+                          ? "Fokus MBKM"
+                          : form.goals === "relaxed"
+                            ? "Fleksibel & Terkendali"
+                            : "Seimbang (4 Thn)",
                   },
                 ].map((row, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>

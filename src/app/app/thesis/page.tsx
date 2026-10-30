@@ -3,6 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/features/session/context";
 import {
+  THESIS_REQUIRED_MESSAGE,
+  getThesisDraftIssues,
+  hasAnyThesisInput,
+  isThesisFieldRequired,
+  sanitizeThesisFields,
+  validateThesisField,
+  validateThesisStage,
+} from "@/lib/thesis-validation";
+import {
   BookOpen, AlertCircle, Lightbulb, ChevronRight, CheckCircle2,
   Sparkles, MessageSquare, Send, Bot, User, Copy, Check, Target,
   FileCheck, HelpCircle, ArrowRight, RotateCcw, ListChecks,
@@ -279,27 +288,59 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
 ];
 
 
-function getMissingRequiredFields(stage: ThesisStage): string[] {
-  const missing: string[] = [];
-  const requiredConfigs = stage.fieldConfigs.filter((f) => f.required);
-  const configsToCheck = requiredConfigs.length > 0 ? requiredConfigs : [stage.fieldConfigs[0]];
+function getStageLabels(stage: ThesisStage): Record<string, string> {
+  const labels: Record<string, string> = {};
+  for (const cfg of stage.fieldConfigs) labels[cfg.key] = cfg.label;
+  return labels;
+}
 
-  for (const cfg of configsToCheck) {
-    const val = stage.fields?.[cfg.key];
-    if (!val || typeof val !== "string" || val.trim() === "") {
-      missing.push(cfg.label);
-    }
-  }
-  return missing;
+/** Semua isian yang harus diperbaiki sebelum tahap boleh disimpan sebagai selesai. */
+function getStageIssues(stage: ThesisStage) {
+  return validateThesisStage(stage.id, stage.fields ?? {}, getStageLabels(stage));
+}
+
+/** Isian yang sudah diketik namun belum valid (kolom wajib kosong tidak dihitung). */
+function getStageDraftIssues(stage: ThesisStage) {
+  return getThesisDraftIssues(stage.id, stage.fields ?? {}, getStageLabels(stage));
+}
+
+function describeIssues(issues: { label: string; message: string }[]): string {
+  return issues
+    .slice(0, 3)
+    .map((issue) => `${issue.label}: ${issue.message}`)
+    .join(" | ");
+}
+
+function getMissingRequiredFields(stage: ThesisStage): string[] {
+  return getStageIssues(stage).map((issue) => `${issue.label} (${issue.message})`);
 }
 
 function isStageFormFilled(stage: ThesisStage): boolean {
-  return getMissingRequiredFields(stage).length === 0;
+  return getStageIssues(stage).length === 0;
+}
+
+/**
+ * Menjaga aturan berurutan: tahap hanya boleh berstatus ACC jika formulirnya valid
+ * dan tahap sebelumnya juga ACC. Tahap yang melanggar diturunkan ke "proses_bimbingan".
+ */
+function normalizeAccChain(list: ThesisStage[]): ThesisStage[] {
+  let chainOk = true;
+  return list.map((stage) => {
+    if (stage.status === "acc_dospem") {
+      if (!chainOk || getStageIssues(stage).length > 0) {
+        chainOk = false;
+        return { ...stage, status: "proses_bimbingan" as StageStatus, isCompleted: false, completedAt: null };
+      }
+      return stage;
+    }
+    chainOk = false;
+    return stage;
+  });
 }
 
 function mergeSavedStages(defaults: ThesisStage[], savedStages: any[]): ThesisStage[] {
   if (!Array.isArray(savedStages) || savedStages.length === 0) return defaults;
-  return defaults.map((def) => {
+  const merged = defaults.map((def) => {
     const found = savedStages.find((s) => s.id === def.id);
     if (!found) return def;
     return {
@@ -313,6 +354,7 @@ function mergeSavedStages(defaults: ThesisStage[], savedStages: any[]): ThesisSt
       },
     };
   });
+  return normalizeAccChain(merged);
 }
 
 export default function ThesisPage() {
@@ -449,17 +491,51 @@ export default function ThesisPage() {
     return stagesList[index - 1].status === "acc_dospem";
   };
 
-  // Helper to save stages progress
+  // Helper to save stages progress with strict validation
   const saveStagesProgress = async (updatedStages?: ThesisStage[]) => {
     const dataToSave = updatedStages || stages;
+
+    // 1. Validasi isian yang sedang diketik pada setiap tahap (tolak ketikan asal / gibberish)
+    for (const s of dataToSave) {
+      const draftIssues = getStageDraftIssues(s);
+      if (draftIssues.length > 0) {
+        setDependencyAlert(`⚠️ Tahap ${s.id} (${s.stageName}) belum valid: ${describeIssues(draftIssues)}. Perbaiki isian sebelum menyimpan.`);
+        setExpandedStageId(s.id);
+        setFormErrorStageId(s.id);
+        setTimeout(() => setDependencyAlert(null), 8000);
+        return false;
+      }
+    }
+
+    // 2. Validasi tahap yang berstatus ACC: semua kolom wajib harus terisi dan valid
+    for (const s of dataToSave) {
+      if (s.status === "acc_dospem") {
+        const stageIssues = getStageIssues(s);
+        if (stageIssues.length > 0) {
+          setDependencyAlert(`⚠️ Tahap ${s.id} (${s.stageName}) tidak memenuhi syarat ACC: ${describeIssues(stageIssues)}. Lengkapi kolom wajib dengan benar.`);
+          setExpandedStageId(s.id);
+          setFormErrorStageId(s.id);
+          setTimeout(() => setDependencyAlert(null), 8000);
+          return false;
+        }
+      }
+    }
+
     setIsSavingProgress(true);
     setSaveSuccessMsg(null);
 
     const completedStages = dataToSave.filter((s) => s.status === "acc_dospem");
     const activeStage = dataToSave.find((s) => s.status !== "acc_dospem") || dataToSave[dataToSave.length - 1];
-    const approvedTitleVal = dataToSave[0]?.fields?.approvedTitle || "";
-    const sup1 = dataToSave[0]?.fields?.supervisor1 || "";
-    const sup2 = dataToSave[0]?.fields?.supervisor2 || "";
+
+    const rawTitle = dataToSave[0]?.fields?.approvedTitle || "";
+    const isTitleValid = rawTitle.trim().length >= 20 && validateThesisField("approvedTitle", rawTitle) === null;
+    const approvedTitleVal = isTitleValid ? rawTitle.trim() : "";
+
+    const rawSup1 = dataToSave[0]?.fields?.supervisor1 || "";
+    const sup1 = validateThesisField("supervisor1", rawSup1) === null ? rawSup1.trim() : "";
+
+    const rawSup2 = dataToSave[0]?.fields?.supervisor2 || "";
+    const sup2 = validateThesisField("supervisor2", rawSup2) === null ? rawSup2.trim() : "";
 
     // 1. LocalStorage
     try {
@@ -498,16 +574,23 @@ export default function ThesisPage() {
             activeStageNumber: activeStage.id,
           }),
         });
+
         if (res.ok) {
           setLastSavedTime(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
           setSaveSuccessMsg("Progres 11 Tahapan tersimpan & disinkronkan ke STARA AI.");
           setTimeout(() => setSaveSuccessMsg(null), 3500);
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.error || "Gagal menyinkronkan progres ke server.";
+          setDependencyAlert(`⚠️ ${errMsg}`);
+          setTimeout(() => setDependencyAlert(null), 7000);
         }
       } catch (err) {
         console.warn("Failed to sync progress to API", err);
       }
     }
     setIsSavingProgress(false);
+    return true;
   };
 
   // Change status of a stage with strict form validation
@@ -517,21 +600,21 @@ export default function ThesisPage() {
 
     if (!isStageUnlocked(stageIndex, stages)) {
       setDependencyAlert(`⚠️ Tahap ${stageId} masih terkunci! Selesaikan dan dapatkan ACC Dospem pada Tahap ${stageId - 1} (${stages[stageIndex - 1].stageName}) terlebih dahulu.`);
-      setTimeout(() => setDependencyAlert(null), 5000);
+      setTimeout(() => setDependencyAlert(null), 6000);
       return;
     }
 
     const stage = stages[stageIndex];
     const isAcc = newStatus === "acc_dospem";
 
-    // Trigger validation: If trying to mark ACC / Selesai but form is not filled
+    // Trigger validation: If trying to mark ACC / Selesai but form has issues
     if (isAcc) {
-      const missing = getMissingRequiredFields(stage);
-      if (missing.length > 0) {
-        setDependencyAlert(`⚠️ Tidak dapat menandai selesai! Formulir Tahap ${stage.id} belum diisi lengkap. Harap lengkapi kolom: ${missing.join(", ")} terlebih dahulu.`);
+      const issues = getStageIssues(stage);
+      if (issues.length > 0) {
+        setDependencyAlert(`⚠️ Tidak dapat menandai ACC Dospem! Formulir Tahap ${stage.id} belum memenuhi syarat: ${describeIssues(issues)}. Harap lengkapi isian dengan benar.`);
         setExpandedStageId(stage.id);
         setFormErrorStageId(stage.id);
-        setTimeout(() => setDependencyAlert(null), 7000);
+        setTimeout(() => setDependencyAlert(null), 8000);
         return;
       }
     }
@@ -575,18 +658,25 @@ export default function ThesisPage() {
     }
   };
 
-  // Toggle checkbox with strict guard: Cannot check if form is not filled!
+  // Toggle checkbox with strict guard: Cannot check if form has issues!
   const handleToggleStageCheckbox = (stageId: number, checked: boolean) => {
-    const stage = stages.find((s) => s.id === stageId);
-    if (!stage) return;
+    const stageIndex = stages.findIndex((s) => s.id === stageId);
+    if (stageIndex === -1) return;
+    const stage = stages[stageIndex];
+
+    if (!isStageUnlocked(stageIndex, stages)) {
+      setDependencyAlert(`⚠️ Tahap ${stageId} masih terkunci! Selesaikan dan dapatkan ACC Dospem pada Tahap ${stageId - 1} (${stages[stageIndex - 1].stageName}) terlebih dahulu.`);
+      setTimeout(() => setDependencyAlert(null), 6000);
+      return;
+    }
 
     if (checked) {
-      const missing = getMissingRequiredFields(stage);
-      if (missing.length > 0) {
-        setDependencyAlert(`⚠️ Tidak dapat menceklis Tahap ${stage.id}! Formulir belum diisi lengkap. Harap lengkapi kolom wajib: ${missing.join(", ")} terlebih dahulu.`);
+      const issues = getStageIssues(stage);
+      if (issues.length > 0) {
+        setDependencyAlert(`⚠️ Tidak dapat menceklis selesai Tahap ${stage.id}! ${describeIssues(issues)}. Harap lengkapi formulir dengan data yang valid terlebih dahulu.`);
         setExpandedStageId(stage.id);
         setFormErrorStageId(stage.id);
-        setTimeout(() => setDependencyAlert(null), 7000);
+        setTimeout(() => setDependencyAlert(null), 8000);
         return;
       }
     }
@@ -594,15 +684,15 @@ export default function ThesisPage() {
     handleStageStatusChange(stageId, checked ? "acc_dospem" : "proses_bimbingan");
   };
 
-  // Save current stage form with trigger: Cannot save if required fields are empty
+  // Save current stage form with trigger: Cannot save if draft has invalid input
   const handleSaveCurrentStage = (stageId: number) => {
     const stage = stages.find((s) => s.id === stageId);
     if (!stage) return;
-    const missing = getMissingRequiredFields(stage);
-    if (missing.length > 0) {
-      setDependencyAlert(`⚠️ Formulir Tahap ${stage.id} (${stage.stageName}) belum dapat disimpan! Harap isi kolom wajib: ${missing.join(", ")}.`);
+    const draftIssues = getStageDraftIssues(stage);
+    if (draftIssues.length > 0) {
+      setDependencyAlert(`⚠️ Isian Tahap ${stage.id} (${stage.stageName}) belum valid: ${describeIssues(draftIssues)}. Perbaiki isian terlebih dahulu.`);
       setFormErrorStageId(stage.id);
-      setTimeout(() => setDependencyAlert(null), 7000);
+      setTimeout(() => setDependencyAlert(null), 8000);
       return;
     }
     setFormErrorStageId(null);
@@ -611,12 +701,12 @@ export default function ThesisPage() {
 
   // Complete current stage and advance to next stage with trigger validation
   const handleCompleteAndAdvance = (stage: ThesisStage) => {
-    const missing = getMissingRequiredFields(stage);
-    if (missing.length > 0) {
-      setDependencyAlert(`⚠️ Tidak dapat beralih ke tahap berikutnya! Formulir Tahap ${stage.id} (${stage.stageName}) belum diisi lengkap. Harap lengkapi: ${missing.join(", ")} terlebih dahulu.`);
+    const issues = getStageIssues(stage);
+    if (issues.length > 0) {
+      setDependencyAlert(`⚠️ Tidak dapat beralih ke tahap berikutnya! Formulir Tahap ${stage.id} (${stage.stageName}) belum memenuhi syarat: ${describeIssues(issues)}. Harap perbaiki dan lengkapi terlebih dahulu.`);
       setExpandedStageId(stage.id);
       setFormErrorStageId(stage.id);
-      setTimeout(() => setDependencyAlert(null), 7000);
+      setTimeout(() => setDependencyAlert(null), 8000);
       return;
     }
     setFormErrorStageId(null);
@@ -1976,42 +2066,52 @@ export default function ThesisPage() {
               </div>
             </div>
 
-            {/* Approved Title Banner */}
-            {stages[0]?.fields?.approvedTitle && (
-              <div
-                style={{
-                  background: "var(--surface-card)",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: "var(--radius-sm)",
-                  padding: "9px 12px",
-                  marginBottom: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  fontSize: 12.5,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Award size={15} color="var(--lime)" style={{ flexShrink: 0 }} />
-                  <div>
-                    <span style={{ color: "var(--text-muted)", fontSize: 11 }}>Judul Skripsi Disetujui (ACC):</span>
-                    <strong style={{ color: "var(--text-primary)", display: "block" }}>
-                      &quot;{stages[0].fields.approvedTitle}&quot;
-                    </strong>
-                  </div>
-                </div>
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => {
-                    setExpandedStageId(1);
+            {/* Approved / Draft Title Banner (Hanya muncul jika judul valid & bermakna) */}
+            {(() => {
+              const rawTitle = stages[0]?.fields?.approvedTitle;
+              const isStage1Acc = stages[0]?.status === "acc_dospem";
+              const isValidTitle =
+                Boolean(rawTitle && rawTitle.trim().length >= 20 && validateThesisField("approvedTitle", rawTitle) === null);
+              if (!isValidTitle) return null;
+
+              return (
+                <div
+                  style={{
+                    background: "var(--surface-card)",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "9px 12px",
+                    marginBottom: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    fontSize: 12.5,
                   }}
-                  style={{ fontSize: 11, flexShrink: 0 }}
                 >
-                  Ubah
-                </button>
-              </div>
-            )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Award size={15} color="var(--lime)" style={{ flexShrink: 0 }} />
+                    <div>
+                      <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                        {isStage1Acc ? "Judul Skripsi Disetujui (ACC):" : "Draf Pengajuan Judul:"}
+                      </span>
+                      <strong style={{ color: "var(--text-primary)", display: "block" }}>
+                        &quot;{rawTitle}&quot;
+                      </strong>
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      setExpandedStageId(1);
+                    }}
+                    style={{ fontSize: 11, flexShrink: 0 }}
+                  >
+                    Ubah
+                  </button>
+                </div>
+              );
+            })()}
 
             {/* Progress Bar & Badges */}
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -2205,29 +2305,51 @@ export default function ThesisPage() {
                   >
                     {/* Left: Checkbox + Number + Title */}
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 260 }}>
-                      {/* Checkbox with lock prevention */}
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          cursor: unlocked ? "pointer" : "not-allowed",
-                          margin: 0,
+                      {/* Checkbox with lock & validation prevention */}
+                      <div
+                        onClick={(e) => {
+                          if (!unlocked) {
+                            e.preventDefault();
+                            setDependencyAlert(`⚠️ Tahap ${stage.id} masih terkunci! Selesaikan Tahap ${stage.id - 1} terlebih dahulu.`);
+                            setTimeout(() => setDependencyAlert(null), 5000);
+                          } else if (!isAcc && !isFilled) {
+                            e.preventDefault();
+                            const issues = getStageIssues(stage);
+                            setDependencyAlert(`⚠️ Tidak dapat menceklis selesai Tahap ${stage.id}! ${describeIssues(issues)}. Lengkapi formulir dengan isian yang valid terlebih dahulu.`);
+                            setExpandedStageId(stage.id);
+                            setFormErrorStageId(stage.id);
+                            setTimeout(() => setDependencyAlert(null), 8000);
+                          }
                         }}
-                        title={!unlocked ? "Selesaikan tahapan sebelumnya terlebih dahulu" : !isFilled && !isAcc ? "Isi formulir dan catatan tahap ini terlebih dahulu untuk dapat menceklis" : isAcc ? "Batalkan status ACC" : "Tandai ACC Dospem & Selesai"}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          cursor: !unlocked ? "not-allowed" : (!isAcc && !isFilled) ? "not-allowed" : "pointer",
+                        }}
+                        title={
+                          !unlocked
+                            ? "Selesaikan tahapan sebelumnya terlebih dahulu"
+                            : !isFilled && !isAcc
+                            ? "Isi formulir dan catatan tahap ini dengan data valid terlebih dahulu untuk dapat menceklis"
+                            : isAcc
+                            ? "Batalkan status ACC"
+                            : "Tandai ACC Dospem & Selesai"
+                        }
                       >
                         <input
                           type="checkbox"
                           checked={isAcc}
-                          disabled={!unlocked}
+                          disabled={!unlocked || (!isAcc && !isFilled)}
                           onChange={(e) => handleToggleStageCheckbox(stage.id, e.target.checked)}
                           style={{
                             width: 18,
                             height: 18,
-                            cursor: unlocked ? "pointer" : "not-allowed",
+                            cursor: (!unlocked || (!isAcc && !isFilled)) ? "not-allowed" : "pointer",
                             accentColor: "var(--lime)",
+                            opacity: (!unlocked || (!isAcc && !isFilled)) ? 0.55 : 1,
                           }}
                         />
-                      </label>
+                      </div>
 
                       {/* Stage Number Badge */}
                       <div
@@ -2384,8 +2506,11 @@ export default function ThesisPage() {
 
                         {stage.fieldConfigs.map((f) => {
                           const val = stage.fields[f.key] || "";
-                          const isFieldEmpty = !val.trim();
-                          const isInvalid = hasFormError && f.required && isFieldEmpty;
+                          const rawError = val.trim() ? validateThesisField(f.key, val) : null;
+                          const emptyRequiredError =
+                            hasFormError && f.required && !val.trim() ? THESIS_REQUIRED_MESSAGE : null;
+                          const fieldError = rawError || emptyRequiredError;
+                          const isInvalid = Boolean(fieldError);
 
                           return (
                             <div key={f.key} className="form-group" style={{ margin: 0 }}>
@@ -2393,7 +2518,7 @@ export default function ThesisPage() {
                                 <label className="form-label" style={{ fontSize: 12, margin: 0, color: isInvalid ? "var(--coral)" : "var(--text-secondary)" }}>
                                   {f.label} {f.required && <span style={{ color: "var(--coral)", fontWeight: 700 }} title="Wajib diisi">*</span>}
                                 </label>
-                                {f.type === "url" && val.startsWith("http") && (
+                                {f.type === "url" && val.startsWith("http") && !rawError && (
                                   <a
                                     href={val}
                                     target="_blank"
@@ -2441,10 +2566,10 @@ export default function ThesisPage() {
                                   }}
                                 />
                               )}
-                              {isInvalid && (
+                              {fieldError && (
                                 <div style={{ fontSize: 11, color: "var(--coral)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                                  <AlertCircle size={12} />
-                                  <span>Kolom ini wajib diisi sebelum menyimpan atau beralih ke tahap berikutnya</span>
+                                  <AlertCircle size={12} style={{ flexShrink: 0 }} />
+                                  <span>{fieldError}</span>
                                 </div>
                               )}
                             </div>
