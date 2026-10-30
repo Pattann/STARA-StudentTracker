@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession, setCachedRoadmap } from "@/features/session/context";
 import { generateAcademicSummaryPdf } from "@/lib/pdf-export";
+import { getCompletedCreditsBounds } from "@/lib/academic-rules";
 import {
   AVATAR_OPTIONS,
   StudentAvatarBadge,
@@ -219,7 +220,21 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!token) return;
 
-    const parsedGpa = parseFloat(gpa);
+    const semInt = parseInt(currentSemester, 10) || 1;
+    const totalInt = parseInt(totalCurriculumCredits, 10) || 144;
+    const sksBounds = getCompletedCreditsBounds(semInt, totalInt);
+    if (!sksBounds.isLocked) {
+      if (completedCredits.trim() === "") {
+        showToast(`SKS selesai wajib diisi untuk Semester ${semInt} (${sksBounds.min}-${sksBounds.max} SKS).`, "error");
+        return;
+      }
+      const compInt = parseInt(completedCredits, 10);
+      if (Number.isNaN(compInt) || compInt < sksBounds.min || compInt > sksBounds.max) {
+        showToast(`Untuk Semester ${semInt}, SKS selesai harus di rentang ${sksBounds.min} hingga ${sksBounds.max} SKS.`, "error");
+        return;
+      }
+    }
+    const parsedGpa = semInt === 1 ? 0 : parseFloat(gpa);
     if (isNaN(parsedGpa) || parsedGpa < 0 || parsedGpa > 4.0) {
       showToast("IPK harus berada di rentang 0.00 hingga 4.00 (maksimal 4.00).", "error");
       return;
@@ -740,7 +755,12 @@ export default function ProfilePage() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">SKS Selesai</label>
+                <label className="form-label">
+                  {(() => {
+                    const b = getCompletedCreditsBounds(parseInt(currentSemester, 10) || 1, parseInt(totalCurriculumCredits, 10) || 144);
+                    return b.isLocked ? "SKS Selesai (Terkunci)" : `SKS Selesai (${b.min}-${b.max} SKS)`;
+                  })()}
+                </label>
                 <input
                   type="number"
                   min={0}

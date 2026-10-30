@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db/prisma";
 import { getDefaultTasksForSemester } from "@/server/curriculum/defaults";
+import { getCompletedCreditsBounds } from "@/lib/academic-rules";
 import { z } from "zod";
 
 const OnboardingSchema = z.object({
@@ -40,6 +41,19 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+    const currSem = data.currentSemester;
+    const sksBounds = getCompletedCreditsBounds(currSem, data.totalCurriculumCredits);
+
+    if (!sksBounds.isLocked) {
+      if (data.completedCredits < sksBounds.min || data.completedCredits > sksBounds.max) {
+        return NextResponse.json(
+          {
+            error: `Untuk Semester ${currSem}, SKS tuntas harus diisi minimal ${sksBounds.min} SKS dan maksimal ${sksBounds.max} SKS (17-24 SKS per semester lulus).`,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Resolve or create guest session
     let sessionToken = data.token;
@@ -69,18 +83,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Atomic fast creation: Academic Profile + Reminders + Initial Roadmap
-    const currSem = data.currentSemester;
-    const effectiveCompletedCredits =
-      currSem === 1
-        ? 0
-        : Math.min(data.totalCurriculumCredits, Math.max(0, data.completedCredits));
-    const effectiveGpa = currSem === 1 ? 0 : Math.min(4.0, Math.max(0.0, data.gpa));
+    const effectiveCompletedCredits = sksBounds.isLocked
+      ? 0
+      : Math.min(data.totalCurriculumCredits, Math.max(0, data.completedCredits));
+    const effectiveGpa = sksBounds.isLocked ? 0 : Math.min(4.0, Math.max(0.0, data.gpa));
     const activeSemCredits = getDefaultTasksForSemester(currSem, data.programName, true).reduce(
       (sum, t) => sum + (t.credits || 0),
       0
     );
     let targetSem = data.goals === "fast" ? 7 : 8;
     if (currSem > targetSem) targetSem = currSem + 1;
+    const pastSemCount = Math.max(0, currSem - 1);
+    const pastBaseCredits = pastSemCount > 0 ? Math.floor(effectiveCompletedCredits / pastSemCount) : 0;
+    const pastRemainder = pastSemCount > 0 ? effectiveCompletedCredits % pastSemCount : 0;
 
     await prisma.$transaction(async (tx) => {
       // 1. Create Academic Profile (TAK tracking completely disabled)
@@ -157,7 +172,33 @@ export async function POST(req: NextRequest) {
       for (let sem = 1; sem <= targetSem; sem++) {
         const isCurrent = sem === currSem;
         const isPast = sem < currSem;
-        const defaultTasks = getDefaultTasksForSemester(sem, data.programName, isCurrent);
+        const defaultTasks = getDefaultTasksForSemester(sem, data.programName, isCurrent).map((t) => ({ ...t }));
+
+        if (isPast && pastSemCount > 0) {
+          const desiredPastCredits = pastBaseCredits + (sem <= pastRemainder ? 1 : 0);
+          const courseIndices = defaultTasks
+            .map((t, idx) => (t.credits > 0 ? idx : -1))
+            .filter((idx) => idx >= 0);
+
+          if (courseIndices.length > 0) {
+            let currentSum = defaultTasks.reduce((sum, t) => sum + (t.credits || 0), 0);
+            let cursor = 0;
+            let guard = 0;
+            while (currentSum !== desiredPastCredits && guard < 100) {
+              const targetIdx = courseIndices[cursor % courseIndices.length];
+              if (currentSum < desiredPastCredits && defaultTasks[targetIdx].credits < 6) {
+                defaultTasks[targetIdx].credits += 1;
+                currentSum += 1;
+              } else if (currentSum > desiredPastCredits && defaultTasks[targetIdx].credits > 1) {
+                defaultTasks[targetIdx].credits -= 1;
+                currentSum -= 1;
+              }
+              cursor += 1;
+              guard += 1;
+            }
+          }
+        }
+
         const academicCredits = defaultTasks.reduce((sum, t) => sum + (t.credits || 0), 0);
 
         const plan = await tx.semesterPlan.create({
