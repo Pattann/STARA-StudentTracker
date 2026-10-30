@@ -6,7 +6,8 @@ import { SCENARIO_TYPES } from "@/lib/constants";
 import CustomAIPlan from "./CustomAIPlan";
 import {
   Zap, AlertCircle, CheckCircle2, History, Play, ArrowRight, Sparkles, RefreshCw,
-  Lightbulb, MessageSquare, Bot, User, Send
+  Lightbulb, MessageSquare, Bot, User, Send, Briefcase, Compass, TrendingUp, Globe,
+  CalendarClock, Check
 } from "lucide-react";
 
 type ScenarioType = keyof typeof SCENARIO_TYPES;
@@ -50,10 +51,59 @@ interface SimulationResult {
 
 const CUSTOM_PLAN_TITLE = "Rencana Kustom dengan AI";
 
+interface ScenarioCardItem {
+  id: ScenarioType | "custom";
+  title: string;
+  badge?: string;
+  description: string;
+  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+}
+
+const ALL_SCENARIOS: ScenarioCardItem[] = [
+  {
+    id: "magang",
+    title: "Magang",
+    description: "Simulasikan dampak magang terhadap jadwal kuliah dan SKS.",
+    icon: Briefcase,
+  },
+  {
+    id: "mbkm",
+    title: "MBKM / Program di Luar Prodi",
+    description: "Evaluasi program MBKM atau belajar di luar prodi.",
+    icon: Compass,
+  },
+  {
+    id: "advanced_course",
+    title: "Mata Kuliah Tingkat Atas",
+    description: "Ambil mata kuliah tingkat atas lebih awal dari jadwal normal.",
+    icon: TrendingUp,
+  },
+  {
+    id: "exchange",
+    title: "Pertukaran Mahasiswa",
+    description: "Ikuti program pertukaran mahasiswa ke kampus lain.",
+    icon: Globe,
+  },
+  {
+    id: "cuti",
+    title: "Cuti Akademik",
+    description: "Rencanakan cuti akademik dan dampaknya terhadap kelulusan.",
+    icon: CalendarClock,
+  },
+  {
+    id: "custom",
+    title: "Rencana Kustom dengan AI",
+    badge: "AI Interaktif",
+    description: "Susun rencana studi sendiri bersama AI melalui tanya jawab bebas dan rekomendasi alternatif.",
+    icon: Sparkles,
+  },
+];
+
 export default function SimulatorPage() {
   const { token } = useSession();
   const [step, setStep] = useState<"select" | "configure" | "result" | "custom">("select");
   const [selectedType, setSelectedType] = useState<ScenarioType | null>(null);
+  const [selectedScenario, setSelectedScenario] = useState<ScenarioType | "custom" | null>(null);
   const [customSelected, setCustomSelected] = useState(false);
   const [params, setParams] = useState<Record<string, string | number | boolean>>({});
   const [result, setResult] = useState<SimulationResult | null>(null);
@@ -137,6 +187,7 @@ export default function SimulatorPage() {
       const sem = urlParams.get("semester");
       if (scenario && SCENARIO_TYPES[scenario]) {
         setSelectedType(scenario);
+        setSelectedScenario(scenario);
         if (sem) {
           setParams((prev) => ({ ...prev, startSemester: parseInt(sem) || 6 }));
         }
@@ -265,78 +316,209 @@ export default function SimulatorPage() {
             </span>
           </div>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>
-            Jalur 1: Pilih skenario yang sudah tersedia
+            Pilih Skenario Akademik
           </h2>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 14px" }}>
-            Pilih satu, lalu klik Lanjutkan. STARA menghitung dampaknya ke jadwal lulusmu.
+          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 16px" }}>
+            Pilih salah satu skenario perkuliahan yang ingin kamu evaluasi, atau susun rencana kustom bebas bersama STARA AI.
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
-            {(Object.entries(SCENARIO_TYPES) as [ScenarioType, string][]).map(([type, label]) => (
-              <div
-                key={type}
-                className={`scenario-card ${selectedType === type ? "selected" : ""}`}
-                onClick={() => { setSelectedType(type); setCustomSelected(false); }}
-                role="radio"
-                tabIndex={0}
-                aria-checked={selectedType === type}
-                onKeyDown={(e) => e.key === "Enter" && (setSelectedType(type), setCustomSelected(false))}
-              >
-                <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 4 }}>
-                  {label}
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+            {ALL_SCENARIOS.map((item) => {
+              const isSelected = selectedScenario === item.id;
+              const IconComp = item.icon;
+
+              return (
+                <div
+                  key={item.id}
+                  className={`scenario-card ${isSelected ? "selected" : ""}`}
+                  onClick={() => {
+                    setSelectedScenario(item.id);
+                    if (item.id === "custom") {
+                      setSelectedType(null);
+                      setCustomSelected(true);
+                    } else {
+                      setSelectedType(item.id);
+                      setCustomSelected(false);
+                    }
+                  }}
+                  onDoubleClick={() => {
+                    setSelectedScenario(item.id);
+                    if (item.id === "custom") {
+                      setSelectedType(null);
+                      setCustomSelected(true);
+                      setStep("custom");
+                    } else {
+                      setSelectedType(item.id);
+                      setCustomSelected(false);
+                      setStep("configure");
+                    }
+                  }}
+                  role="radio"
+                  tabIndex={0}
+                  aria-checked={isSelected}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setSelectedScenario(item.id);
+                      if (item.id === "custom") {
+                        setSelectedType(null);
+                        setCustomSelected(true);
+                        setStep("custom");
+                      } else {
+                        setSelectedType(item.id);
+                        setCustomSelected(false);
+                        setStep("configure");
+                      }
+                    }
+                  }}
+                  style={{
+                    background: isSelected ? "#FFFDF9" : "#FFFFFF",
+                    border: isSelected ? "2px solid #D97706" : "1px solid #E2E8F0",
+                    borderRadius: 14,
+                    padding: "18px 20px",
+                    cursor: "pointer",
+                    transition: "all 0.18s ease",
+                    boxShadow: isSelected
+                      ? "0 6px 20px rgba(217, 119, 6, 0.12)"
+                      : "0 1px 3px rgba(0, 0, 0, 0.02)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    minHeight: 144,
+                    position: "relative",
+                  }}
+                >
+                  <div>
+                    {/* Top: Minimalist Icon Box + Check/Radio Indicator */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <div
+                        style={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: 10,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: isSelected ? "#FEF3C7" : "#F8FAFC",
+                          border: isSelected ? "1px solid #FCD34D" : "1px solid #E2E8F0",
+                          transition: "all 0.18s ease",
+                        }}
+                      >
+                        <IconComp
+                          size={19}
+                          color={isSelected ? "#B45309" : "#475569"}
+                          strokeWidth={isSelected ? 2.3 : 2}
+                        />
+                      </div>
+
+                      {isSelected ? (
+                        <div
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: "50%",
+                            background: "#D97706",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 2px 6px rgba(217, 119, 6, 0.3)",
+                          }}
+                        >
+                          <Check size={12} color="#FFFFFF" strokeWidth={3} />
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            width: 18,
+                            height: 18,
+                            borderRadius: "50%",
+                            border: "1.5px solid #CBD5E1",
+                            background: "#FFFFFF",
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    {/* Title & Optional AI Badge */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6, flexWrap: "wrap" }}>
+                      <span
+                        style={{
+                          fontSize: 14.5,
+                          fontWeight: 700,
+                          color: isSelected ? "#92400E" : "var(--text-primary)",
+                          letterSpacing: "-0.01em",
+                        }}
+                      >
+                        {item.title}
+                      </span>
+                      {item.badge && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "1.5px 7px",
+                            borderRadius: 6,
+                            background: isSelected ? "rgba(217, 119, 6, 0.2)" : "rgba(217, 119, 6, 0.1)",
+                            color: "#B45309",
+                            border: "1px solid rgba(217, 119, 6, 0.25)",
+                          }}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    <p
+                      style={{
+                        fontSize: 12.5,
+                        color: "var(--text-secondary)",
+                        lineHeight: 1.45,
+                        margin: 0,
+                      }}
+                    >
+                      {item.description}
+                    </p>
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                  {scenarioDescriptions[type]}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-          <div style={{ marginTop: 16 }}>
+
+          {/* Unified Bottom Action */}
+          <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 14 }}>
             <button
               className="btn btn-primary"
-              disabled={!selectedType}
-              onClick={() => setStep("configure")}
+              disabled={!selectedScenario}
+              onClick={() => {
+                if (selectedScenario === "custom") {
+                  setStep("custom");
+                } else if (selectedScenario) {
+                  setSelectedType(selectedScenario);
+                  setStep("configure");
+                }
+              }}
+              style={{
+                padding: "9px 22px",
+                fontSize: 13,
+                fontWeight: 700,
+                gap: 7,
+                borderRadius: 9,
+                background: selectedScenario ? "#D97706" : "#E2E8F0",
+                borderColor: selectedScenario ? "#B45309" : "#CBD5E1",
+                color: selectedScenario ? "#FFFFFF" : "#94A3B8",
+                boxShadow: selectedScenario ? "0 4px 12px rgba(217, 119, 6, 0.28)" : "none",
+                cursor: selectedScenario ? "pointer" : "not-allowed",
+                transition: "all 0.18s ease",
+              }}
             >
-              Lanjutkan
-              <ArrowRight size={16} />
+              <span>{selectedScenario === "custom" ? "Mulai Rencana AI" : "Lanjutkan"}</span>
+              <ArrowRight size={15} />
             </button>
-            {!selectedType && (
-              <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 10 }}>
-                Pilih satu skenario dulu
+            {!selectedScenario && (
+              <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+                Pilih salah satu skenario untuk melanjutkan
               </span>
             )}
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "28px 0 18px" }}>
-            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)" }}>ATAU</span>
-            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          </div>
-
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>
-            Jalur 2: Susun rencana sendiri dengan AI
-          </h2>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 14px" }}>
-            Pilih ini jika kondisimu tidak cocok dengan skenario di atas. Kamu bisa bertanya bebas ke AI.
-          </p>
-          <div
-            className="scenario-card"
-            onClick={() => { setCustomSelected(true); setSelectedType(null); setStep("custom"); }}
-            role="button"
-            tabIndex={0}
-            id="scenario-card-custom-ai"
-            style={{ maxWidth: 520 }}
-            onKeyDown={(e) => e.key === "Enter" && (setCustomSelected(true), setSelectedType(null), setStep("custom"))}
-          >
-            <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
-              <Sparkles size={14} color="var(--lime)" />
-              {CUSTOM_PLAN_TITLE}
-            </div>
-            <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              {CUSTOM_PLAN_DESC}
-            </div>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--amber-deep)", marginTop: 8, display: "flex", alignItems: "center", gap: 4 }}>
-              Buka <ArrowRight size={13} />
-            </div>
           </div>
         </div>
       )}
@@ -471,7 +653,7 @@ export default function SimulatorPage() {
               </div>
             </div>
             <div className="comparison-panel scenario">
-              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--lime)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: "#D97706", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Jika Kamu Memilih: {selectedType && SCENARIO_TYPES[selectedType]}
               </div>
               <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text-primary)", marginBottom: 4 }}>

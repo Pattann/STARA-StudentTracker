@@ -1193,8 +1193,8 @@ select.form-input {
 
 .scenario-card:hover,
 .scenario-card.selected {
-  border-color: var(--lime);
-  background: rgba(215, 243, 106, 0.05);
+  border-color: #D97706;
+  background: rgba(217, 119, 6, 0.04);
 }
 
 .comparison-grid {
