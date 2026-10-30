@@ -64,6 +64,7 @@ type StageFieldConfig = {
   type: "text" | "textarea" | "date" | "number" | "url";
   placeholder?: string;
   helper?: string;
+  required?: boolean;
 };
 
 type ThesisStage = {
@@ -94,8 +95,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "approvedTitle", label: "Judul Skripsi yang Diajukan / Di-ACC", type: "text", placeholder: "Contoh: Penerapan Algoritma Graph Neural Network untuk Deteksi Penipuan Finansial" },
-      { key: "supervisor1", label: "Dosen Pembimbing 1 (Utama)", type: "text", placeholder: "Nama lengkap beserta gelar akademik pembimbing 1" },
+      { key: "approvedTitle", label: "Judul Skripsi yang Diajukan / Di-ACC", type: "text", required: true, placeholder: "Contoh: Penerapan Algoritma Graph Neural Network untuk Deteksi Penipuan Finansial" },
+      { key: "supervisor1", label: "Dosen Pembimbing 1 (Utama)", type: "text", required: true, placeholder: "Nama lengkap beserta gelar akademik pembimbing 1" },
       { key: "supervisor2", label: "Dosen Pembimbing 2 (Pendamping)", type: "text", placeholder: "Nama lengkap beserta gelar akademik pembimbing 2 (jika ada)" },
       { key: "notes", label: "Catatan & Syarat Calon Dosen Pembimbing", type: "textarea", placeholder: "Catatan perbaikan redaksi judul, arahan fokus, atau syarat awal dospem..." },
     ],
@@ -112,8 +113,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "researchGap", label: "Celah Riset (Research Gap) yang Diisi", type: "textarea", placeholder: "Keterbatasan/kelemahan riset sebelumnya yang akan diselesaikan pada penelitian ini..." },
-      { key: "problemStatements", label: "Rumusan Masalah Utama (Pertanyaan Penelitian)", type: "textarea", placeholder: "1. Bagaimana rancangan arsitektur... \n2. Seberapa besar peningkatan performa..." },
+      { key: "researchGap", label: "Celah Riset (Research Gap) yang Diisi", type: "textarea", required: true, placeholder: "Keterbatasan/kelemahan riset sebelumnya yang akan diselesaikan pada penelitian ini..." },
+      { key: "problemStatements", label: "Rumusan Masalah Utama (Pertanyaan Penelitian)", type: "textarea", required: true, placeholder: "1. Bagaimana rancangan arsitektur... \n2. Seberapa besar peningkatan performa..." },
       { key: "researchScope", label: "Batasan Masalah & Asumsi Riset", type: "text", placeholder: "Contoh: Dataset terbatas pada transaksi perbankan ritel Indonesia tahun 2024" },
       { key: "notes", label: "Catatan Dospem Terkait Rumusan Masalah", type: "textarea", placeholder: "Masukan dosen pembimbing terhadap ketajaman dan kelayakan masalah..." },
     ],
@@ -130,8 +131,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "primaryReferences", label: "Daftar 3-5 Paper Referensi Utama (Jurnal/Konferensi)", type: "textarea", placeholder: "1. Pratama et al. (2024) - GNN Fraud Detection (IEEE Access)\n2. ..." },
-      { key: "theoreticalFramework", label: "Teori / Model Konseptual Utama yang Digunakan", type: "text", placeholder: "Contoh: Graph Convolutional Network, Teori Kriminologi Finansial" },
+      { key: "primaryReferences", label: "Daftar 3-5 Paper Referensi Utama (Jurnal/Konferensi)", type: "textarea", required: true, placeholder: "1. Pratama et al. (2024) - GNN Fraud Detection (IEEE Access)\n2. ..." },
+      { key: "theoreticalFramework", label: "Teori / Model Konseptual Utama yang Digunakan", type: "text", required: true, placeholder: "Contoh: Graph Convolutional Network, Teori Kriminologi Finansial" },
       { key: "notes", label: "Catatan Pembimbing Terkait Kelengkapan Pustaka", type: "textarea", placeholder: "Arahan dospem mengenai jurnal kunci yang wajib disitasi..." },
     ],
   },
@@ -147,8 +148,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 1 (Google Drive / Docs)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
-      { key: "bgSummary", label: "Intisari Latar Belakang (Mengapa Riset Ini Sangat Mendesak)", type: "textarea", placeholder: "Ringkasan urgensi masalah dan alasan pemilihan solusi metode..." },
+      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 1 (Google Drive / Docs)", type: "url", required: true, placeholder: "https://docs.google.com/document/d/..." },
+      { key: "bgSummary", label: "Intisari Latar Belakang (Mengapa Riset Ini Sangat Mendesak)", type: "textarea", required: true, placeholder: "Ringkasan urgensi masalah dan alasan pemilihan solusi metode..." },
       { key: "supervisorNotes", label: "Catatan & Masukan Revisi Dospem BAB 1", type: "textarea", placeholder: "Catatan perbaikan paragraf latar belakang, tujuan riset, atau sistematika..." },
     ],
   },
@@ -164,8 +165,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 2 (Google Drive / Docs)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
-      { key: "keyTheories", label: "Teori Kunci & Bagan Kerangka Pemikiran", type: "textarea", placeholder: "Ringkasan teori pendukung dan alur logika kerangka berpikir penelitian..." },
+      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 2 (Google Drive / Docs)", type: "url", required: true, placeholder: "https://docs.google.com/document/d/..." },
+      { key: "keyTheories", label: "Teori Kunci & Bagan Kerangka Pemikiran", type: "textarea", required: true, placeholder: "Ringkasan teori pendukung dan alur logika kerangka berpikir penelitian..." },
       { key: "supervisorNotes", label: "Catatan & Masukan Revisi Dospem BAB 2", type: "textarea", placeholder: "Revisi dospem terkait relevansi teori dan kelengkapan tinjauan pustaka..." },
     ],
   },
@@ -181,8 +182,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 3 (Google Drive / Docs)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
-      { key: "methodDetails", label: "Metode, Arsitektur & Metrik Pengujian yang Digunakan", type: "textarea", placeholder: "Metode: GCN + Attention. Metrik: Accuracy, Precision, Recall, F1-Score, AUC-ROC..." },
+      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 3 (Google Drive / Docs)", type: "url", required: true, placeholder: "https://docs.google.com/document/d/..." },
+      { key: "methodDetails", label: "Metode, Arsitektur & Metrik Pengujian yang Digunakan", type: "textarea", required: true, placeholder: "Metode: GCN + Attention. Metrik: Accuracy, Precision, Recall, F1-Score, AUC-ROC..." },
       { key: "supervisorNotes", label: "Catatan & Masukan Revisi Dospem BAB 3", type: "textarea", placeholder: "Validasi dosen pembimbing atas rancangan instrumen/metode penelitian..." },
     ],
   },
@@ -198,8 +199,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "semproDate", label: "Tanggal Pelaksanaan Sempro", type: "date" },
-      { key: "examiners", label: "Nama Dewan Penguji Sempro", type: "text", placeholder: "Contoh: Dr. Budi, M.T. & Dr. Siti, M.Kom" },
+      { key: "semproDate", label: "Tanggal Pelaksanaan Sempro", type: "date", required: true },
+      { key: "examiners", label: "Nama Dewan Penguji Sempro", type: "text", required: true, placeholder: "Contoh: Dr. Budi, M.T. & Dr. Siti, M.Kom" },
       { key: "revisionNotes", label: "Rangkuman Catatan & Revisi Dewan Penguji Sempro", type: "textarea", placeholder: "Poin revisi penguji: tambahkan baseline komparasi, perjelas teknik sampling..." },
       { key: "semproDocLink", label: "Tautan Berita Acara / Lembar Pengesahan Sempro", type: "url", placeholder: "https://drive.google.com/file/d/..." },
     ],
@@ -216,8 +217,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "repoLink", label: "Tautan Repositori Kode / Dataset (GitHub / GitLab / Drive)", type: "url", placeholder: "https://github.com/username/thesis-research" },
-      { key: "progressNotes", label: "Ringkasan Hasil Eksperimen Sementara & Kendala Teknis", type: "textarea", placeholder: "Progres koding: model telah di-training 50 epoch, akurasi mencapai 91.4%..." },
+      { key: "repoLink", label: "Tautan Repositori Kode / Dataset (GitHub / GitLab / Drive)", type: "url", required: true, placeholder: "https://github.com/username/thesis-research" },
+      { key: "progressNotes", label: "Ringkasan Hasil Eksperimen Sementara & Kendala Teknis", type: "textarea", required: true, placeholder: "Progres koding: model telah di-training 50 epoch, akurasi mencapai 91.4%..." },
       { key: "supervisorNotes", label: "Catatan Bimbingan Rutin & Arahan Pembimbing", type: "textarea", placeholder: "Arahan pembimbing: coba lakukan tuning hyperparameter learning rate..." },
     ],
   },
@@ -233,8 +234,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 4 (Google Drive / Docs)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
-      { key: "keyFindings", label: "Temuan Kunci yang Menjawab Rumusan Masalah BAB 1", type: "textarea", placeholder: "Model GNN berhasil meningkatkan F1-Score sebesar 7.2% dibanding baseline Random Forest..." },
+      { key: "documentLink", label: "Tautan Naskah Dokumen BAB 4 (Google Drive / Docs)", type: "url", required: true, placeholder: "https://docs.google.com/document/d/..." },
+      { key: "keyFindings", label: "Temuan Kunci yang Menjawab Rumusan Masalah BAB 1", type: "textarea", required: true, placeholder: "Model GNN berhasil meningkatkan F1-Score sebesar 7.2% dibanding baseline Random Forest..." },
       { key: "supervisorNotes", label: "Catatan & Masukan Revisi Dospem BAB 4", type: "textarea", placeholder: "Revisi dospem: perdalam analisis perbandingan pada tabel 4.2..." },
     ],
   },
@@ -250,8 +251,8 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "turnitinScore", label: "Skor Plagiarisme Turnitin (%)", type: "text", placeholder: "Contoh: 14% (Maksimal batas kampus: <= 20%)" },
-      { key: "documentLink", label: "Tautan Naskah Lengkap BAB 1–5 (ACC Dospem Maju Sidang)", type: "url", placeholder: "https://docs.google.com/document/d/..." },
+      { key: "turnitinScore", label: "Skor Plagiarisme Turnitin (%)", type: "text", required: true, placeholder: "Contoh: 14% (Maksimal batas kampus: <= 20%)" },
+      { key: "documentLink", label: "Tautan Naskah Lengkap BAB 1–5 (ACC Dospem Maju Sidang)", type: "url", required: true, placeholder: "https://docs.google.com/document/d/..." },
       { key: "articleDraftLink", label: "Tautan Draf Artikel Jurnal / Publikasi Ilmiah", type: "url", placeholder: "https://docs.google.com/document/d/..." },
       { key: "supervisorNotes", label: "Pernyataan ACC Pembimbing untuk Mendaftar Sidang Sarjana", type: "textarea", placeholder: "Pernyataan resmi dospem bahwa naskah telah memenuhi syarat kelayakan ujian sidang..." },
     ],
@@ -268,14 +269,33 @@ const DEFAULT_11_STAGES: ThesisStage[] = [
     status: "belum_dimulai",
     fields: {},
     fieldConfigs: [
-      { key: "defenseDate", label: "Tanggal Pelaksanaan Sidang Sarjana", type: "date" },
-      { key: "defenseExaminers", label: "Dewan Penguji Sidang Sarjana", type: "text", placeholder: "Ketua Penguji: Dr. ..., Anggota Penguji: Dr. ..." },
-      { key: "defenseScore", label: "Nilai Akhir / Predikat Kelulusan", type: "text", placeholder: "Contoh: Nilai A (89.0) / Lulus dengan Pujian (Cumlaude)" },
+      { key: "defenseDate", label: "Tanggal Pelaksanaan Sidang Sarjana", type: "date", required: true },
+      { key: "defenseExaminers", label: "Dewan Penguji Sidang Sarjana", type: "text", required: true, placeholder: "Ketua Penguji: Dr. ..., Anggota Penguji: Dr. ..." },
+      { key: "defenseScore", label: "Nilai Akhir / Predikat Kelulusan", type: "text", required: true, placeholder: "Contoh: Nilai A (89.0) / Lulus dengan Pujian (Cumlaude)" },
       { key: "finalRepoLink", label: "Tautan Naskah Final / Repositori Perpustakaan Kampus", type: "url", placeholder: "https://openlibrary.kampus.ac.id/..." },
       { key: "notes", label: "Catatan Kelulusan & Rencana Pasca-Lulus", type: "textarea", placeholder: "Revisi penguji yang telah di-ACC, rencana karier atau studi lanjut..." },
     ],
   },
 ];
+
+
+function getMissingRequiredFields(stage: ThesisStage): string[] {
+  const missing: string[] = [];
+  const requiredConfigs = stage.fieldConfigs.filter((f) => f.required);
+  const configsToCheck = requiredConfigs.length > 0 ? requiredConfigs : [stage.fieldConfigs[0]];
+
+  for (const cfg of configsToCheck) {
+    const val = stage.fields?.[cfg.key];
+    if (!val || typeof val !== "string" || val.trim() === "") {
+      missing.push(cfg.label);
+    }
+  }
+  return missing;
+}
+
+function isStageFormFilled(stage: ThesisStage): boolean {
+  return getMissingRequiredFields(stage).length === 0;
+}
 
 function mergeSavedStages(defaults: ThesisStage[], savedStages: any[]): ThesisStage[] {
   if (!Array.isArray(savedStages) || savedStages.length === 0) return defaults;
@@ -358,6 +378,7 @@ export default function ThesisPage() {
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [dependencyAlert, setDependencyAlert] = useState<string | null>(null);
+  const [formErrorStageId, setFormErrorStageId] = useState<number | null>(null);
 
   // Fetch academic profile for auto-prefill
   useEffect(() => {
@@ -489,7 +510,7 @@ export default function ThesisPage() {
     setIsSavingProgress(false);
   };
 
-  // Change status of a stage
+  // Change status of a stage with strict form validation
   const handleStageStatusChange = (stageId: number, newStatus: StageStatus) => {
     const stageIndex = stages.findIndex((s) => s.id === stageId);
     if (stageIndex === -1) return;
@@ -500,8 +521,22 @@ export default function ThesisPage() {
       return;
     }
 
-    const updated = [...stages];
+    const stage = stages[stageIndex];
     const isAcc = newStatus === "acc_dospem";
+
+    // Trigger validation: If trying to mark ACC / Selesai but form is not filled
+    if (isAcc) {
+      const missing = getMissingRequiredFields(stage);
+      if (missing.length > 0) {
+        setDependencyAlert(`⚠️ Tidak dapat menandai selesai! Formulir Tahap ${stage.id} belum diisi lengkap. Harap lengkapi kolom: ${missing.join(", ")} terlebih dahulu.`);
+        setExpandedStageId(stage.id);
+        setFormErrorStageId(stage.id);
+        setTimeout(() => setDependencyAlert(null), 7000);
+        return;
+      }
+    }
+
+    const updated = [...stages];
 
     // If reverting from ACC to an unapproved state, adjust subsequent stages
     if (updated[stageIndex].status === "acc_dospem" && !isAcc) {
@@ -532,6 +567,7 @@ export default function ThesisPage() {
 
     setStages(updated);
     saveStagesProgress(updated);
+    setFormErrorStageId(null);
 
     // Auto expand next stage if this one just became ACC
     if (isAcc && stageIndex + 1 < updated.length) {
@@ -539,9 +575,69 @@ export default function ThesisPage() {
     }
   };
 
-  // Toggle checkbox
+  // Toggle checkbox with strict guard: Cannot check if form is not filled!
   const handleToggleStageCheckbox = (stageId: number, checked: boolean) => {
+    const stage = stages.find((s) => s.id === stageId);
+    if (!stage) return;
+
+    if (checked) {
+      const missing = getMissingRequiredFields(stage);
+      if (missing.length > 0) {
+        setDependencyAlert(`⚠️ Tidak dapat menceklis Tahap ${stage.id}! Formulir belum diisi lengkap. Harap lengkapi kolom wajib: ${missing.join(", ")} terlebih dahulu.`);
+        setExpandedStageId(stage.id);
+        setFormErrorStageId(stage.id);
+        setTimeout(() => setDependencyAlert(null), 7000);
+        return;
+      }
+    }
+    setFormErrorStageId(null);
     handleStageStatusChange(stageId, checked ? "acc_dospem" : "proses_bimbingan");
+  };
+
+  // Save current stage form with trigger: Cannot save if required fields are empty
+  const handleSaveCurrentStage = (stageId: number) => {
+    const stage = stages.find((s) => s.id === stageId);
+    if (!stage) return;
+    const missing = getMissingRequiredFields(stage);
+    if (missing.length > 0) {
+      setDependencyAlert(`⚠️ Formulir Tahap ${stage.id} (${stage.stageName}) belum dapat disimpan! Harap isi kolom wajib: ${missing.join(", ")}.`);
+      setFormErrorStageId(stage.id);
+      setTimeout(() => setDependencyAlert(null), 7000);
+      return;
+    }
+    setFormErrorStageId(null);
+    saveStagesProgress();
+  };
+
+  // Complete current stage and advance to next stage with trigger validation
+  const handleCompleteAndAdvance = (stage: ThesisStage) => {
+    const missing = getMissingRequiredFields(stage);
+    if (missing.length > 0) {
+      setDependencyAlert(`⚠️ Tidak dapat beralih ke tahap berikutnya! Formulir Tahap ${stage.id} (${stage.stageName}) belum diisi lengkap. Harap lengkapi: ${missing.join(", ")} terlebih dahulu.`);
+      setExpandedStageId(stage.id);
+      setFormErrorStageId(stage.id);
+      setTimeout(() => setDependencyAlert(null), 7000);
+      return;
+    }
+    setFormErrorStageId(null);
+    handleStageStatusChange(stage.id, "acc_dospem");
+  };
+
+  // Accordion toggle guarded for locked stages
+  const handleToggleExpandStage = (targetStage: ThesisStage, idx: number) => {
+    const unlocked = isStageUnlocked(idx, stages);
+    if (!unlocked) {
+      const prevStage = stages[idx - 1];
+      const prevMissing = getMissingRequiredFields(prevStage);
+      if (prevMissing.length > 0) {
+        setDependencyAlert(`⚠️ Tahap ${targetStage.id} masih terkunci! Anda harus mengisi formulir dan menyelesaikan Tahap ${targetStage.id - 1} (${prevStage.stageName}) terlebih dahulu.`);
+      } else {
+        setDependencyAlert(`⚠️ Tahap ${targetStage.id} masih terkunci! Tandai selesai atau dapatkan ACC Dospem pada Tahap ${targetStage.id - 1} terlebih dahulu.`);
+      }
+      setTimeout(() => setDependencyAlert(null), 6000);
+      return;
+    }
+    setExpandedStageId(expandedStageId === targetStage.id ? null : targetStage.id);
   };
 
   // Field change
@@ -2074,6 +2170,8 @@ export default function ThesisPage() {
               const isAcc = stage.status === "acc_dospem";
               const isExpanded = expandedStageId === stage.id;
               const isCurrent = stage.id === currentActiveStage.id && !isAcc;
+              const isFilled = isStageFormFilled(stage);
+              const hasFormError = formErrorStageId === stage.id;
 
               return (
                 <div
@@ -2115,7 +2213,7 @@ export default function ThesisPage() {
                           cursor: unlocked ? "pointer" : "not-allowed",
                           margin: 0,
                         }}
-                        title={unlocked ? (isAcc ? "Batalkan status ACC" : "Tandai ACC Dospem") : "Selesaikan tahapan sebelumnya terlebih dahulu"}
+                        title={!unlocked ? "Selesaikan tahapan sebelumnya terlebih dahulu" : !isFilled && !isAcc ? "Isi formulir dan catatan tahap ini terlebih dahulu untuk dapat menceklis" : isAcc ? "Batalkan status ACC" : "Tandai ACC Dospem & Selesai"}
                       >
                         <input
                           type="checkbox"
@@ -2214,12 +2312,12 @@ export default function ThesisPage() {
                         <option value="belum_dimulai">⚪ Belum Dimulai</option>
                         <option value="proses_bimbingan">🔵 Proses Bimbingan</option>
                         <option value="revisi_dospem">🟠 Revisi Dospem</option>
-                        <option value="acc_dospem">🟢 ACC Dospem / Selesai</option>
+                        <option value="acc_dospem" disabled={!isFilled && !isAcc}>🟢 ACC Dospem / Selesai {!isFilled && !isAcc ? "(Form Belum Diisi)" : ""}</option>
                       </select>
 
                       <button
                         className="btn btn-ghost btn-sm"
-                        onClick={() => setExpandedStageId(isExpanded ? null : stage.id)}
+                        onClick={() => handleToggleExpandStage(stage, idx)}
                         style={{ fontSize: 11, padding: "4px 8px", gap: 4 }}
                         title="Buka / Tutup Form & Masukan Dospem"
                       >
@@ -2286,11 +2384,14 @@ export default function ThesisPage() {
 
                         {stage.fieldConfigs.map((f) => {
                           const val = stage.fields[f.key] || "";
+                          const isFieldEmpty = !val.trim();
+                          const isInvalid = hasFormError && f.required && isFieldEmpty;
+
                           return (
                             <div key={f.key} className="form-group" style={{ margin: 0 }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                <label className="form-label" style={{ fontSize: 12, margin: 0 }}>
-                                  {f.label}
+                                <label className="form-label" style={{ fontSize: 12, margin: 0, color: isInvalid ? "var(--coral)" : "var(--text-secondary)" }}>
+                                  {f.label} {f.required && <span style={{ color: "var(--coral)", fontWeight: 700 }} title="Wajib diisi">*</span>}
                                 </label>
                                 {f.type === "url" && val.startsWith("http") && (
                                   <a
@@ -2311,8 +2412,16 @@ export default function ThesisPage() {
                                   value={val}
                                   disabled={!unlocked}
                                   placeholder={f.placeholder}
-                                  onChange={(e) => handleStageFieldChange(stage.id, f.key, e.target.value)}
-                                  style={{ fontSize: 12.5, resize: "vertical" }}
+                                  onChange={(e) => {
+                                    handleStageFieldChange(stage.id, f.key, e.target.value);
+                                    if (formErrorStageId === stage.id) setFormErrorStageId(null);
+                                  }}
+                                  style={{
+                                    fontSize: 12.5,
+                                    resize: "vertical",
+                                    borderColor: isInvalid ? "var(--coral)" : undefined,
+                                    background: isInvalid ? "rgba(239, 68, 68, 0.05)" : undefined,
+                                  }}
                                 />
                               ) : (
                                 <input
@@ -2321,9 +2430,22 @@ export default function ThesisPage() {
                                   value={val}
                                   disabled={!unlocked}
                                   placeholder={f.placeholder}
-                                  onChange={(e) => handleStageFieldChange(stage.id, f.key, e.target.value)}
-                                  style={{ fontSize: 12.5 }}
+                                  onChange={(e) => {
+                                    handleStageFieldChange(stage.id, f.key, e.target.value);
+                                    if (formErrorStageId === stage.id) setFormErrorStageId(null);
+                                  }}
+                                  style={{
+                                    fontSize: 12.5,
+                                    borderColor: isInvalid ? "var(--coral)" : undefined,
+                                    background: isInvalid ? "rgba(239, 68, 68, 0.05)" : undefined,
+                                  }}
                                 />
+                              )}
+                              {isInvalid && (
+                                <div style={{ fontSize: 11, color: "var(--coral)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                                  <AlertCircle size={12} />
+                                  <span>Kolom ini wajib diisi sebelum menyimpan atau beralih ke tahap berikutnya</span>
+                                </div>
                               )}
                             </div>
                           );
@@ -2341,15 +2463,42 @@ export default function ThesisPage() {
                           <span>💬 Bahas Tahap Ini dengan AI Konsultan</span>
                         </button>
 
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => saveStagesProgress()}
-                          disabled={isSavingProgress}
-                          style={{ fontSize: 11.5, gap: 5 }}
-                        >
-                          <Save size={13} />
-                          <span>Simpan Isian Tahap Ini</span>
-                        </button>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleSaveCurrentStage(stage.id)}
+                            disabled={isSavingProgress}
+                            style={{ fontSize: 11.5, gap: 5 }}
+                            title="Simpan perubahan formulir tahap ini"
+                          >
+                            <Save size={13} />
+                            <span>Simpan Isian Tahap Ini</span>
+                          </button>
+
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleCompleteAndAdvance(stage)}
+                            disabled={isSavingProgress}
+                            style={{
+                              fontSize: 11.5,
+                              gap: 5,
+                              background: isAcc ? "#15803D" : undefined,
+                              borderColor: isAcc ? "#15803D" : undefined,
+                            }}
+                            title="Validasi formulir, tandai ACC Dospem, dan lanjut ke tahap berikutnya"
+                          >
+                            {isAcc ? (
+                              <>
+                                <CheckCircle2 size={13} />
+                                <span>Tahap Sudah Selesai (ACC)</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>{stage.id === 11 ? "Selesaikan Seluruh Skripsi 🎉" : "Selesai & Lanjut ke Tahap Berikutnya →"}</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}

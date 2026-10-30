@@ -593,36 +593,6 @@ export default function TemplatesPage() {
                 ))}
               </select>
             </div>
-            <div className="form-group">
-              <label
-                className="form-label"
-                htmlFor="filter-tahun"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                <Calendar size={13} style={{ color: "var(--text-muted)" }} />
-                Tahun Kurikulum
-              </label>
-              <select
-                id="filter-tahun"
-                className="form-input"
-                style={{ fontSize: 13, background: "var(--bg-tertiary)", borderColor: "var(--border)" }}
-                value={filterYear}
-                onChange={(e) => setFilterYear(e.target.value)}
-              >
-                {YEARS.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
         </div>
       )}
@@ -1894,23 +1864,6 @@ function TemplateCard({
             >
               {categoryIcons[t.category]}
               {TEMPLATE_CATEGORIES[t.category as keyof typeof TEMPLATE_CATEGORIES] ?? t.category}
-            </span>
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "2px 7px",
-                borderRadius: "var(--radius-pill)",
-                fontSize: 10,
-                fontWeight: 600,
-                background: "var(--bg-tertiary)",
-                color: "var(--text-muted)",
-                border: "1px solid var(--border-subtle)",
-              }}
-            >
-              <Calendar size={10} />
-              {t.year}
             </span>
           </div>
 

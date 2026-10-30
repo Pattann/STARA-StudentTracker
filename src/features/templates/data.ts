@@ -188,7 +188,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "k1",
-    title: "Roadmap Semester 1–8 Teknik Informatika (AI & Cloud Track 2025)",
+    title: "Roadmap Semester 1–8 Teknik Informatika (AI & Cloud Track)",
     description: "Panduan semester demi semester terbaru untuk mahasiswa Teknik Informatika kurikulum 2025. Fokus pada rekayasa perangkat lunak modern, LLM engineering, dan strategi lulus cum laude.",
     category: "semester",
     institutionName: "Institut Teknologi Bandung",
@@ -335,7 +335,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "k2",
-    title: "Persiapan Magang BUMN FHCI & ESG Batch 2025",
+    title: "Persiapan Magang BUMN FHCI & ESG",
     description: "Template rencana magang di perusahaan BUMN besar (Telkom, Mandiri, PLN, Pertamina). Dilengkapi checklist administrasi FHCI 2025 dan negosiasi konversi SKS.",
     category: "magang",
     institutionName: "Universitas Indonesia",
@@ -350,7 +350,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     updatedAt: "2025-05-20T00:00:00Z",
     tags: ["bumn", "magang", "konversi sks", "fhci 2025", "magenta"],
     verified: false,
-    targetAudience: "Mahasiswa Semester 4-6 yang menargetkan program magang BUMN Batch 2025 dengan konversi 20 SKS penuh.",
+    targetAudience: "Mahasiswa Semester 4-6 yang menargetkan program magang BUMN dengan konversi 20 SKS penuh.",
     targetGPA: "IPK ≥ 3.25",
     targetGraduation: "Tepat Waktu (8 Semester)",
     totalCredits: 20,
@@ -374,7 +374,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     ],
     faq: [{ question: "Apakah menunda kelulusan?", answer: "Tidak, karena 20 SKS dikonversi penuh ke transkrip akademik." }],
     items: [
-      { title: "Penyusunan CV ATS & Portofolio Standar FHCI 2025", category: "karier", credits: 0, notes: "Kualifikasi Telkom, Mandiri, Pertamina.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Penyusunan CV ATS & Portofolio Standar FHCI", category: "karier", credits: 0, notes: "Kualifikasi Telkom, Mandiri, Pertamina.", targetSemesterNum: 5, certaintyLevel: "pasti" },
       { title: "Sertifikasi Kompetensi BNSP / Bahasa Asing", category: "tak", credits: 0, notes: "Nilai tambah seleksi administrasi.", targetSemesterNum: 5, certaintyLevel: "estimasi" },
       { title: "Pelaksanaan Magang BUMN Bersertifikat (PMMB)", category: "akademik", credits: 18, courseCode: "BUMN-INT601", notes: "Konversi SKS mata kuliah elektif dan kerja praktik.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
       { title: "Laporan Berkala & Mentoring Dosen Wali Magang", category: "akademik", credits: 2, notes: "Logbook mingguan dan evaluasi performa.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
@@ -382,7 +382,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "k3",
-    title: "Strategi TAK 120 Poin Efisien & Portofolio Prestasi 2025",
+    title: "Strategi TAK 120 Poin Efisien & Portofolio Prestasi",
     description: "Panduan praktis mengumpulkan 120 poin TAK/SKP tanpa stres sejak semester awal. Berisi daftar kegiatan poin tinggi dan trik validasi kemahasiswaan.",
     category: "tak",
     institutionName: "Universitas Brawijaya",
@@ -418,7 +418,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "k4",
-    title: "Timeline Skripsi 1 Semester: Dari Proposal ke Sidang 2025",
+    title: "Timeline Skripsi 1 Semester: Dari Proposal ke Sidang",
     description: "Rencana penyusunan skripsi terstruktur selesai 4-5 bulan. Meliputi bimbingan mingguan, tips uji Turnitin, dan jadwal ujian tanpa jeda.",
     category: "skripsi",
     institutionName: "Universitas Gadjah Mada",
@@ -454,11 +454,11 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // ── KOMUNITAS (2024) ──
+  // ── KOMUNITAS ──
   // ══════════════════════════════════════════════════════════════════════════════
   {
     id: "k5",
-    title: "Roadmap Semester 5–8 Teknik Informatika (Kurikulum 2024 Microservices & Web)",
+    title: "Roadmap Semester 5–8 Teknik Informatika (Microservices & Web Track)",
     description: "Template kurikulum 2024 untuk mahasiswa Informatika yang fokus ke software engineering, arsitektur microservices, dan persiapan magang industri teknologi.",
     category: "semester",
     institutionName: "Institut Teknologi Bandung",
@@ -496,8 +496,8 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "k6",
-    title: "Roadmap MBKM: Riset Terapan + Magang Industri 2 Semester (2024)",
-    description: "Kombinasi riset terapan di semester 6 dan magang industri di semester 7 dengan konversi 40 SKS kurikulum 2024.",
+    title: "Roadmap MBKM: Riset Terapan + Magang Industri 2 Semester",
+    description: "Kombinasi riset terapan di semester 6 dan magang industri di semester 7 dengan konversi 40 SKS kurikulum terkini.",
     category: "mbkm",
     institutionName: "Universitas Diponegoro",
     programName: "Teknik Sipil",
@@ -516,7 +516,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     targetGraduation: "Tepat Waktu (8 Semester)",
     totalCredits: 40,
     prerequisites: ["Telah menyelesaikan minimal 80 SKS", "IPK minimal 3.00"],
-    requiredDocuments: ["Learning Agreement MBKM 2024", "Surat Izin Fakultas"],
+    requiredDocuments: ["Learning Agreement MBKM", "Surat Izin Fakultas"],
     keyStrategies: ["Jadikan data riset semester 6 sebagai bahan skripsi di semester 8."],
     semesterBreakdown: [
       { semesterNum: 6, title: "MBKM Riset Terapan", focus: "Laboratorium Riset Bahan & Beton", targetCredits: 20, strategyTip: "Buat draf artikel jurnal ilmiah." },
@@ -530,8 +530,8 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "k7",
-    title: "Semester Padat: 24 SKS dengan Organisasi Aktif (2024)",
-    description: "Strategi manajemen waktu memadatkan 24 SKS sambil tetap menjabat pengurus BEM fakultas pada kurikulum 2024.",
+    title: "Semester Padat: 24 SKS dengan Organisasi Aktif",
+    description: "Strategi manajemen waktu memadatkan 24 SKS sambil tetap menjabat pengurus BEM fakultas pada kurikulum terkini.",
     category: "organisasi",
     institutionName: "Universitas Airlangga",
     programName: "Farmasi",
@@ -564,7 +564,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "k8",
-    title: "Blueprint Fast Track Lulus 3.5 Tahun Manajemen Bisnis (2024)",
+    title: "Blueprint Fast Track Lulus 3.5 Tahun Manajemen Bisnis",
     description: "Panduan lulus cepat 7 semester (3.5 tahun) untuk mahasiswa Manajemen. Memaksimalkan semester antara, magang dini, dan skripsi percepatan.",
     category: "semester",
     institutionName: "Universitas Indonesia",
@@ -600,11 +600,11 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // ── KOMUNITAS (2023) ──
+  // ── KOMUNITAS ──
   // ══════════════════════════════════════════════════════════════════════════════
   {
     id: "k9",
-    title: "Roadmap Studi Informatika: Jalur Software Quality & DevOps (2023)",
+    title: "Roadmap Studi Informatika: Jalur Software Quality & DevOps",
     description: "Blueprint kurikulum 2023 untuk spesialisasi QA Testing, CI/CD pipeline otomatisasi, dan cloud deployment.",
     category: "semester",
     institutionName: "Institut Teknologi Bandung",
@@ -639,7 +639,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "k10",
-    title: "Perencanaan Studi & Karier Konsultan Akuntansi Publik (2023)",
+    title: "Perencanaan Studi & Karier Konsultan Akuntansi Publik",
     description: "Template persiapan menuju kantor akuntan publik Big 4. Meliputi mata kuliah auditing mendalam, simulasi kertas kerja audit, dan magang semester 6.",
     category: "karier",
     institutionName: "Universitas Gadjah Mada",
@@ -674,14 +674,14 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   {
     id: "k11",
     title: "Panduan Lolos Pertukaran Mahasiswa Merdeka (PMM Angkatan 3/2023)",
-    description: "Strategi lolos seleksi berkas, esai kebhinekaan, dan konversi 20 SKS Modul Nusantara PMM 2023.",
+    description: "Strategi lolos seleksi berkas, esai kebhinekaan, dan konversi 20 SKS Modul Nusantara PMM.",
     category: "mbkm",
     institutionName: "Universitas Brawijaya",
     programName: "Ilmu Komunikasi",
     sourceType: "komunitas",
     usefulCount: 165,
     authorDisplayName: "Rina Kartika",
-    authorRole: "Alumni PMM 2023",
+    authorRole: "Alumni PMM",
     isAnonymous: false,
     year: "2023",
     academicYear: "2022/2023",
@@ -710,7 +710,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   // ══════════════════════════════════════════════════════════════════════════════
   {
     id: "c1",
-    title: "Panduan Resmi MBKM Pertukaran Internasional (IISMA 2025)",
+    title: "Panduan Resmi MBKM Pertukaran Internasional (IISMA)",
     description: "Pedoman resmi Biro Akademik UI mengenai pendaftaran, seleksi wawancara, dan penyetaraan transkrip 20 SKS program IISMA 2025.",
     category: "mbkm",
     institutionName: "Universitas Indonesia",
@@ -752,7 +752,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "c2",
-    title: "Roadmap Skripsi Resmi — Panduan Tugas Akhir & Kolokium 2025",
+    title: "Roadmap Skripsi Resmi — Panduan Tugas Akhir & Kolokium",
     description: "Standar buku panduan resmi penulisan skripsi tahun 2025 dari Dekanat UGM. Termasuk syarat batas Turnitin 20% dan jadwal kolokium.",
     category: "skripsi",
     institutionName: "Universitas Gadjah Mada",
@@ -781,13 +781,13 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     faq: [{ question: "Batas kemiripan Turnitin?", answer: "Maksimal 20% tanpa daftar pustaka." }],
     items: [
       { title: "Verifikasi Kelayakan Akademik (Min. 110 SKS)", category: "akademik", credits: 0, notes: "Pengecekan prasyarat mata kuliah wajib.", targetSemesterNum: 7, certaintyLevel: "pasti" },
-      { title: "Seminar Proposal Resmi Skripsi 2025", category: "skripsi", credits: 0, notes: "Presentasi kelayakan di depan tim penguji.", targetSemesterNum: 7, certaintyLevel: "pasti" },
+      { title: "Seminar Proposal Resmi Skripsi", category: "skripsi", credits: 0, notes: "Presentasi kelayakan di depan tim penguji.", targetSemesterNum: 7, certaintyLevel: "pasti" },
       { title: "Pelaksanaan & Ujian Sidang Skripsi", category: "skripsi", credits: 6, courseCode: "UGM-TA2025", notes: "Sidang ujian dan revisi tim penguji.", targetSemesterNum: 8, certaintyLevel: "estimasi" },
     ],
   },
   {
     id: "c3",
-    title: "Pedoman Magang Studi Independen Bersertifikat (MSIB Angkatan 8 / 2025)",
+    title: "Pedoman Magang Studi Independen Bersertifikat (MSIB)",
     description: "Pedoman nasional Kemendikbudristek untuk program MSIB 2025. Memuat regulasi uang saku, logbook mingguan, dan rubrik konversi 20 SKS.",
     category: "magang",
     institutionName: "Kemendikbudristek",
@@ -802,7 +802,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     updatedAt: "2025-06-20T00:00:00Z",
     tags: ["msib 2025", "kemendikbud", "magang resmi", "konversi 20 sks"],
     verified: true,
-    targetAudience: "Mahasiswa D4/S1 seluruh Indonesia peserta program MSIB Batch 2025.",
+    targetAudience: "Mahasiswa D4/S1 seluruh Indonesia peserta program MSIB.",
     targetGPA: "IPK min. 3.00",
     targetGraduation: "Tepat Waktu",
     totalCredits: 20,
@@ -814,17 +814,17 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     ],
     faq: [{ question: "Apakah ada uang saku?", answer: "Ya, didanai penuh kementerian sesuai ketentuan MSIB 2025." }],
     items: [
-      { title: "Magang Bersertifikat Industri (MSIB 2025)", category: "akademik", credits: 20, courseCode: "MSIB-2025", notes: "Program resmi dengan konversi 20 SKS.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
+      { title: "Magang Bersertifikat Industri (MSIB)", category: "akademik", credits: 20, courseCode: "MSIB-2025", notes: "Program resmi dengan konversi 20 SKS.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
       { title: "Mentoring & Laporan Akhir Konversi SKS", category: "akademik", credits: 0, notes: "Pengesahan rubrik konversi di prodi.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
     ],
   },
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // ── KAMPUS RESMI (2024) ──
+  // ── KAMPUS RESMI ──
   // ══════════════════════════════════════════════════════════════════════════════
   {
     id: "c4",
-    title: "Template Rencana Studi S1 Teknik — Kurikulum Baru 2024 (ABET Accredited)",
+    title: "Template Rencana Studi S1 Teknik (ABET Accredited)",
     description: "Rencana studi resmi 8 semester kurikulum 2024 terakreditasi ABET. Memuat mata kuliah wajib OBE, Capstone Design, dan peminatan.",
     category: "semester",
     institutionName: "Institut Teknologi Bandung",
@@ -839,7 +839,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     updatedAt: "2024-08-15T00:00:00Z",
     tags: ["kurikulum 2024", "teknik itb", "abet", "capstone 2024"],
     verified: true,
-    targetAudience: "Mahasiswa Fakultas Teknik ITB kurikulum 2024.",
+    targetAudience: "Mahasiswa Fakultas Teknik ITB kurikulum terkini.",
     targetGPA: "IPK ≥ 3.00",
     targetGraduation: "Semester 8 (144 SKS)",
     totalCredits: 144,
@@ -854,7 +854,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     ],
     faq: [{ question: "Apakah Capstone beda dengan skripsi?", answer: "Capstone adalah proyek rekayasa berkelompok, sedangkan skripsi adalah penelitian mandiri." }],
     items: [
-      { title: "Rekayasa Sistem Berkelanjutan", category: "akademik", credits: 3, courseCode: "TK3101", notes: "Mata kuliah wajib kurikulum 2024.", targetSemesterNum: 5, certaintyLevel: "pasti" },
+      { title: "Rekayasa Sistem Berkelanjutan", category: "akademik", credits: 3, courseCode: "TK3101", notes: "Mata kuliah wajib kurikulum terkini.", targetSemesterNum: 5, certaintyLevel: "pasti" },
       { title: "Komputasi Numerik Lanjut", category: "akademik", credits: 3, courseCode: "TK3102", notes: "Pemodelan matematis rekayasa.", targetSemesterNum: 5, certaintyLevel: "pasti" },
       { title: "Proyek Capstone Design Rekayasa", category: "akademik", credits: 4, courseCode: "TK4102", notes: "Perancangan terpadu multidisiplin.", targetSemesterNum: 7, certaintyLevel: "pasti" },
       { title: "Tugas Akhir / Skripsi Rekayasa", category: "skripsi", credits: 6, courseCode: "TK4201", notes: "Sidang komprehensif sarjana teknik.", targetSemesterNum: 8, certaintyLevel: "estimasi" },
@@ -862,7 +862,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
   {
     id: "c5",
-    title: "Panduan Magang Industri Terstruktur & Ekivalensi SKS (2024)",
+    title: "Panduan Magang Industri Terstruktur & Ekivalensi SKS",
     description: "Pedoman resmi pelaksanaan magang industri 2024 dari Kemendikbudristek untuk konversi 20 SKS.",
     category: "magang",
     institutionName: "Kemendikbudristek",
@@ -877,7 +877,7 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     updatedAt: "2024-06-15T00:00:00Z",
     tags: ["magang 2024", "resmi", "ekivalensi 20 sks"],
     verified: true,
-    targetAudience: "Mahasiswa seluruh Indonesia peserta magang MBKM 2024.",
+    targetAudience: "Mahasiswa seluruh Indonesia peserta magang MBKM.",
     targetGPA: "IPK ≥ 2.80",
     targetGraduation: "Tepat Waktu",
     totalCredits: 20,
@@ -889,12 +889,12 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     ],
     faq: [{ question: "Bisa konversi matkul apa saja?", answer: "MK Pilihan, Kerja Praktik, dan Seminar Proyek." }],
     items: [
-      { title: "Magang Industri Terstruktur MBKM 2024", category: "akademik", credits: 20, courseCode: "MSIB-2024", notes: "Konversi mata kuliah elektif.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
+      { title: "Magang Industri Terstruktur MBKM", category: "akademik", credits: 20, courseCode: "MSIB-2024", notes: "Konversi mata kuliah elektif.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
     ],
   },
   {
     id: "c6",
-    title: "Pedoman Penulisan Tugas Akhir & Publikasi Jurnal SINTA (2024)",
+    title: "Pedoman Penulisan Tugas Akhir & Publikasi Jurnal SINTA",
     description: "Standar buku panduan skripsi dan publikasi jurnal terakreditasi SINTA 2024 Fakultas UI.",
     category: "skripsi",
     institutionName: "Universitas Indonesia",
@@ -927,11 +927,11 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // ── KAMPUS RESMI (2023) ──
+  // ── KAMPUS RESMI ──
   // ══════════════════════════════════════════════════════════════════════════════
   {
     id: "c7",
-    title: "Buku Pedoman Kurikulum MBKM & Jalur Merdeka Belajar (2023)",
+    title: "Buku Pedoman Kurikulum MBKM & Jalur Merdeka Belajar",
     description: "Dokumen acuan kurikulum MBKM 2023 dari Direktorat Pendidikan ITB untuk program pertukaran dan riset.",
     category: "semester",
     institutionName: "Institut Teknologi Bandung",
@@ -958,12 +958,12 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     ],
     faq: [{ question: "Berapa SKS maksimal di luar prodi?", answer: "Hingga 40 SKS (2 semester)." }],
     items: [
-      { title: "Program Merdeka Belajar di Luar Kampus ITB", category: "akademik", credits: 20, notes: "Konversi SKS kurikulum 2023.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
+      { title: "Program Merdeka Belajar di Luar Kampus ITB", category: "akademik", credits: 20, notes: "Konversi SKS kurikulum berjalan.", targetSemesterNum: 6, certaintyLevel: "estimasi" },
     ],
   },
   {
     id: "c8",
-    title: "Panduan Konversi Kredit Pertukaran Mahasiswa Dalam Negeri (2023)",
+    title: "Panduan Konversi Kredit Pertukaran Mahasiswa Dalam Negeri",
     description: "Pedoman resmi Kemendikbudristek untuk penyamaan transkrip nilai program Pertukaran Mahasiswa Merdeka (PMM) 2023.",
     category: "mbkm",
     institutionName: "Kemendikbudristek",
@@ -990,12 +990,12 @@ export const MOCK_TEMPLATES: MockTemplate[] = [
     ],
     faq: [{ question: "Apakah ada ujian susulan jika ada bentrok?", answer: "Dosen mitra PMM menyediakan jadwal ujian terkoordinasi." }],
     items: [
-      { title: "Penyetaraan Kredit Modul Nusantara PMM 2023", category: "akademik", credits: 20, notes: "Transfer nilai langsung ke perguruan tinggi asal.", targetSemesterNum: 5, certaintyLevel: "estimasi" },
+      { title: "Penyetaraan Kredit Modul Nusantara PMM", category: "akademik", credits: 20, notes: "Transfer nilai langsung ke perguruan tinggi asal.", targetSemesterNum: 5, certaintyLevel: "estimasi" },
     ],
   },
   {
     id: "k12",
-    title: "Roadmap S1 Informatika Telkom University (Kurikulum 2024/2025 - 8 Semester Cum Laude)",
+    title: "Roadmap S1 Informatika Telkom University (8 Semester Cum Laude)",
     description: "Blueprint jalur kelulusan 4 tahun Teknik Informatika Telkom University. Mengintegrasikan pencapaian poin TAK 120+, magang industri di semester 6/7, dan bimbingan Tugas Akhir tanpa drama.",
     category: "semester",
     institutionName: "Telkom University",
