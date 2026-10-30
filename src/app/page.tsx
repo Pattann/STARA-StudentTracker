@@ -258,7 +258,7 @@ export default function HomePage() {
           {/* CTA Buttons */}
           <div className="stara-cta-group">
             <Link
-              href="/app/onboarding"
+              href="/onboarding"
               className="stara-btn-primary hero-btn-primary"
             >
               <span>Mulai Perjalanan</span>

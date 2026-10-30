@@ -1,21 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar, Topbar } from "@/components/layout/AppShell";
 import { SessionProvider, useSession } from "@/features/session/context";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
 function WorkspaceGuard({ children, pageTitle }: { children: React.ReactNode; pageTitle?: string }) {
   const { token, isLoading } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Standalone pages under /app that should NOT display AppShell (Sidebar, Topbar, User Profile, etc.)
+  const isStandalone = pathname === "/app/onboarding";
+
   useEffect(() => {
+    if (isStandalone) return;
     if (!isLoading && !token) {
       router.push("/login");
     }
-  }, [isLoading, token, router]);
+  }, [isLoading, token, router, isStandalone]);
+
+  if (isStandalone) {
+    return <>{children}</>;
+  }
 
   if (isLoading) {
     return (
