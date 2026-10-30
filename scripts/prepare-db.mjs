@@ -24,14 +24,35 @@ function readEnvFallback(key) {
 }
 
 if (fs.existsSync(schemaPath)) {
-  const dbUrl =
-    readEnvFallback("DATABASE_URL") ||
-    readEnvFallback("POSTGRES_PRISMA_URL") ||
-    readEnvFallback("POSTGRES_URL");
-  const directUrl =
-    readEnvFallback("DIRECT_URL") ||
-    readEnvFallback("POSTGRES_URL_NON_POOLING");
-  const hasDirectUrl = Boolean(directUrl);
+  const candidates = ["POSTGRES_PRISMA_URL", "DATABASE_URL", "POSTGRES_URL"];
+  let dbEnvKey = "DATABASE_URL";
+  let dbUrl = "";
+  for (const key of candidates) {
+    const val = readEnvFallback(key);
+    if (
+      val.startsWith("postgres://") ||
+      val.startsWith("postgresql://") ||
+      val.startsWith("prisma+postgres://")
+    ) {
+      dbEnvKey = key;
+      dbUrl = val;
+      break;
+    }
+  }
+  if (!dbUrl) {
+    dbUrl = readEnvFallback("DATABASE_URL");
+  }
+
+  const directCandidates = ["DIRECT_URL", "POSTGRES_URL_NON_POOLING"];
+  let directEnvKey = "";
+  for (const key of directCandidates) {
+    const val = readEnvFallback(key);
+    if (val.startsWith("postgres://") || val.startsWith("postgresql://")) {
+      directEnvKey = key;
+      break;
+    }
+  }
+
   const isPostgres =
     dbUrl.startsWith("postgres://") ||
     dbUrl.startsWith("postgresql://") ||
@@ -39,14 +60,14 @@ if (fs.existsSync(schemaPath)) {
 
   if (isPostgres) {
     let schema = fs.readFileSync(schemaPath, "utf8");
-    const datasourceBlock = hasDirectUrl
-      ? `datasource db {\n  provider  = "postgresql"\n  url       = env("DATABASE_URL")\n  directUrl = env("DIRECT_URL")\n}`
-      : `datasource db {\n  provider = "postgresql"\n  url      = env("DATABASE_URL")\n}`;
+    const datasourceBlock = directEnvKey
+      ? `datasource db {\n  provider  = "postgresql"\n  url       = env("${dbEnvKey}")\n  directUrl = env("${directEnvKey}")\n}`
+      : `datasource db {\n  provider = "postgresql"\n  url      = env("${dbEnvKey}")\n}`;
 
     schema = schema.replace(/datasource\s+db\s*\{[\s\S]*?\}/, datasourceBlock);
     fs.writeFileSync(schemaPath, schema, "utf8");
     console.log(
-      `[prepare-db] Configured Prisma schema for PostgreSQL (directUrl=${hasDirectUrl ? "enabled" : "not set"}).`
+      `[prepare-db] Configured Prisma schema for PostgreSQL (url=${dbEnvKey}, directUrl=${directEnvKey || "not set"}).`
     );
   } else {
     console.log("[prepare-db] Keeping Prisma schema provider as SQLite for local development.");

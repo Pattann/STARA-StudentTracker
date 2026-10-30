@@ -1,25 +1,59 @@
 import "server-only";
 import { PrismaClient } from "@prisma/client";
 
-function sanitizePostgresUri(raw: string | undefined): string | undefined {
+export function sanitizePostgresUri(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
-  const trimmed = raw.trim();
-  const bracketMatch = trimmed.match(/^(postgres(?:ql)?:\/\/[^:/?#]+):\[([^\]]+)\]@(.*)$/i);
-  if (bracketMatch) {
-    const [, prefix, rawPass, suffix] = bracketMatch;
-    return `${prefix}:${encodeURIComponent(rawPass)}@${suffix}`;
+  let trimmed = raw.trim().replace(/^["']|["']$/g, "").trim();
+  if (!trimmed) return undefined;
+
+  // Handle postgres:// or postgresql:// with bracketed or unencoded password
+  const uriMatch = trimmed.match(/^(postgres(?:ql)?:\/\/[^:/?#]+):(.+)@([^@]+)$/i);
+  if (uriMatch) {
+    const [, prefix, rawPassInput, hostAndRest] = uriMatch;
+    const unbracketed = rawPassInput.replace(/^\[(.*)\]$/, "$1");
+    let decoded = unbracketed;
+    try {
+      decoded = decodeURIComponent(unbracketed);
+    } catch {
+      decoded = unbracketed;
+    }
+    trimmed = `${prefix}:${encodeURIComponent(decoded)}@${hostAndRest}`;
   }
+
+  // Ensure Supabase Transaction Pooler (port 6543) always has pgbouncer=true
+  if (trimmed.includes(":6543") && !trimmed.includes("pgbouncer=true")) {
+    trimmed += trimmed.includes("?") ? "&pgbouncer=true" : "?pgbouncer=true";
+  }
+
   return trimmed;
 }
 
-const resolvedDbUrl = sanitizePostgresUri(
-  process.env.DATABASE_URL || process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL
-);
+function resolveDatabaseUrl(): string | undefined {
+  const candidates = [
+    process.env.POSTGRES_PRISMA_URL,
+    process.env.DATABASE_URL,
+    process.env.POSTGRES_URL,
+  ];
+  for (const candidate of candidates) {
+    const sanitized = sanitizePostgresUri(candidate);
+    if (
+      sanitized &&
+      (sanitized.startsWith("postgres://") ||
+        sanitized.startsWith("postgresql://") ||
+        sanitized.startsWith("prisma+postgres://"))
+    ) {
+      return sanitized;
+    }
+  }
+  return sanitizePostgresUri(process.env.DATABASE_URL);
+}
+
+const resolvedDbUrl = resolveDatabaseUrl();
 if (resolvedDbUrl) {
   process.env.DATABASE_URL = resolvedDbUrl;
 }
 const resolvedDirectUrl = sanitizePostgresUri(
-  process.env.DIRECT_URL || process.env.POSTGRES_URL_NON_POOLING
+  process.env.POSTGRES_URL_NON_POOLING || process.env.DIRECT_URL
 );
 if (resolvedDirectUrl) {
   process.env.DIRECT_URL = resolvedDirectUrl;
