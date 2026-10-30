@@ -1,22 +1,20 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  GraduationCap,
   Sparkles,
   ChevronRight,
   ChevronLeft,
   CheckCircle2,
   AlertCircle,
   Building2,
-  BookOpen,
-  Award,
   Zap,
   Clock,
   Compass,
   ArrowRight,
+  Info,
 } from "lucide-react";
 
 type Step = 0 | 1 | 2 | 3;
@@ -199,8 +197,8 @@ export default function OnboardingPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "radial-gradient(ellipse at top, #161D18 0%, #0B0D0C 70%)",
-        color: "#F5F5F0",
+        background: "var(--bg-base, #FAF9F5)",
+        color: "#0F172A",
         padding: "32px 20px 60px",
         display: "flex",
         flexDirection: "column",
@@ -215,97 +213,111 @@ export default function OnboardingPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 36,
+          marginBottom: 32,
         }}
       >
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
           <img
-            src="/whitestara.svg"
+            src="/blackstara.svg"
             alt="Logo STARA"
-            width={32}
-            height={32}
-            style={{ width: 32, height: 32, objectFit: "contain" }}
+            width={28}
+            height={28}
+            style={{ width: 28, height: 28, objectFit: "contain", display: "block" }}
           />
-          <span style={{ fontSize: 20, fontWeight: 900, color: "#F5F5F0", letterSpacing: "-0.02em" }}>
+          <span style={{ fontSize: 18, fontWeight: 900, color: "#0F172A", letterSpacing: "-0.02em" }}>
             STARA
           </span>
         </Link>
 
         <button
+          type="button"
           onClick={handleFillDemo}
-          className="btn btn-ghost btn-sm"
           style={{
             fontSize: 12,
             fontWeight: 700,
-            color: "var(--lime)",
-            background: "rgba(245, 205, 71, 0.08)",
-            border: "1px solid rgba(245, 205, 71, 0.25)",
+            color: "#92400E",
+            background: "#FEF3C7",
+            border: "1px solid #FCD34D",
             borderRadius: "var(--radius-pill)",
             padding: "6px 14px",
             cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+            transition: "all 0.15s ease",
           }}
         >
-          ✦ Isi Data Contoh
+          <Sparkles size={13} color="#D97706" />
+          <span>Isi Data Contoh</span>
         </button>
       </div>
 
       {/* Main Container */}
       <div style={{ width: "100%", maxWidth: 720 }}>
         {/* Step Progress Bar */}
-        <div style={{ marginBottom: 30 }}>
+        <div style={{ marginBottom: 28 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-            {steps.map((s, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  opacity: idx === step ? 1 : idx < step ? 0.8 : 0.4,
-                  transition: "opacity 0.2s ease",
-                }}
-              >
+            {steps.map((s, idx) => {
+              const isActive = idx === step;
+              const isDone = idx < step;
+              return (
                 <div
+                  key={idx}
                   style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: "50%",
-                    background: idx <= step ? "var(--lime)" : "rgba(255,255,255,0.08)",
-                    color: idx <= step ? "#0B0D0C" : "#A4AAA5",
-                    fontSize: 12,
-                    fontWeight: 800,
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: idx === step ? "0 0 12px rgba(245,205,71,0.6)" : "none",
+                    gap: 8,
+                    opacity: isActive ? 1 : isDone ? 0.9 : 0.45,
+                    transition: "all 0.2s ease",
                   }}
                 >
-                  {idx < step ? "✓" : idx + 1}
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: isDone
+                        ? "#15803D"
+                        : isActive
+                        ? "#0F172A"
+                        : "#F1F5F9",
+                      color: isDone || isActive ? "#FFFFFF" : "#64748B",
+                      border: `1.5px solid ${isDone ? "#15803D" : isActive ? "#0F172A" : "#CBD5E1"}`,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: isActive ? "0 2px 8px rgba(15, 23, 42, 0.12)" : "none",
+                    }}
+                  >
+                    {isDone ? <CheckCircle2 size={15} strokeWidth={2.5} /> : idx + 1}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: isActive ? "#0F172A" : isDone ? "#334155" : "#64748B",
+                      display: isActive ? "inline" : "none",
+                    }}
+                    className="step-label"
+                  >
+                    {s.title}
+                  </span>
                 </div>
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: idx === step ? "#F5F5F0" : "#A4AAA5",
-                    display: idx === step ? "inline" : "none",
-                  }}
-                  className="step-label"
-                >
-                  {s.title}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          <div style={{ width: "100%", height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ width: "100%", height: 6, background: "#E2E8F0", borderRadius: 99, overflow: "hidden" }}>
             <div
               style={{
                 width: `${((step + 1) / steps.length) * 100}%`,
                 height: "100%",
-                background: "linear-gradient(90deg, #E5BB35 0%, #F5CD47 100%)",
-                borderRadius: 2,
+                background: "#15803D",
+                borderRadius: 99,
                 transition: "width 0.3s ease",
-                boxShadow: "0 0 10px rgba(245,205,71,0.6)",
               }}
             />
           </div>
@@ -314,42 +326,41 @@ export default function OnboardingPage() {
         {/* Card Content */}
         <div
           style={{
-            background: "linear-gradient(180deg, rgba(22, 27, 24, 0.9) 0%, rgba(13, 16, 14, 0.95) 100%)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: 24,
-            padding: "36px 32px",
-            boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
-            backdropFilter: "blur(20px)",
+            background: "#FFFFFF",
+            border: "1px solid rgba(0, 0, 0, 0.08)",
+            borderRadius: 20,
+            padding: "34px 30px",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02)",
           }}
         >
           {/* Header of Step */}
-          <div style={{ marginBottom: 28 }}>
+          <div style={{ marginBottom: 26 }}>
             <div
               style={{
-                fontSize: 11,
+                fontSize: 11.5,
                 fontWeight: 700,
-                color: "var(--lime)",
-                letterSpacing: "0.08em",
+                color: "#92400E",
+                letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 marginBottom: 6,
               }}
             >
-              Langkah {step + 1} dari {steps.length} · sekitar 2 menit
+              Langkah {step + 1} dari {steps.length} · Sekitar 2 Menit
             </div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#F5F5F0", margin: 0, letterSpacing: "-0.02em" }}>
+            <h1 style={{ fontSize: 23, fontWeight: 800, color: "#0F172A", margin: 0, letterSpacing: "-0.02em" }}>
               {steps[step].title}
             </h1>
-            <p style={{ fontSize: 14, color: "#A4AAA5", marginTop: 4, margin: "4px 0 0" }}>
+            <p style={{ fontSize: 13.5, color: "#64748B", marginTop: 4, margin: "4px 0 0", lineHeight: 1.4 }}>
               {steps[step].desc}
             </p>
           </div>
 
           {/* ================= STEP 0: Identitas Akademik ================= */}
           {step === 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
-                  Nama Kampus / Perguruan Tinggi <span style={{ color: "var(--lime)" }}>*</span>
+                <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 7 }}>
+                  Nama Kampus / Perguruan Tinggi <span style={{ color: "#DC2626" }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -357,7 +368,16 @@ export default function OnboardingPage() {
                   onChange={(e) => update("institutionName", e.target.value)}
                   placeholder="Misal: Telkom University, Universitas Indonesia, ITB..."
                   className="form-input"
-                  style={{ width: "100%", padding: "12px 16px", borderRadius: 12, background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 14 }}
+                  style={{
+                    width: "100%",
+                    padding: "11px 14px",
+                    borderRadius: 10,
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    color: "#0F172A",
+                    fontSize: 13.5,
+                    boxSizing: "border-box",
+                  }}
                   required
                 />
                 <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
@@ -367,14 +387,15 @@ export default function OnboardingPage() {
                       type="button"
                       onClick={() => update("institutionName", camp)}
                       style={{
-                        background: form.institutionName === camp ? "rgba(245,205,71,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${form.institutionName === camp ? "var(--lime)" : "rgba(255,255,255,0.08)"}`,
-                        color: form.institutionName === camp ? "var(--lime)" : "#A4AAA5",
+                        background: form.institutionName === camp ? "#FEF3C7" : "#F8FAFC",
+                        border: `1px solid ${form.institutionName === camp ? "#FCD34D" : "#E2E8F0"}`,
+                        color: form.institutionName === camp ? "#92400E" : "#475569",
                         borderRadius: "var(--radius-pill)",
-                        padding: "4px 10px",
-                        fontSize: 11,
+                        padding: "4px 11px",
+                        fontSize: 11.5,
                         fontWeight: 600,
                         cursor: "pointer",
+                        transition: "all 0.15s ease",
                       }}
                     >
                       {camp}
@@ -385,8 +406,8 @@ export default function OnboardingPage() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
-                    Program Studi (Prodi) <span style={{ color: "var(--lime)" }}>*</span>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 7 }}>
+                    Program Studi (Prodi) <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -394,13 +415,22 @@ export default function OnboardingPage() {
                     onChange={(e) => update("programName", e.target.value)}
                     placeholder="Misal: Teknik Informatika"
                     className="form-input"
-                    style={{ width: "100%", padding: "12px 16px", borderRadius: 12, background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 14 }}
+                    style={{
+                      width: "100%",
+                      padding: "11px 14px",
+                      borderRadius: 10,
+                      background: "#FFFFFF",
+                      border: "1px solid #CBD5E1",
+                      color: "#0F172A",
+                      fontSize: 13.5,
+                      boxSizing: "border-box",
+                    }}
                     required
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 7 }}>
                     Fakultas (Opsional)
                   </label>
                   <input
@@ -409,32 +439,50 @@ export default function OnboardingPage() {
                     onChange={(e) => update("facultyName", e.target.value)}
                     placeholder="Misal: Fakultas Informatika"
                     className="form-input"
-                    style={{ width: "100%", padding: "12px 16px", borderRadius: 12, background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 14 }}
+                    style={{
+                      width: "100%",
+                      padding: "11px 14px",
+                      borderRadius: 10,
+                      background: "#FFFFFF",
+                      border: "1px solid #CBD5E1",
+                      color: "#0F172A",
+                      fontSize: 13.5,
+                      boxSizing: "border-box",
+                    }}
                   />
                 </div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 7 }}>
                     Jenjang Studi
                   </label>
                   <select
                     value={form.educationLevel}
                     onChange={(e) => update("educationLevel", e.target.value)}
                     className="form-input"
-                    style={{ width: "100%", padding: "12px 16px", borderRadius: 12, background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 14 }}
+                    style={{
+                      width: "100%",
+                      padding: "11px 14px",
+                      borderRadius: 10,
+                      background: "#FFFFFF",
+                      border: "1px solid #CBD5E1",
+                      color: "#0F172A",
+                      fontSize: 13.5,
+                      boxSizing: "border-box",
+                    }}
                   >
-                    <option value="S1">S1 — Sarjana</option>
-                    <option value="D4">D4 — Sarjana Terapan</option>
-                    <option value="D3">D3 — Diploma</option>
-                    <option value="S2">S2 — Magister</option>
+                    <option value="S1">S1 (Sarjana)</option>
+                    <option value="D4">D4 (Sarjana Terapan)</option>
+                    <option value="D3">D3 (Diploma)</option>
+                    <option value="S2">S2 (Magister)</option>
                   </select>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
-                    Tahun Angkatan <span style={{ color: "var(--lime)" }}>*</span>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 7 }}>
+                    Tahun Angkatan <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <input
                     type="number"
@@ -442,7 +490,16 @@ export default function OnboardingPage() {
                     onChange={(e) => update("entryYear", e.target.value)}
                     placeholder="2023"
                     className="form-input"
-                    style={{ width: "100%", padding: "12px 16px", borderRadius: 12, background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 14 }}
+                    style={{
+                      width: "100%",
+                      padding: "11px 14px",
+                      borderRadius: 10,
+                      background: "#FFFFFF",
+                      border: "1px solid #CBD5E1",
+                      color: "#0F172A",
+                      fontSize: 13.5,
+                      boxSizing: "border-box",
+                    }}
                     min={2015}
                     max={2030}
                     required
@@ -457,46 +514,49 @@ export default function OnboardingPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               {/* Semester Selector */}
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
-                  Semester Aktif Saat Ini <span style={{ color: "var(--lime)" }}>*</span>
+                <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 8 }}>
+                  Semester Aktif Saat Ini <span style={{ color: "#DC2626" }}>*</span>
                 </label>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 8 }}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => update("currentSemester", s.toString())}
-                      style={{
-                        padding: "12px 0",
-                        borderRadius: 10,
-                        background: form.currentSemester === s.toString() ? "var(--lime)" : "rgba(255,255,255,0.04)",
-                        color: form.currentSemester === s.toString() ? "#0B0D0C" : "#F5F5F0",
-                        fontWeight: 800,
-                        fontSize: 14,
-                        border: `1.5px solid ${form.currentSemester === s.toString() ? "var(--lime)" : "rgba(255,255,255,0.08)"}`,
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => {
+                    const isSelected = form.currentSemester === s.toString();
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => update("currentSemester", s.toString())}
+                        style={{
+                          padding: "11px 0",
+                          borderRadius: 10,
+                          background: isSelected ? "#15803D" : "#F8FAFC",
+                          color: isSelected ? "#FFFFFF" : "#334155",
+                          fontWeight: 800,
+                          fontSize: 14,
+                          border: `1.5px solid ${isSelected ? "#15803D" : "#E2E8F0"}`,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* SKS & Progress Card */}
               <div
                 style={{
-                  background: "rgba(0,0,0,0.35)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 16,
-                  padding: "20px",
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 14,
+                  padding: "18px 20px",
                 }}
               >
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                   <div>
-                    <label style={{ fontSize: 12.5, fontWeight: 700, color: "#A4AAA5", display: "block", marginBottom: 6 }}>
-                      SKS Tuntas Hingga Kini <span style={{ color: "var(--lime)" }}>*</span>
+                    <label style={{ fontSize: 12.5, fontWeight: 700, color: "#475569", display: "block", marginBottom: 6 }}>
+                      SKS Tuntas Hingga Kini <span style={{ color: "#DC2626" }}>*</span>
                     </label>
                     <input
                       type="number"
@@ -504,18 +564,28 @@ export default function OnboardingPage() {
                       onChange={(e) => update("completedCredits", e.target.value)}
                       placeholder="Contoh: 74"
                       className="form-input"
-                      style={{ width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 16, fontWeight: 800 }}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        background: "#FFFFFF",
+                        border: "1px solid #CBD5E1",
+                        color: "#0F172A",
+                        fontSize: 16,
+                        fontWeight: 800,
+                        boxSizing: "border-box",
+                      }}
                       min={0}
                       max={200}
                     />
-                    <span style={{ fontSize: 11, color: "#A4AAA5", display: "block", marginTop: 4 }}>
-                      Lihat total SKS lulus di KHS/transkrip akademikmu.
+                    <span style={{ fontSize: 11, color: "#64748B", display: "block", marginTop: 4 }}>
+                      Lihat total SKS lulus di KHS atau transkrip akademikmu.
                     </span>
                   </div>
 
                   <div>
-                    <label style={{ fontSize: 12.5, fontWeight: 700, color: "#A4AAA5", display: "block", marginBottom: 6 }}>
-                      Total SKS Kurikulum Prodi <span style={{ color: "var(--lime)" }}>*</span>
+                    <label style={{ fontSize: 12.5, fontWeight: 700, color: "#475569", display: "block", marginBottom: 6 }}>
+                      Total SKS Kurikulum Prodi <span style={{ color: "#DC2626" }}>*</span>
                     </label>
                     <input
                       type="number"
@@ -523,12 +593,22 @@ export default function OnboardingPage() {
                       onChange={(e) => update("totalCurriculumCredits", e.target.value)}
                       placeholder="144"
                       className="form-input"
-                      style={{ width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 16, fontWeight: 800 }}
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        background: "#FFFFFF",
+                        border: "1px solid #CBD5E1",
+                        color: "#0F172A",
+                        fontSize: 16,
+                        fontWeight: 800,
+                        boxSizing: "border-box",
+                      }}
                       min={100}
                       max={200}
                     />
-                    <span style={{ fontSize: 11, color: "#A4AAA5", display: "block", marginTop: 4 }}>
-                      Biasanya 144 SKS untuk S1. Cek buku panduan prodi.
+                    <span style={{ fontSize: 11, color: "#64748B", display: "block", marginTop: 4 }}>
+                      Standar 144 SKS untuk S1. Cek buku panduan prodi.
                     </span>
                   </div>
                 </div>
@@ -536,21 +616,21 @@ export default function OnboardingPage() {
                 {/* Real-time Progress Bar */}
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#D4D9D5" }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "#334155" }}>
                       Pencapaian Kurikulum
                     </span>
-                    <span style={{ fontSize: 14, fontWeight: 900, color: "var(--lime)" }}>
-                      {progressPercent}% <span style={{ fontSize: 11, color: "#A4AAA5", fontWeight: 600 }}>({completedSKS} dari {totalSKS} SKS)</span>
+                    <span style={{ fontSize: 13.5, fontWeight: 800, color: "#15803D" }}>
+                      {progressPercent}% <span style={{ fontSize: 11, color: "#64748B", fontWeight: 600 }}>({completedSKS} dari {totalSKS} SKS)</span>
                     </span>
                   </div>
-                  <div style={{ width: "100%", height: 8, background: "rgba(255,255,255,0.08)", borderRadius: 4, overflow: "hidden" }}>
+                  <div style={{ width: "100%", height: 7, background: "#E2E8F0", borderRadius: 99, overflow: "hidden" }}>
                     <div
                       style={{
                         width: `${progressPercent}%`,
                         height: "100%",
-                        background: "linear-gradient(90deg, #E5BB35 0%, #F5CD47 100%)",
-                        borderRadius: 4,
-                        boxShadow: "0 0 10px rgba(245,205,71,0.6)",
+                        background: "#15803D",
+                        borderRadius: 99,
+                        transition: "width 0.3s ease",
                       }}
                     />
                   </div>
@@ -560,11 +640,11 @@ export default function OnboardingPage() {
               {/* IPK & TAK */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5" }}>
-                      IPK Kumulatif Terakhir <span style={{ color: "var(--lime)" }}>*</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 7 }}>
+                    <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B" }}>
+                      IPK Kumulatif Terakhir <span style={{ color: "#DC2626" }}>*</span>
                     </label>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--lime)" }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#64748B" }}>
                       Maks. 4.00
                     </span>
                   </div>
@@ -600,22 +680,23 @@ export default function OnboardingPage() {
                     className="form-input"
                     style={{
                       width: "100%",
-                      padding: "12px 16px",
-                      borderRadius: 12,
-                      background: "rgba(0,0,0,0.4)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      color: "#F5F5F0",
+                      padding: "11px 14px",
+                      borderRadius: 10,
+                      background: "#FFFFFF",
+                      border: "1px solid #CBD5E1",
+                      color: "#0F172A",
                       fontSize: 15,
-                      fontWeight: 700,
+                      fontWeight: 800,
+                      boxSizing: "border-box",
                     }}
                   />
-                  <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 5 }}>
-                    Skala standar perguruan tinggi (0.00 – 4.00)
+                  <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>
+                    Skala standar perguruan tinggi (0.00 - 4.00)
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 7 }}>
                     Pelacakan Poin TAK / SKPI
                   </label>
                   <div
@@ -624,25 +705,26 @@ export default function OnboardingPage() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      padding: "11px 16px",
-                      borderRadius: 12,
-                      background: form.takEnabled ? "rgba(117,189,165,0.12)" : "rgba(0,0,0,0.4)",
-                      border: `1px solid ${form.takEnabled ? "rgba(117,189,165,0.35)" : "rgba(255,255,255,0.1)"}`,
+                      padding: "11px 14px",
+                      borderRadius: 10,
+                      background: form.takEnabled ? "#F0FDF4" : "#F8FAFC",
+                      border: `1px solid ${form.takEnabled ? "#BBF7D0" : "#E2E8F0"}`,
                       cursor: "pointer",
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    <span style={{ fontSize: 13, fontWeight: 700, color: form.takEnabled ? "#75BDA5" : "#A4AAA5" }}>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: form.takEnabled ? "#166534" : "#64748B" }}>
                       {form.takEnabled ? "Aktifkan Pelacakan TAK" : "Nonaktifkan TAK"}
                     </span>
                     <input
                       type="checkbox"
                       checked={form.takEnabled}
                       onChange={() => {}}
-                      style={{ accentColor: "var(--lime)", cursor: "pointer" }}
+                      style={{ accentColor: "#15803D", cursor: "pointer", width: 16, height: 16 }}
                     />
                   </div>
-                  <span style={{ fontSize: 11, color: "#A4AAA5", display: "block", marginTop: 4 }}>
-                    TAK/SKPI = poin kegiatan non-akademik (organisasi, lomba, dll). Matikan jika kampusmu tidak memakainya.
+                  <span style={{ fontSize: 11, color: "#64748B", display: "block", marginTop: 4 }}>
+                    Poin kegiatan non-akademik. Nonaktifkan jika kampusmu tidak memakainya.
                   </span>
                 </div>
               </div>
@@ -653,7 +735,7 @@ export default function OnboardingPage() {
           {step === 2 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 12 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 12 }}>
                   Pilih Ritme & Gaya Studi yang Paling Cocok:
                 </label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -662,33 +744,33 @@ export default function OnboardingPage() {
                       id: "fast",
                       title: "Lulus Cepat (3.5 Tahun)",
                       sub: "7 Semester • Akselerasi",
-                      desc: "Maksimalkan beban SKS 22–24 per semester dan ambil semester antara/pendek.",
-                      icon: <Zap size={18} color="var(--lime)" />,
-                      accent: "var(--lime)",
+                      desc: "Maksimalkan beban SKS 22-24 per semester dan ambil semester pendek.",
+                      icon: <Zap size={18} color="#D97706" />,
+                      iconBg: "#FEF3C7",
                     },
                     {
                       id: "balanced",
                       title: "Seimbang & Teratur (4 Tahun)",
                       sub: "8 Semester • Standar Ideal",
-                      desc: "Beban 18–20 SKS per semester dengan ritme belajar stabil tanpa stres berlebih.",
-                      icon: <Clock size={18} color="#75BDA5" />,
-                      accent: "#75BDA5",
+                      desc: "Beban 18-20 SKS per semester dengan ritme belajar stabil tanpa stres berlebih.",
+                      icon: <Clock size={18} color="#15803D" />,
+                      iconBg: "#F0FDF4",
                     },
                     {
                       id: "active",
                       title: "Fokus MBKM & Magang",
                       sub: "8 Semester • Portofolio Kuat",
                       desc: "Alokasikan 1 semester penuh untuk magang industri atau program pertukaran.",
-                      icon: <Building2 size={18} color="#B288FF" />,
-                      accent: "#B288FF",
+                      icon: <Building2 size={18} color="#7C3AED" />,
+                      iconBg: "#F3E8FF",
                     },
                     {
                       id: "relaxed",
                       title: "Fleksibel & Terkendali",
                       sub: "Adaptif • Ritme Tenang",
                       desc: "Prioritaskan pemahaman mendalam dan keseimbangan kehidupan kampus.",
-                      icon: <Compass size={18} color="#FF9E66" />,
-                      accent: "#FF9E66",
+                      icon: <Compass size={18} color="#0284C7" />,
+                      iconBg: "#E0F2FE",
                     },
                   ].map((item) => {
                     const isSelected = form.goals === item.id;
@@ -697,36 +779,37 @@ export default function OnboardingPage() {
                         key={item.id}
                         onClick={() => update("goals", item.id as any)}
                         style={{
-                          background: isSelected ? "rgba(245,205,71,0.08)" : "rgba(0,0,0,0.3)",
-                          border: `1.5px solid ${isSelected ? item.accent : "rgba(255,255,255,0.08)"}`,
-                          borderRadius: 16,
-                          padding: "18px 16px",
+                          background: isSelected ? "#F0FDF4" : "#FFFFFF",
+                          border: `1.5px solid ${isSelected ? "#16A34A" : "#E2E8F0"}`,
+                          borderRadius: 14,
+                          padding: "16px 16px",
                           cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          boxShadow: isSelected ? `0 8px 24px ${item.accent}20` : "none",
+                          transition: "all 0.15s ease",
+                          boxShadow: isSelected ? "0 4px 16px rgba(22, 163, 74, 0.08)" : "0 1px 3px rgba(0,0,0,0.02)",
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <div
                               style={{
-                                width: 32,
-                                height: 32,
+                                width: 34,
+                                height: 34,
                                 borderRadius: 8,
-                                background: "rgba(255,255,255,0.06)",
+                                background: item.iconBg,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
+                                flexShrink: 0,
                               }}
                             >
                               {item.icon}
                             </div>
-                            <span style={{ fontSize: 13, fontWeight: 800, color: "#F5F5F0" }}>{item.title}</span>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: "#0F172A" }}>{item.title}</span>
                           </div>
-                          {isSelected && <span style={{ width: 8, height: 8, borderRadius: "50%", background: item.accent }} />}
+                          {isSelected && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#16A34A" }} />}
                         </div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: item.accent, marginBottom: 4 }}>{item.sub}</div>
-                        <p style={{ fontSize: 12, color: "#A4AAA5", lineHeight: 1.45, margin: 0 }}>{item.desc}</p>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#166534", marginBottom: 4 }}>{item.sub}</div>
+                        <p style={{ fontSize: 12, color: "#64748B", lineHeight: 1.45, margin: 0 }}>{item.desc}</p>
                       </div>
                     );
                   })}
@@ -735,7 +818,7 @@ export default function OnboardingPage() {
 
               {/* Minat & Skripsi */}
               <div>
-                <label style={{ fontSize: 13, fontWeight: 700, color: "#D4D9D5", display: "block", marginBottom: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: "#1E293B", display: "block", marginBottom: 7 }}>
                   Bidang Minat & Eksplorasi Skripsi
                 </label>
                 <input
@@ -744,10 +827,19 @@ export default function OnboardingPage() {
                   onChange={(e) => update("interests", e.target.value)}
                   placeholder="Misal: Machine Learning, Cybersecurity, UI/UX Design..."
                   className="form-input"
-                  style={{ width: "100%", padding: "12px 16px", borderRadius: 12, background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", color: "#F5F5F0", fontSize: 14 }}
+                  style={{
+                    width: "100%",
+                    padding: "11px 14px",
+                    borderRadius: 10,
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    color: "#0F172A",
+                    fontSize: 13.5,
+                    boxSizing: "border-box",
+                  }}
                 />
-                <span style={{ fontSize: 11, color: "#A4AAA5", display: "block", marginTop: 4 }}>
-                  Digunakan untuk rekomendasi topik tugas akhir dan modul What-If Simulator.
+                <span style={{ fontSize: 11, color: "#64748B", display: "block", marginTop: 4 }}>
+                  Digunakan untuk rekomendasi topik tugas akhir dan modul Simulasi Skenario.
                 </span>
               </div>
             </div>
@@ -755,43 +847,43 @@ export default function OnboardingPage() {
 
           {/* ================= STEP 3: Review & Generate ================= */}
           {step === 3 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {/* Summary Highlight Box */}
               <div
                 style={{
-                  background: "linear-gradient(180deg, rgba(245,205,71,0.1) 0%, rgba(245,205,71,0.03) 100%)",
-                  border: "1.5px solid rgba(245,205,71,0.35)",
-                  borderRadius: 18,
-                  padding: "22px 20px",
+                  background: "#F0FDF4",
+                  border: "1.5px solid #BBF7D0",
+                  borderRadius: 16,
+                  padding: "20px 18px",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                  <Sparkles size={18} color="var(--lime)" />
-                  <span style={{ fontSize: 12, fontWeight: 800, color: "var(--lime)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                  <Sparkles size={16} color="#15803D" />
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "#166534", letterSpacing: "0.04em", textTransform: "uppercase" }}>
                     Hasil Kalkulasi AI STARA
                   </span>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, textAlign: "center" }}>
-                  <div style={{ background: "rgba(0,0,0,0.3)", padding: "12px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ fontSize: 24, fontWeight: 900, color: "var(--lime)" }}>
+                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #DCFCE7" }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#15803D" }}>
                       Sem {targetGradSem}
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#D4D9D5", marginTop: 2 }}>Target Kelulusan</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#475569", marginTop: 2 }}>Target Kelulusan</div>
                   </div>
 
-                  <div style={{ background: "rgba(0,0,0,0.3)", padding: "12px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ fontSize: 24, fontWeight: 900, color: "#75BDA5" }}>
+                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #DCFCE7" }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#0F172A" }}>
                       {remainingSKS} SKS
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#D4D9D5", marginTop: 2 }}>Sisa Beban Studi</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#475569", marginTop: 2 }}>Sisa Beban Studi</div>
                   </div>
 
-                  <div style={{ background: "rgba(0,0,0,0.3)", padding: "12px 10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ fontSize: 24, fontWeight: 900, color: "#F5F5F0" }}>
+                  <div style={{ background: "#FFFFFF", padding: "12px 10px", borderRadius: 10, border: "1px solid #DCFCE7" }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#0F172A" }}>
                       ~{avgSKSPerSem} SKS
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#D4D9D5", marginTop: 2 }}>Rata-rata/Semester</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#475569", marginTop: 2 }}>Rata-rata/Semester</div>
                   </div>
                 </div>
               </div>
@@ -799,10 +891,10 @@ export default function OnboardingPage() {
               {/* Data Review Rows */}
               <div
                 style={{
-                  background: "rgba(0,0,0,0.35)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 16,
-                  padding: "16px 20px",
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 14,
+                  padding: "16px 18px",
                   display: "flex",
                   flexDirection: "column",
                   gap: 10,
@@ -815,8 +907,8 @@ export default function OnboardingPage() {
                   { label: "Gaya Rencana", value: form.goals === "fast" ? "Lulus Cepat (3.5 Thn)" : form.goals === "active" ? "Fokus MBKM" : "Seimbang (4 Thn)" },
                 ].map((row, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 }}>
-                    <span style={{ color: "#A4AAA5" }}>{row.label}</span>
-                    <span style={{ fontWeight: 700, color: "#F5F5F0" }}>{row.value}</span>
+                    <span style={{ color: "#64748B" }}>{row.label}</span>
+                    <span style={{ fontWeight: 700, color: "#0F172A" }}>{row.value}</span>
                   </div>
                 ))}
               </div>
@@ -827,22 +919,23 @@ export default function OnboardingPage() {
                   display: "flex",
                   alignItems: "flex-start",
                   gap: 10,
-                  background: "rgba(117,189,165,0.08)",
-                  border: "1px solid rgba(117,189,165,0.25)",
+                  background: "#FFFBEB",
+                  border: "1px solid #FDE68A",
                   padding: "12px 14px",
                   borderRadius: 12,
                   fontSize: 12.5,
-                  color: "#D4D9D5",
+                  color: "#92400E",
+                  lineHeight: 1.4,
                 }}
               >
-                <AlertCircle size={16} color="#75BDA5" style={{ flexShrink: 0, marginTop: 2 }} />
+                <Info size={15} color="#D97706" style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>
                   STARA akan membuat baseline roadmap lengkap dari Semester {form.currentSemester} hingga kelulusan. Kamu bisa merevisi target, menyimulasikan magang MBKM, dan menyesuaikan SKS kapan pun.
                 </span>
               </div>
 
               {error && (
-                <div style={{ color: "#FF7A45", fontSize: 13, background: "rgba(255,122,69,0.1)", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,122,69,0.3)" }}>
+                <div style={{ color: "#991B1B", fontSize: 13, background: "#FEF2F2", padding: "10px 14px", borderRadius: 10, border: "1px solid #FCA5A5" }}>
                   {error}
                 </div>
               )}
@@ -855,13 +948,13 @@ export default function OnboardingPage() {
               role="alert"
               style={{
                 marginTop: 20,
-                color: "#FF9E66",
+                color: "#991B1B",
                 fontSize: 13,
                 fontWeight: 600,
-                background: "rgba(255,122,69,0.1)",
+                background: "#FEF2F2",
                 padding: "10px 14px",
                 borderRadius: 10,
-                border: "1px solid rgba(255,122,69,0.3)",
+                border: "1px solid #FCA5A5",
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
@@ -875,9 +968,9 @@ export default function OnboardingPage() {
           {/* Navigation Controls */}
           <div
             style={{
-              marginTop: 32,
-              paddingTop: 20,
-              borderTop: "1px solid rgba(255,255,255,0.08)",
+              marginTop: 28,
+              paddingTop: 18,
+              borderTop: "1px solid #E2E8F0",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -892,10 +985,12 @@ export default function OnboardingPage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                color: step === 0 ? "rgba(255,255,255,0.2)" : "#A4AAA5",
+                color: step === 0 ? "#CBD5E1" : "#475569",
                 cursor: step === 0 ? "not-allowed" : "pointer",
-                padding: "10px 16px",
+                padding: "9px 14px",
                 borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 600,
               }}
             >
               <ChevronLeft size={16} />
@@ -908,18 +1003,19 @@ export default function OnboardingPage() {
                 onClick={handleNext}
                 className="btn btn-primary"
                 style={{
-                  background: "var(--lime)",
-                  color: "#0B0D0C",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  padding: "12px 24px",
+                  background: "#15803D",
+                  color: "#FFFFFF",
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  padding: "10px 22px",
                   borderRadius: "var(--radius-pill)",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                   border: "none",
                   cursor: "pointer",
-                  boxShadow: "0 4px 16px rgba(245, 205, 71, 0.35)",
+                  boxShadow: "0 2px 8px rgba(21, 128, 61, 0.25)",
+                  transition: "all 0.15s ease",
                 }}
               >
                 <span>Lanjutkan</span>
@@ -932,33 +1028,34 @@ export default function OnboardingPage() {
                 disabled={submitting}
                 className="btn btn-primary"
                 style={{
-                  background: "var(--lime)",
-                  color: "#0B0D0C",
+                  background: "#15803D",
+                  color: "#FFFFFF",
                   fontWeight: 800,
-                  fontSize: 14,
-                  padding: "12px 28px",
+                  fontSize: 13.5,
+                  padding: "11px 26px",
                   borderRadius: "var(--radius-pill)",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                   border: "none",
                   cursor: submitting ? "wait" : "pointer",
-                  boxShadow: "0 4px 20px rgba(245, 205, 71, 0.45)",
+                  boxShadow: "0 2px 10px rgba(21, 128, 61, 0.3)",
+                  transition: "all 0.15s ease",
                 }}
               >
                 {submitting ? (
                   <>
                     <span
                       style={{
-                        width: 16,
-                        height: 16,
-                        border: "2px solid #0B0D0C",
+                        width: 15,
+                        height: 15,
+                        border: "2px solid #FFFFFF",
                         borderTop: "2px solid transparent",
                         borderRadius: "50%",
                         animation: "spin 0.8s linear infinite",
                       }}
                     />
-                    <span>Membuat Roadmap...</span>
+                    <span>Menyusun Roadmap...</span>
                   </>
                 ) : (
                   <>

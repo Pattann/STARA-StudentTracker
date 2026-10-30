@@ -121,8 +121,8 @@ export default function OnboardingPage() {
       <div style={{ width: "100%", maxWidth: 540 }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 14, background: "var(--lime)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-            <GraduationCap size={24} color="#0B0C0E" />
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: "#FEF3C7", border: "1px solid #FCD34D", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+            <GraduationCap size={22} color="#92400E" />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text-primary)" }}>Setup Profil Akademik</h1>
           <p style={{ fontSize: 14, color: "var(--text-secondary)", marginTop: 4 }}>
@@ -137,7 +137,7 @@ export default function OnboardingPage() {
               key={i}
               style={{
                 flex: 1, height: 4, borderRadius: 2,
-                background: i <= step ? "var(--lime)" : "var(--bg-secondary)",
+                background: i <= step ? "#15803D" : "#E2E8F0",
                 transition: "background 0.3s",
               }}
             />
