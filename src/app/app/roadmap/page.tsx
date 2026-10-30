@@ -26,6 +26,7 @@ import {
   Check,
   Lock,
   SlidersHorizontal,
+  Pencil,
   Calendar,
   Briefcase,
   GraduationCap,
@@ -416,10 +417,6 @@ export default function RoadmapPage() {
   const handleUpdateTask = async (taskId: string, updates: Record<string, unknown>) => {
     if (!token) return;
     try {
-      if (!data?.roadmap?.isDraftMode) {
-        const ok = await ensureDraftMode();
-        if (!ok) return;
-      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -427,22 +424,18 @@ export default function RoadmapPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Gagal menyimpan perubahan.");
-      showToast("Perubahan disimpan", "success");
+      showToast("Perubahan item berhasil disimpan.", "success");
+      setEditingTaskId(null);
       fetchRoadmap();
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : "Gagal menyimpan perubahan", "error");
     }
-    setEditingTaskId(null);
   };
 
   // Kemampuan A: Pindah Semester (Locked if done)
   const handleMoveTask = async (taskId: string, targetSemesterNum: number) => {
     if (!token) return;
     try {
-      if (!data?.roadmap?.isDraftMode) {
-        const ok = await ensureDraftMode();
-        if (!ok) return;
-      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -452,6 +445,7 @@ export default function RoadmapPage() {
       if (!res.ok) throw new Error(json.error || "Gagal memindahkan mata kuliah.");
       showToast(json.message, "success");
       setExpandedSemesters((prev) => new Set([...prev, targetSemesterNum]));
+      setEditingTaskId(null);
       fetchRoadmap();
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : "Gagal memindahkan", "error");
@@ -462,10 +456,6 @@ export default function RoadmapPage() {
   const handleDeleteTask = async (taskId: string) => {
     if (!token) return;
     try {
-      if (!data?.roadmap?.isDraftMode) {
-        const ok = await ensureDraftMode();
-        if (!ok) return;
-      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -601,10 +591,6 @@ export default function RoadmapPage() {
   const handleUpdateSemesterTarget = async (semesterNum: number, targetCredits: number) => {
     if (!token) return;
     try {
-      if (!data?.roadmap?.isDraftMode) {
-        const ok = await ensureDraftMode();
-        if (!ok) return;
-      }
       const res = await fetch(`/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-demo-token": token },
@@ -1076,8 +1062,8 @@ export default function RoadmapPage() {
                         width: "100%",
                       }}
                     >
-                      <SlidersHorizontal size={14} color="#D97706" />
-                      <span>Sesuaikan Roadmap</span>
+                      <Pencil size={14} color="#D97706" />
+                      <span>Edit Roadmap</span>
                     </button>
                   )}
 
@@ -1654,29 +1640,41 @@ export default function RoadmapPage() {
             </div>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {!isEditOrDraft && (
-                <button
-                  onClick={handleStartEditAndDraft}
-                  className="btn btn-secondary btn-sm"
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    gap: 6,
-                    padding: "6px 14px",
-                    borderRadius: 8,
-                    background: "#FEF3C7",
-                    color: "#92400E",
-                    borderColor: "#FCD34D",
-                    cursor: "pointer",
-                    boxShadow: "0 1px 3px rgba(217, 119, 6, 0.12)",
-                  }}
-                  id="btn-adjust-roadmap-toolbar"
-                  title="Mulai penyesuaian susunan roadmap secara aman dalam draf"
-                >
-                  <SlidersHorizontal size={13} color="#D97706" />
-                  <span>Sesuaikan Roadmap</span>
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  const next = activeMode === "edit" ? "view" : "edit";
+                  setActiveMode(next);
+                  if (next === "view") setEditingTaskId(null);
+                }}
+                className="btn btn-secondary btn-sm"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  gap: 6,
+                  padding: "6px 14px",
+                  borderRadius: 8,
+                  background: activeMode === "edit" ? "#18181B" : "#FEF3C7",
+                  color: activeMode === "edit" ? "#FFFFFF" : "#92400E",
+                  borderColor: activeMode === "edit" ? "#18181B" : "#FCD34D",
+                  cursor: "pointer",
+                  boxShadow: activeMode === "edit" ? "0 2px 6px rgba(0, 0, 0, 0.15)" : "0 1px 3px rgba(217, 119, 6, 0.12)",
+                  transition: "all 0.15s ease",
+                }}
+                id="btn-edit-roadmap-toolbar"
+                title={activeMode === "edit" ? "Selesai Edit Roadmap" : "Edit Roadmap"}
+              >
+                {activeMode === "edit" ? (
+                  <>
+                    <Check size={13} color="#FFFFFF" strokeWidth={2.5} />
+                    <span>Selesai Edit</span>
+                  </>
+                ) : (
+                  <>
+                    <Pencil size={13} color="#D97706" />
+                    <span>Edit Roadmap</span>
+                  </>
+                )}
+              </button>
               <div style={{ display: "flex", gap: 4 }}>
                 <button className="btn btn-ghost btn-sm" onClick={expandAll} style={{ fontSize: 11.5, padding: "4px 8px" }}>
                   Buka Semua
@@ -2650,8 +2648,8 @@ export default function RoadmapPage() {
         </div>
       )}
 
-      {/* ── Floating Sticky Action Bar saat Mode Draf Aktif (Kombinasi Pilihan 1 & 3) ── */}
-      {isEditOrDraft && (
+      {/* ── Floating Sticky Action Bar saat Mode Edit Aktif ── */}
+      {activeMode === "edit" && (
         <div
           style={{
             position: "fixed",
@@ -2662,95 +2660,48 @@ export default function RoadmapPage() {
             background: "#FFFFFF",
             border: "1.5px solid #F59E0B",
             borderRadius: 16,
-            padding: "10px 18px",
+            padding: "8px 16px",
             display: "flex",
             alignItems: "center",
-            gap: 16,
-            boxShadow: "0 16px 40px -8px rgba(180, 83, 9, 0.22), 0 4px 16px rgba(0, 0, 0, 0.08)",
+            gap: 14,
+            boxShadow: "0 12px 32px -4px rgba(180, 83, 9, 0.2), 0 4px 12px rgba(0, 0, 0, 0.06)",
             maxWidth: "calc(100vw - 32px)",
           }}
-          id="floating-draft-bar"
+          id="floating-edit-bar"
         >
-          {/* Status info */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                background: "#D97706",
-                boxShadow: "0 0 0 3px rgba(217, 119, 6, 0.25)",
-                flexShrink: 0,
-              }}
-            />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: "#18181B", display: "flex", alignItems: "center", gap: 6 }}>
-                <span>Mode Penyesuaian Draf</span>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    background: "#FEF3C7",
-                    color: "#B45309",
-                    padding: "1px 6px",
-                    borderRadius: 4,
-                  }}
-                >
-                  Belum Disimpan
-                </span>
-              </div>
-              <div style={{ fontSize: 11, color: "#71717A" }}>
-                Perubahan belum memengaruhi roadmap resmi hingga disimpan
-              </div>
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Pencil size={14} color="#D97706" />
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#18181B" }}>
+              Mode Edit Roadmap Aktif
+            </span>
+            <span style={{ fontSize: 11.5, color: "#71717A" }}>
+              • Klik item mata kuliah untuk mengubah nilai atau semester
+            </span>
           </div>
 
-          <div style={{ width: 1, height: 26, background: "#E4E4E7", flexShrink: 0 }} />
+          <div style={{ width: 1, height: 20, background: "#E4E4E7", flexShrink: 0 }} />
 
-          {/* Action buttons */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={() => handleCancelDraft(false)}
-              className="btn btn-secondary btn-sm"
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                gap: 5,
-                padding: "7px 14px",
-                borderRadius: 10,
-                color: "#475569",
-                border: "1px solid #CBD5E1",
-              }}
-              id="btn-cancel-floating-draft"
-              title="Batalkan seluruh perubahan draf dan kembalikan ke versi resmi"
-            >
-              <RotateCcw size={13} />
-              <span>Batalkan</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              className="btn btn-primary btn-sm"
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                gap: 6,
-                padding: "7px 18px",
-                borderRadius: 10,
-                background: "#D97706",
-                borderColor: "#B45309",
-                color: "#FFFFFF",
-                boxShadow: "0 2px 8px rgba(217, 119, 6, 0.35)",
-              }}
-              id="btn-save-floating-draft"
-              title="Terapkan seluruh perubahan ke roadmap aktif"
-            >
-              <Check size={14} strokeWidth={2.5} />
-              <span>Simpan Perubahan</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveMode("view");
+              setEditingTaskId(null);
+            }}
+            className="btn btn-primary btn-sm"
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              gap: 5,
+              padding: "6px 14px",
+              borderRadius: 8,
+              background: "#18181B",
+              borderColor: "#18181B",
+              color: "#FFFFFF",
+            }}
+          >
+            <Check size={13} strokeWidth={2.5} />
+            <span>Selesai Edit</span>
+          </button>
         </div>
       )}
 
@@ -3310,29 +3261,31 @@ function SemesterCardItem({
 
                           {mode === "edit" && (
                             <button
-                              className="btn btn-ghost btn-sm"
+                              className="btn btn-secondary btn-sm"
                               style={{
-                                width: 28,
-                                height: 28,
-                                padding: 0,
                                 display: "inline-flex",
                                 alignItems: "center",
-                                justifyContent: "center",
+                                gap: 4,
+                                padding: "4px 8px",
+                                fontSize: 11.5,
+                                fontWeight: 600,
                                 borderRadius: "6px",
-                                color: "#475569",
-                                background: "#F8FAFC",
-                                border: "1px solid #E2E8F0",
+                                color: "#92400E",
+                                background: "#FEF3C7",
+                                border: "1px solid #FCD34D",
                                 transition: "all 0.15s ease",
                                 flexShrink: 0,
+                                cursor: "pointer",
                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onEditTaskId(task.id);
                               }}
-                              title="Edit item"
+                              title="Edit item mata kuliah ini"
                               aria-label="Edit item"
                             >
-                              <Edit3 size={13} />
+                              <Pencil size={11} color="#D97706" />
+                              <span>Edit</span>
                             </button>
                           )}
                         </div>
@@ -4819,6 +4772,7 @@ function TaskRowEditForm({
               title,
               status,
               notes,
+              targetSemesterNum: !isCompleted && targetSem !== currentSemesterNum ? targetSem : undefined,
               courseCode: itemType === "COURSE" ? courseCode : undefined,
               credits: itemType === "COURSE" ? credits : (task.credits ?? 0),
               activityPeriod: itemType === "ACTIVITY" ? activityPeriod : undefined,

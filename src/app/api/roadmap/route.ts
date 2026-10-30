@@ -493,6 +493,34 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      let destPlanId = task.semesterPlanId;
+      if (
+        "targetSemesterNum" in updates &&
+        typeof updates.targetSemesterNum === "number" &&
+        updates.targetSemesterNum >= 1 &&
+        updates.targetSemesterNum <= 14 &&
+        updates.targetSemesterNum !== plan.semesterNum &&
+        task.status !== "done"
+      ) {
+        let destPlan = await prisma.semesterPlan.findFirst({
+          where: { roadmapVersionId: currentVersionId, semesterNum: updates.targetSemesterNum },
+        });
+        if (!destPlan) {
+          destPlan = await prisma.semesterPlan.create({
+            data: {
+              roadmapVersionId: currentVersionId,
+              semesterNum: updates.targetSemesterNum,
+              semesterLabel: `Semester ${updates.targetSemesterNum}`,
+              targetCredits: 20,
+              plannedCredits: 0,
+              isCurrentSemester: updates.targetSemesterNum === (session.academicProfile?.currentSemester ?? 4),
+            },
+          });
+        }
+        destPlanId = destPlan.id;
+        safeData.semesterPlanId = destPlan.id;
+      }
+
       const updatedTask = await prisma.$transaction(async (tx) => {
         const u = await tx.roadmapTask.update({
           where: { id: task.id },
@@ -500,6 +528,9 @@ export async function POST(req: NextRequest) {
         });
 
         await syncSemesterPlanCredits(task.semesterPlanId, tx);
+        if (destPlanId !== task.semesterPlanId) {
+          await syncSemesterPlanCredits(destPlanId, tx);
+        }
         await syncProfileAcademicMetrics(session.id, currentVersionId, tx);
         return u;
       });
