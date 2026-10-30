@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   Search,
   Plus,
-  ShieldAlert,
   ShieldCheck,
   RefreshCw,
   ExternalLink,
@@ -38,11 +37,11 @@ const NAV_ITEMS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[]
 const TAB_TITLES: Record<AdminTab, { title: string; subtitle: string }> = {
   overview: {
     title: "Ringkasan Operasional",
-    subtitle: "Antrian moderasi template komunitas, laporan pengguna, dan sebaran kurikulum aktif.",
+    subtitle: "Antrian verifikasi template komunitas, kurikulum aktif, dan ringkasan operasional.",
   },
   templates: {
-    title: "Moderasi Template & Laporan",
-    subtitle: "Verifikasi pengajuan template roadmap mahasiswa dan tindak lanjuti laporan konten.",
+    title: "Moderasi & Verifikasi Template",
+    subtitle: "Verifikasi pengajuan template roadmap dari komunitas mahasiswa sebelum ditayangkan resmi.",
   },
   academics: {
     title: "Kurikulum & Data Akademik",
@@ -90,15 +89,9 @@ function AdminDashboardContent() {
 
   // Templates & Moderation Data
   const [templatesList, setTemplatesList] = useState<any[]>([]);
-  const [reportsList, setReportsList] = useState<any[]>([]);
-  const [templateSubTab, setTemplateSubTab] = useState<"templates" | "reports">("templates");
   const [templateStatusFilter, setTemplateStatusFilter] = useState<string>("all");
   const [templateSearch, setTemplateSearch] = useState("");
-  const [reportStatusFilter, setReportStatusFilter] = useState<string>("all");
   const [selectedTemplateForPreview, setSelectedTemplateForPreview] = useState<any | null>(null);
-  const [selectedReportForAction, setSelectedReportForAction] = useState<any | null>(null);
-  const [moderatorResolutionNote, setModeratorResolutionNote] = useState("");
-  const [isUpdatingModeration, setIsUpdatingModeration] = useState(false);
 
   // AI Monitor Data
   const [aiData, setAiData] = useState<any>(null);
@@ -162,18 +155,6 @@ function AdminDashboardContent() {
     }
   };
 
-  const fetchReports = async () => {
-    try {
-      const res = await fetch(`/api/admin/reports?status=${reportStatusFilter}`);
-      const data = await res.json();
-      if (data.success) {
-        setReportsList(data.reports);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const fetchAiMonitor = async () => {
     try {
       const res = await fetch("/api/admin/ai-monitor");
@@ -218,17 +199,12 @@ function AdminDashboardContent() {
     fetchOverview();
     fetchAcademics();
     fetchTemplates();
-    fetchReports();
     fetchAiMonitor();
   }, [router]);
 
   useEffect(() => {
     fetchTemplates();
   }, [templateStatusFilter, templateSearch]);
-
-  useEffect(() => {
-    fetchReports();
-  }, [reportStatusFilter]);
 
   const handleAddCourseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -333,39 +309,6 @@ function AdminDashboardContent() {
     }
   };
 
-  const handleResolveReport = async (status: "resolved" | "reviewed") => {
-    if (!selectedReportForAction) return;
-    try {
-      setIsUpdatingModeration(true);
-      const res = await fetch("/api/admin/reports", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reportId: selectedReportForAction.id,
-          status,
-          moderatorNote:
-            moderatorResolutionNote || "Ditindaklanjuti dan diselesaikan oleh Administrator STARA.",
-        }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        showToast(
-          `Laporan ditandai sebagai ${status === "resolved" ? "Selesai" : "Sedang Ditinjau"}.`
-        );
-        setSelectedReportForAction(null);
-        setModeratorResolutionNote("");
-        fetchReports();
-        fetchOverview();
-      } else {
-        showToast(result.error || "Gagal memperbarui status laporan.", "error");
-      }
-    } catch {
-      showToast("Terjadi kesalahan jaringan.", "error");
-    } finally {
-      setIsUpdatingModeration(false);
-    }
-  };
-
   const handleRunAiPing = async () => {
     try {
       setIsPingingAi(true);
@@ -404,13 +347,10 @@ function AdminDashboardContent() {
     return matchesSearch && matchesSemester && matchesCategory;
   });
 
-  const openReportsCount =
-    overviewData?.metrics?.openReports ??
-    reportsList.filter((r) => r.status === "open").length;
   const unverifiedTemplatesCount =
     overviewData?.metrics?.communityTemplates ??
     templatesList.filter((t) => t.sourceType !== "terverifikasi").length;
-  const moderationQueueCount = openReportsCount + unverifiedTemplatesCount;
+  const moderationQueueCount = unverifiedTemplatesCount;
 
   const adminInitial = adminUser?.name
     ? adminUser.name.trim().charAt(0).toUpperCase()
@@ -583,9 +523,9 @@ function AdminDashboardContent() {
                       style={{
                         fontSize: 11,
                         fontWeight: 700,
-                        background: openReportsCount > 0 ? "#FEE2E2" : "#FEF3C7",
-                        color: openReportsCount > 0 ? "#B91C1C" : "#92400E",
-                        border: openReportsCount > 0 ? "1px solid #FECACA" : "1px solid #FDE68A",
+                        background: "#FEF3C7",
+                        color: "#92400E",
+                        border: "1px solid #FDE68A",
                         padding: "1px 6px",
                         borderRadius: "999px",
                       }}
@@ -784,7 +724,6 @@ function AdminDashboardContent() {
                 fetchOverview();
                 fetchAcademics();
                 fetchTemplates();
-                fetchReports();
                 fetchAiMonitor();
                 showToast("Data berhasil diperbarui.");
               }}
@@ -845,7 +784,7 @@ function AdminDashboardContent() {
                         gap: 6,
                         fontSize: 12,
                         fontWeight: 700,
-                        color: openReportsCount > 0 ? "#B91C1C" : "#92400E",
+                        color: "#92400E",
                         marginBottom: 6,
                       }}
                     >
@@ -854,14 +793,13 @@ function AdminDashboardContent() {
                           width: 7,
                           height: 7,
                           borderRadius: "50%",
-                          background: openReportsCount > 0 ? "#DC2626" : "#D97706",
+                          background: "#D97706",
                         }}
                       />
-                      Prioritas Moderasi Kurikulum & Komunitas
+                      Prioritas Verifikasi Template Komunitas
                     </div>
                     <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0F172A", marginBottom: 4 }}>
-                      {unverifiedTemplatesCount} template komunitas menunggu verifikasi, dan{" "}
-                      {openReportsCount} laporan mahasiswa berstatus terbuka
+                      {unverifiedTemplatesCount} template komunitas menunggu verifikasi resmi
                     </h3>
                     <p style={{ fontSize: 13, color: "#475569", margin: 0, lineHeight: 1.5 }}>
                       Template yang diajukan mahasiswa dari halaman Roadmap masuk ke antrian moderasi sebelum mendapat label Terverifikasi Resmi di galeri publik.
@@ -872,7 +810,6 @@ function AdminDashboardContent() {
                     <button
                       type="button"
                       onClick={() => {
-                        setTemplateSubTab("templates");
                         setTemplateStatusFilter("unverified");
                         switchTab("templates");
                       }}
@@ -883,14 +820,10 @@ function AdminDashboardContent() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        setTemplateSubTab("reports");
-                        setTemplateStatusFilter("all");
-                        switchTab("templates");
-                      }}
+                      onClick={() => switchTab("academics")}
                       className="btn btn-secondary btn-sm"
                     >
-                      Buka Laporan ({openReportsCount})
+                      Kelola Katalog Kurikulum
                     </button>
                   </div>
                 </div>
@@ -1606,100 +1539,11 @@ function AdminDashboardContent() {
             )}
 
             {/* ══════════════════════════════════════════════════════════════════════════
-                TAB 3: MODERASI TEMPLATE & LAPORAN
+                TAB 3: MODERASI & VERIFIKASI TEMPLATE
                 ══════════════════════════════════════════════════════════════════════════ */}
             {activeTab === "templates" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                {/* Segmented Sub-tab Control */}
-                <div
-                  style={{
-                    display: "inline-flex",
-                    gap: 4,
-                    background: "#F1F5F9",
-                    padding: 4,
-                    borderRadius: "10px",
-                    border: "1px solid #E2E8F0",
-                    alignSelf: "flex-start",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setTemplateSubTab("templates")}
-                    style={{
-                      background: templateSubTab === "templates" ? "#FFFFFF" : "transparent",
-                      border: "none",
-                      color: templateSubTab === "templates" ? "#0F172A" : "#475569",
-                      padding: "7px 14px",
-                      borderRadius: "7px",
-                      fontSize: 12.5,
-                      fontWeight: templateSubTab === "templates" ? 700 : 600,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      boxShadow:
-                        templateSubTab === "templates"
-                          ? "0 1px 2px rgba(15, 23, 42, 0.06)"
-                          : "none",
-                    }}
-                  >
-                    <FileCheck size={15} />
-                    <span>Verifikasi Template Publik</span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        background: templateSubTab === "templates" ? "#FEF3C7" : "#E2E8F0",
-                        color: templateSubTab === "templates" ? "#92400E" : "#475569",
-                        padding: "1px 6px",
-                        borderRadius: "999px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {templatesList.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setTemplateSubTab("reports")}
-                    style={{
-                      background: templateSubTab === "reports" ? "#FFFFFF" : "transparent",
-                      border: "none",
-                      color: templateSubTab === "reports" ? "#0F172A" : "#475569",
-                      padding: "7px 14px",
-                      borderRadius: "7px",
-                      fontSize: 12.5,
-                      fontWeight: templateSubTab === "reports" ? 700 : 600,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      boxShadow:
-                        templateSubTab === "reports"
-                          ? "0 1px 2px rgba(15, 23, 42, 0.06)"
-                          : "none",
-                    }}
-                  >
-                    <ShieldAlert size={15} />
-                    <span>Laporan Pengguna</span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        background: openReportsCount > 0 ? "#FEE2E2" : "#E2E8F0",
-                        color: openReportsCount > 0 ? "#B91C1C" : "#475569",
-                        padding: "1px 6px",
-                        borderRadius: "999px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {openReportsCount} terbuka
-                    </span>
-                  </button>
-                </div>
-
-                {/* Sub-Tab 1: Verifikasi Template */}
-                {templateSubTab === "templates" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                     <div
                       style={{
                         display: "flex",
@@ -1922,149 +1766,6 @@ function AdminDashboardContent() {
                       })}
                     </div>
                   </div>
-                )}
-
-                {/* Sub-Tab 2: Daftar Laporan */}
-                {templateSubTab === "reports" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        background: "#FFFFFF",
-                        padding: "12px 16px",
-                        borderRadius: "12px",
-                        border: "1px solid #E2E8F0",
-                      }}
-                    >
-                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>
-                          Filter Status Laporan:
-                        </span>
-                        <select
-                          value={reportStatusFilter}
-                          onChange={(e) => setReportStatusFilter(e.target.value)}
-                          className="form-input"
-                          style={{ width: "auto", height: 34, fontSize: 12.5, padding: "0 12px" }}
-                        >
-                          <option value="all">Semua Laporan</option>
-                          <option value="open">Menunggu Tindakan (Open)</option>
-                          <option value="reviewed">Sedang Ditinjau (Reviewed)</option>
-                          <option value="resolved">Selesai (Resolved)</option>
-                        </select>
-                      </div>
-
-                      <div style={{ fontSize: 12.5, color: "#64748B" }}>
-                        Total <strong style={{ color: "#0F172A" }}>{reportsList.length}</strong> laporan
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {reportsList.map((rep: any) => (
-                        <div
-                          key={rep.id}
-                          style={{
-                            background: "#FFFFFF",
-                            border: rep.status === "open" ? "1px solid #FECACA" : "1px solid #E2E8F0",
-                            borderRadius: "14px",
-                            padding: "18px 20px",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                            gap: 16,
-                          }}
-                        >
-                          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  padding: "2px 8px",
-                                  borderRadius: "999px",
-                                  textTransform: "uppercase",
-                                  background:
-                                    rep.status === "open"
-                                      ? "#FEE2E2"
-                                      : rep.status === "reviewed"
-                                      ? "#FEF3C7"
-                                      : "#DCFCE7",
-                                  color:
-                                    rep.status === "open"
-                                      ? "#B91C1C"
-                                      : rep.status === "reviewed"
-                                      ? "#92400E"
-                                      : "#15803D",
-                                  border:
-                                    rep.status === "open"
-                                      ? "1px solid #FECACA"
-                                      : rep.status === "reviewed"
-                                      ? "1px solid #FDE68A"
-                                      : "1px solid #BBF7D0",
-                                }}
-                              >
-                                {rep.status}
-                              </span>
-                              <span style={{ fontSize: 12, color: "#64748B" }}>
-                                Dilaporkan pada {new Date(rep.createdAt).toLocaleDateString("id-ID")}
-                              </span>
-                            </div>
-
-                            <div style={{ fontSize: 14.5, fontWeight: 700, color: "#0F172A" }}>
-                              Template Terkait: {rep.template?.title || "Template Mahasiswa"}
-                            </div>
-
-                            <div
-                              style={{
-                                background: "#F8FAFC",
-                                border: "1px solid #E2E8F0",
-                                padding: "10px 14px",
-                                borderRadius: "10px",
-                                fontSize: 13,
-                                color: "#334155",
-                                lineHeight: 1.45,
-                              }}
-                            >
-                              <strong>Catatan Pelapor:</strong> &ldquo;{rep.reason}&rdquo;
-                            </div>
-
-                            {rep.moderatorNote && (
-                              <div
-                                style={{
-                                  fontSize: 12.5,
-                                  color: "#92400E",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 6,
-                                }}
-                              >
-                                <ShieldCheck size={14} color="#D97706" />
-                                <span>Catatan Moderator: {rep.moderatorNote}</span>
-                              </div>
-                            )}
-
-                            <div style={{ fontSize: 12, color: "#64748B" }}>
-                              Pelapor: {rep.reporter?.name || "Mahasiswa"} ({rep.reporter?.email || "anonim"})
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedReportForAction(rep);
-                              setModeratorResolutionNote(rep.moderatorNote || "");
-                            }}
-                            className="btn btn-primary btn-sm"
-                            style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}
-                          >
-                            Tindak Lanjuti
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -2755,123 +2456,6 @@ function AdminDashboardContent() {
                 className="btn btn-secondary btn-sm"
               >
                 Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── MODAL: TINDAK LANJUTI LAPORAN ────────────────────────────────────────── */}
-      {selectedReportForAction && (
-        <div
-          className="dialog-overlay"
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(15, 23, 42, 0.45)",
-            zIndex: 999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 20,
-          }}
-          onClick={() => setSelectedReportForAction(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            style={{
-              background: "#FFFFFF",
-              border: "1px solid #E2E8F0",
-              borderRadius: "16px",
-              width: "100%",
-              maxWidth: 520,
-              padding: 24,
-              boxShadow: "0 20px 25px -5px rgba(15, 23, 42, 0.12)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: "#0F172A", margin: 0 }}>
-                Resolusi Laporan Pengguna
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSelectedReportForAction(null)}
-                className="btn btn-ghost btn-sm"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div
-              style={{
-                background: "#F8FAFC",
-                border: "1px solid #E2E8F0",
-                padding: "12px",
-                borderRadius: "10px",
-                fontSize: 12.5,
-                color: "#334155",
-                marginBottom: 16,
-              }}
-            >
-              <strong>Catatan Laporan:</strong> &ldquo;{selectedReportForAction.reason}&rdquo;
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#334155",
-                  display: "block",
-                  marginBottom: 4,
-                }}
-              >
-                Catatan Tindakan Moderator
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Tuliskan hasil verifikasi atau tindak lanjut atas laporan ini..."
-                value={moderatorResolutionNote}
-                onChange={(e) => setModeratorResolutionNote(e.target.value)}
-                className="form-input"
-                style={{ height: "auto" }}
-              />
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-              <button
-                type="button"
-                onClick={() => setSelectedReportForAction(null)}
-                className="btn btn-secondary btn-sm"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                disabled={isUpdatingModeration}
-                onClick={() => handleResolveReport("reviewed")}
-                className="btn btn-secondary btn-sm"
-                style={{ color: "#92400E" }}
-              >
-                Tandai Ditinjau
-              </button>
-              <button
-                type="button"
-                disabled={isUpdatingModeration}
-                onClick={() => handleResolveReport("resolved")}
-                className="btn btn-primary btn-sm"
-                style={{ fontWeight: 700 }}
-              >
-                Tandai Selesai
               </button>
             </div>
           </div>
